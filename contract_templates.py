@@ -496,7 +496,8 @@ class ContractTemplates:
             warranties_clause += "disposer de droits sur l'image du Modèle. Il s'engage à indemniser le Cessionnaire de tous frais et indemnités "
             warranties_clause += "qui pourraient résulter de telles actions.\n\n"
         
-        warranties_clause += f"7.{3 if 'Image (droit à l'image)' in contract_type else 2} Obligations du Cessionnaire\n\n"
+        sub_section_num = 3 if 'Image (droit à l'image)' in contract_type else 2
+        warranties_clause += f"7.{sub_section_num} Obligations du Cessionnaire\n\n"
         warranties_clause += "Le Cessionnaire s'engage à :\n"
         warranties_clause += "- Respecter l'intégrité de l'œuvre et/ou de l'image dans le cadre des exploitations autorisées ;\n"
         
