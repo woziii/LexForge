@@ -34,140 +34,103 @@ def preview_contract(contract_type, is_free, author_type, author_info,
     # Initialiser l'aperçu avec le titre
     apercu = ContractTemplates.get_title(contract_type) + "\n\n"
     
-    # Ajouter le préambule
-    apercu += ContractTemplates.get_preamble_text(contract_type, author_type, author_info)
+    # Ajouter un extrait du préambule (simplifié pour l'aperçu)
+    preamble_parts = ContractTemplates.get_preamble_text(contract_type, author_type, author_info).split("\n\n")
     
-    # Article 1 - Objet
-    apercu += "Article 1 – OBJET\n"
+    # Première partie du préambule (partie "ENTRE LES SOUSSIGNÉS" et infos parties)
+    for i in range(min(6, len(preamble_parts))):
+        if preamble_parts[i].strip():
+            apercu += preamble_parts[i] + "\n\n"
+    
+    # Sauter au "CECI EXPOSÉ, IL A ÉTÉ CONVENU CE QUI SUIT :"
+    for part in preamble_parts:
+        if "CONVENU CE QUI SUIT" in part:
+            apercu += part + "\n\n"
+            break
+    
+    # Article 1 - Objet (extrait)
+    apercu += "ARTICLE 1 – OBJET DU CONTRAT\n\n"
+    
     if "Auteur (droits d'auteur)" in contract_type:
-        apercu += f"L'Auteur déclare être le créateur et titulaire exclusif des droits d'auteur sur l'œuvre suivante : {sanitize_text(work_description)}.\n"
+        apercu += "1.1 Œuvre concernée\n\n"
+        apercu += f"L'Auteur déclare être le créateur et titulaire exclusif des droits d'auteur sur l'œuvre suivante :\n\n"
+        apercu += f"{sanitize_text(work_description)}\n\n"
     
     if "Image (droit à l'image)" in contract_type:
-        apercu += f"Le Modèle autorise l'utilisation et l'exploitation de son image telle qu'elle apparaît dans les photographies/vidéos suivantes : {sanitize_text(image_description)}.\n"
+        apercu += "1.2 Images concernées\n\n"
+        apercu += f"Le Modèle autorise l'utilisation et l'exploitation de son image telle qu'elle apparaît dans les photographies/vidéos suivantes :\n\n"
+        apercu += f"{sanitize_text(image_description)}\n\n"
     
-    apercu += "Par le présent contrat, "
-    if "Auteur (droits d'auteur)" in contract_type and "Image (droit à l'image)" in contract_type:
-        apercu += "l'Auteur cède au Cessionnaire certains droits sur son œuvre, et le Modèle autorise l'exploitation de son image, dans les conditions définies ci-après.\n\n"
-    elif "Auteur (droits d'auteur)" in contract_type:
-        apercu += "l'Auteur cède au Cessionnaire certains droits sur son œuvre dans les conditions définies ci-après.\n\n"
+    # Article 2 - Droits cédés (extrait)
+    apercu += "ARTICLE 2 – ÉTENDUE DES DROITS CÉDÉS\n\n"
+    apercu += "2.1 Nature de la cession\n\n"
+    apercu += "L'Auteur cède au Cessionnaire, "
+    
+    if is_exclusive:
+        apercu += "à titre exclusif, "
     else:
-        apercu += "le Modèle autorise l'exploitation de son image dans les conditions définies ci-après.\n\n"
+        apercu += "à titre non exclusif, "
     
-    # Compteur d'articles
-    article_num = 2
+    if is_free:
+        apercu += "gratuitement et pour la durée précisée à l'article 4, les droits patrimoniaux suivants.\n\n"
+    else:
+        apercu += "pour la durée précisée à l'article 4 et moyennant rémunération, les droits patrimoniaux détaillés au contrat.\n\n"
     
-    # Article 2 - Droits cédés pour l'Auteur
-    if "Auteur (droits d'auteur)" in contract_type:
-        apercu += "Article 2 – ÉTENDUE DES DROITS CÉDÉS\n"
-        apercu += "L'Auteur cède au Cessionnaire, "
-        
-        if is_exclusive:
-            apercu += "à titre exclusif, "
-        else:
-            apercu += "à titre non exclusif, "
-        
-        if is_free:
-            apercu += "gratuitement et pour la durée précisée à l'article 3, les droits patrimoniaux suivants :\n\n"
-            apercu += "- Le droit de reproduction\n"
-            apercu += "- Le droit de représentation\n\n"
-        else:
-            apercu += "pour la durée précisée à l'article 3 et moyennant la rémunération précisée à l'article approprié, les droits patrimoniaux suivants :\n\n"
-            
-            # Droits de base
-            apercu += "- Le droit de reproduction\n"
-            apercu += "- Le droit de représentation\n"
-            
-            # Droits supplémentaires pour les cessions onéreuses
-            if "distribution" in additional_rights:
-                apercu += "- Le droit de distribution\n"
-            
-            if "usage" in additional_rights:
-                apercu += "- Le droit d'usage\n"
-            
-            if "adaptation" in additional_rights:
-                apercu += "- Le droit d'adaptation\n"
-            
-            if "pret" in additional_rights:
-                apercu += "- Le droit de prêt\n"
-            
-            if "location" in additional_rights:
-                apercu += "- Le droit de location\n"
-            
-            if "suite" in additional_rights:
-                apercu += "- Le droit de suite (pour œuvres graphiques et plastiques)\n"
-            
-            apercu += "\n"
-        
-        # Clause d'exclusivité
-        if is_exclusive:
-            apercu += "Pendant la durée de la présente cession, l'Auteur s'engage à ne pas céder les mêmes droits à des tiers et à ne pas exploiter lui-même l'œuvre selon les modalités cédées au Cessionnaire.\n\n"
-        else:
-            apercu += "La présente cession étant non exclusive, l'Auteur conserve le droit d'exploiter l'œuvre et de céder les mêmes droits à des tiers.\n\n"
-        
-        article_num += 1
+    apercu += "2.2 Droits patrimoniaux cédés\n\n"
+    apercu += "Droits de base : reproduction et représentation"
     
-    # Article pour les droits à l'image
+    if not is_free and additional_rights:
+        apercu += "\nDroits supplémentaires inclus :"
+        for right in additional_rights:
+            right_name = right.split(" - ")[0] if " - " in right else right
+            apercu += f"\n- {right_name}"
+    
+    apercu += "\n\n"
+    
+    # Pour l'aperçu, ajouter les titres des autres articles
+    article_num = 3
+    
     if "Image (droit à l'image)" in contract_type:
-        image_article_num = article_num if "Auteur (droits d'auteur)" in contract_type else 2
-        apercu += f"Article {image_article_num} – AUTORISATION D'EXPLOITATION DE L'IMAGE\n"
-        
-        apercu += "Le Modèle autorise le Cessionnaire à fixer, reproduire et communiquer au public son image. "
-        apercu += "Cette autorisation est consentie "
-        
-        if is_exclusive:
-            apercu += "à titre exclusif, "
-        else:
-            apercu += "à titre non exclusif, "
-        
-        if is_free:
-            apercu += "gratuitement, "
-        else:
-            apercu += "moyennant la rémunération précisée à l'article approprié, "
-        
-        apercu += "pour la durée et sur le territoire mentionnés ci-après.\n\n"
-        
-        apercu += "Le Cessionnaire s'engage expressément à ne pas porter atteinte à la dignité, à l'honneur ou à la réputation du Modèle. "
-        apercu += "Les parties s'engagent mutuellement à ne pas tenir de propos dénigrants l'une envers l'autre.\n\n"
-        
-        if is_exclusive:
-            apercu += "Le Modèle s'engage à ne pas autoriser l'exploitation de son image à des tiers pendant la durée du présent contrat.\n\n"
-        else:
-            apercu += "La présente autorisation étant non exclusive, le Modèle conserve le droit d'autoriser l'exploitation de son image à des tiers.\n\n"
-        
+        apercu += f"ARTICLE {article_num} – AUTORISATION D'EXPLOITATION DE L'IMAGE\n"
+        apercu += f"(Les détails complets seront inclus dans le contrat final)\n\n"
         article_num += 1
     
-    # Suite des articles (résumés pour l'aperçu)
-    apercu += f"Article {article_num} – DURÉE ET TERRITOIRE\n"
+    apercu += f"ARTICLE {article_num} – DURÉE ET TERRITOIRE\n"
     apercu += "Durée : 1 an, renouvelable par tacite reconduction\n"
     apercu += "Territoire : monde entier\n\n"
-    
     article_num += 1
-    apercu += f"Article {article_num} – SUPPORTS D'EXPLOITATION\n"
+    
+    apercu += f"ARTICLE {article_num} – SUPPORTS D'EXPLOITATION\n"
     supports_str = ", ".join(final_supports)
     apercu += f"Supports autorisés : {supports_str}\n\n"
-    
     article_num += 1
-    apercu += f"Article {article_num} – RÉMUNÉRATION\n"
+    
+    apercu += f"ARTICLE {article_num} – RÉMUNÉRATION\n"
     if is_free:
         apercu += "La présente cession est consentie à titre gratuit.\n\n"
     else:
         apercu += f"Rémunération : {sanitize_text(remuneration)}\n\n"
+    article_num += 1
     
-    # Aperçu des articles restants
+    # Résumé des articles restants
+    apercu += f"ARTICLE {article_num} – GARANTIES ET RESPONSABILITÉS\n"
     article_num += 1
-    apercu += f"Article {article_num} – GARANTIES\n"
+    apercu += f"ARTICLE {article_num} – RÉSILIATION\n"
     article_num += 1
-    apercu += f"Article {article_num} – RÉSILIATION\n"
+    apercu += f"ARTICLE {article_num} – DISPOSITIONS DIVERSES\n"
     article_num += 1
-    apercu += f"Article {article_num} – LOI APPLICABLE ET JURIDICTION COMPÉTENTE\n\n"
+    apercu += f"ARTICLE {article_num} – LOI APPLICABLE ET JURIDICTION COMPÉTENTE\n\n"
     
     apercu += "Fait à ________________, le ________________\n\n"
+    apercu += "En deux exemplaires originaux.\n\n"
     
     if "Auteur (droits d'auteur)" in contract_type and "Image (droit à l'image)" in contract_type:
-        apercu += "L'Auteur et Modèle                                     Le Cessionnaire"
+        apercu += "Pour l'Auteur et Modèle                                Pour le Cessionnaire"
     elif "Auteur (droits d'auteur)" in contract_type:
-        apercu += "L'Auteur                                                   Le Cessionnaire"
+        apercu += "Pour l'Auteur                                          Pour le Cessionnaire"
     else:
-        apercu += "Le Modèle                                                Le Cessionnaire"
+        apercu += "Pour le Modèle                                         Pour le Cessionnaire"
+    
+    apercu += "\n\nCet aperçu est une version simplifiée. Le contrat final sera plus détaillé et juridiquement complet."
     
     return apercu
