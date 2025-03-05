@@ -3,6 +3,7 @@ Module pour la génération des contrats en format PDF.
 Module optimisé pour une génération plus rapide et efficace.
 """
 import io
+import reportlab
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
@@ -19,6 +20,8 @@ from config import PDF_CONFIG
 from contract_builder import ContractBuilder
 from utils import create_temp_file, ensure_default_supports
 
+pdfmetrics.registerFont(TTFont('Vera', 'Vera.ttf'))
+pdfmetrics.registerFont(TTFont('VeraBd', 'VeraBd.ttf'))
 
 def generate_pdf(contract_type, is_free, author_type, author_info,
                 work_description, image_description, supports,
@@ -138,17 +141,17 @@ def get_simplified_styles():
     styles = getSampleStyleSheet()
     # Utiliser des styles plus simples avec moins d'options
     styles.add(ParagraphStyle(name='ContractTitle', 
-                             fontName='Helvetica-Bold', 
+                             fontName='VeraBd', 
                              fontSize=14, 
                              alignment=TA_CENTER,
                              spaceAfter=10))
     styles.add(ParagraphStyle(name='ContractText', 
-                             fontName='Helvetica', 
+                             fontName='Vera', 
                              fontSize=10, 
                              alignment=TA_JUSTIFY,
                              spaceAfter=5))
     styles.add(ParagraphStyle(name='ContractArticle', 
-                             fontName='Helvetica-Bold', 
+                             fontName='VeraBd', 
                              fontSize=11, 
                              spaceAfter=5))
     return styles
