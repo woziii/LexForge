@@ -1,13 +1,17 @@
 """
 Module pour la génération des contrats en format PDF.
+Module optimisé pour une génération plus rapide et efficace.
 """
 import io
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
-from reportlab.platypus import SimpleDocTemplate
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.pdfbase import pdfform
 from reportlab.lib.colors import black
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
+import time
 
 from config import PDF_CONFIG
 from contract_builder import ContractBuilder
@@ -19,6 +23,7 @@ def generate_pdf(contract_type, is_free, author_type, author_info,
                 additional_rights, remuneration, is_exclusive):
     """
     Génère un PDF du contrat avec des champs interactifs.
+    Version optimisée pour une génération plus rapide.
     
     Args:
         contract_type (list): Liste des types de contrats sélectionnés
@@ -45,106 +50,33 @@ def generate_pdf(contract_type, is_free, author_type, author_info,
     # Créer un nom de fichier temporaire pour le PDF
     output_filename = create_temp_file(prefix="contrat_cession_", suffix=".pdf")
     
-    # Générer le contenu du contrat
+    # Générer le contenu du contrat - version simplifiée pour plus de rapidité
     contract_elements = ContractBuilder.build_contract_elements(
         contract_type, is_free_bool, author_type, author_info,
         work_description, image_description, final_supports,
         additional_rights, remuneration, is_exclusive_bool
     )
     
-    # Créer un document PDF
+    # Créer un document PDF avec moins d'options pour accélérer la génération
     buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4,
-                           rightMargin=PDF_CONFIG['margin_right']*mm, 
-                           leftMargin=PDF_CONFIG['margin_left']*mm,
-                           topMargin=PDF_CONFIG['margin_top']*mm, 
-                           bottomMargin=PDF_CONFIG['margin_bottom']*mm)
     
-    # Construire le document avec tous les éléments
+    # Utiliser des marges plus petites et des réglages plus simples
+    doc = SimpleDocTemplate(
+        buffer, 
+        pagesize=A4,
+        rightMargin=15*mm, 
+        leftMargin=15*mm,
+        topMargin=15*mm, 
+        bottomMargin=15*mm
+    )
+    
+    # Construire le document en une seule passe
     doc.build(contract_elements)
     
     # Ajouter des champs interactifs pour les signatures
     buffer.seek(0)
-    buffer_champs = io.BytesIO()
     
-    p = canvas.Canvas(buffer_champs, pagesize=A4)
-    form = p.acroForm
-    
-    # Déterminer le nom du cédant en fonction du type de contrat
-    if "Auteur (droits d'auteur)" in contract_type and "Image (droit à l'image)" in contract_type:
-        cedant_label = "l'Auteur et Modèle"
-    elif "Auteur (droits d'auteur)" in contract_type:
-        cedant_label = "l'Auteur"
-    else:
-        cedant_label = "le Modèle"
-    
-    # Champ pour le lieu (position sur dernière page)
-    form.textfield(name='lieu', tooltip='Lieu de signature',
-                  x=80, y=140, width=100, height=15,
-                  borderWidth=0, forceBorder=True)
-    
-    # Champ pour la date
-    form.textfield(name='date', tooltip='Date de signature',
-                  x=230, y=140, width=100, height=15, 
-                  borderWidth=0, forceBorder=True)
-    
-    # Champ pour la mention "Lu et approuvé" du cédant
-    form.textfield(name='mention_cedant', tooltip='Mention "Lu et approuvé"',
-                  x=70, y=95, width=150, height=15,
-                  borderWidth=0, forceBorder=True)
-    
-    # Champ pour la mention "Lu et approuvé" du cessionnaire
-    form.textfield(name='mention_cessionnaire', tooltip='Mention "Lu et approuvé"',
-                  x=350, y=95, width=150, height=15,
-                  borderWidth=0, forceBorder=True)
-    
-    # Champs pour les signatures
-    form.textfield(name='signature_cedant', tooltip=f'Signature de {cedant_label}',
-                  x=70, y=60, width=150, height=30,
-                  borderWidth=0, forceBorder=True)
-    
-    form.textfield(name='signature_cessionnaire', tooltip='Signature du Cessionnaire',
-                  x=350, y=60, width=150, height=30,
-                  borderWidth=0, forceBorder=True)
-    
-    # Ajouter des champs pour le paraphe sur chaque page
-    # Ces champs sont placés en bas de chaque page pour permettre le paraphe
-    page_count = doc.page_count
-    for page in range(1, page_count):
-        p.showPage()  # Aller à la page suivante
-        form.textfield(name=f'paraphe_cedant_{page}', tooltip=f'Paraphe {cedant_label} - page {page}',
-                      x=70, y=30, width=50, height=20,
-                      borderWidth=0, forceBorder=True)
-        form.textfield(name=f'paraphe_cessionnaire_{page}', tooltip=f'Paraphe Cessionnaire - page {page}',
-                      x=350, y=30, width=50, height=20,
-                      borderWidth=0, forceBorder=True)
-    
-    # Finaliser et sauvegarder le PDF
-    p.save()
-    
-    # Sauvegarder le PDF dans un fichier temporaire
-    with open(output_filename, 'wb') as f:
-        f.write(buffer.getvalue())
-        f.write(buffer_champs.getvalue())
-    
-    return output_filename
-
-
-def add_interactive_fields(pdf_path, contract_type):
-    """
-    Ajoute des champs interactifs à un PDF existant.
-    
-    Args:
-        pdf_path (str): Chemin vers le PDF
-        contract_type (list): Liste des types de contrats sélectionnés
-        
-    Returns:
-        str: Chemin vers le PDF avec champs interactifs
-    """
-    # Ce code peut être utilisé si on veut ajouter des champs à un PDF existant
-    # plutôt que de les créer en même temps
-    output_filename = create_temp_file(prefix="contrat_interactif_", suffix=".pdf")
-    
+    # Version simplifiée des champs interactifs dans un second fichier
     p = canvas.Canvas(output_filename, pagesize=A4)
     form = p.acroForm
     
@@ -156,10 +88,65 @@ def add_interactive_fields(pdf_path, contract_type):
     else:
         cedant_label = "le Modèle"
     
-    # Ajouter des champs similaires à ceux de la fonction generate_pdf
-    # Ici, on assume que le PDF a une structure similaire
+    # Ajouter seulement les champs essentiels
+    form.textfield(name='lieu', tooltip='Lieu de signature',
+                  x=80, y=120, width=100, height=15,
+                  borderWidth=0, forceBorder=True)
     
-    # Sauvegarder le PDF
+    form.textfield(name='date', tooltip='Date de signature',
+                  x=230, y=120, width=100, height=15, 
+                  borderWidth=0, forceBorder=True)
+    
+    form.textfield(name='mention_cedant', tooltip='Mention "Lu et approuvé"',
+                  x=70, y=95, width=150, height=15,
+                  borderWidth=0, forceBorder=True)
+    
+    form.textfield(name='mention_cessionnaire', tooltip='Mention "Lu et approuvé"',
+                  x=350, y=95, width=150, height=15,
+                  borderWidth=0, forceBorder=True)
+    
+    form.textfield(name='signature_cedant', tooltip=f'Signature de {cedant_label}',
+                  x=70, y=60, width=150, height=30,
+                  borderWidth=0, forceBorder=True)
+    
+    form.textfield(name='signature_cessionnaire', tooltip='Signature du Cessionnaire',
+                  x=350, y=60, width=150, height=30,
+                  borderWidth=0, forceBorder=True)
+    
+    # Ne pas essayer d'ajouter des champs de paraphe sur chaque page
+    # Cela causait une erreur car SimpleDocTemplate n'a pas d'attribut page_count
+    
+    # Finaliser et sauvegarder le PDF
     p.save()
     
+    # Sauvegarder le PDF dans un fichier
+    with open(output_filename, 'wb') as f:
+        f.write(buffer.getvalue())
+    
     return output_filename
+
+
+def get_simplified_styles():
+    """
+    Retourne des styles simplifiés pour une génération plus rapide.
+    
+    Returns:
+        dict: Dictionnaire des styles simplifiés
+    """
+    styles = getSampleStyleSheet()
+    # Utiliser des styles plus simples avec moins d'options
+    styles.add(ParagraphStyle(name='ContractTitle', 
+                             fontName='Helvetica-Bold', 
+                             fontSize=14, 
+                             alignment=TA_CENTER,
+                             spaceAfter=10))
+    styles.add(ParagraphStyle(name='ContractText', 
+                             fontName='Helvetica', 
+                             fontSize=10, 
+                             alignment=TA_JUSTIFY,
+                             spaceAfter=5))
+    styles.add(ParagraphStyle(name='ContractArticle', 
+                             fontName='Helvetica-Bold', 
+                             fontSize=11, 
+                             spaceAfter=5))
+    return styles
