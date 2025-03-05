@@ -12,11 +12,19 @@ from reportlab.pdfbase import pdfform
 from reportlab.lib.colors import black
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 import time
 
 from config import PDF_CONFIG
 from contract_builder import ContractBuilder
 from utils import create_temp_file, ensure_default_supports
+
+
+# Enregistrement des polices pour les caractères accentués
+# Utiliser les polices standard de ReportLab qui supportent les caractères UTF-8
+pdfmetrics.registerFont(TTFont('Helvetica', 'Helvetica.ttf'))
+pdfmetrics.registerFont(TTFont('Helvetica-Bold', 'Helvetica-Bold.ttf'))
 
 
 def generate_pdf(contract_type, is_free, author_type, author_info,
