@@ -1,6 +1,6 @@
 """
 Module définissant l'interface utilisateur Gradio sous forme d'assistant progressif (wizard).
-Cette version permet une navigation par étapes avec aperçu en temps réel.
+Version améliorée avec zone de prévisualisation fixe et meilleur placement des éléments.
 """
 import gradio as gr
 from utils import collect_author_info, ensure_default_supports
@@ -24,7 +24,7 @@ def create_wizard_interface(generate_pdf_fn, preview_contract_fn):
     # Définir le nombre total d'étapes
     TOTAL_STEPS = 6
     
-    with gr.Blocks(title="Assistant de Contrats de Cession", css="style.css") as demo:
+    with gr.Blocks(title="Assistant de Contrats de Cession", css="wizard_style.css") as demo:
         # Variables d'état pour stocker les données entre les étapes
         current_step = gr.State(value=1)
         contract_data = gr.State(value={
@@ -278,26 +278,30 @@ def create_wizard_interface(generate_pdf_fn, preview_contract_fn):
                         value=""
                     )
                     
+                    generate_button = gr.Button("Générer le PDF", variant="primary", elem_id="generate-btn")
+                    
                     # Indicateur de génération
-                    with gr.Group(visible=False) as generation_status_group:
-                        generation_status = gr.Markdown("Préparation du contrat en cours...")
+                    with gr.Group() as generation_status_group:
+                        generation_status = gr.Markdown("", elem_id="generation-status")
                         generation_progress = gr.Slider(
                             minimum=0, 
                             maximum=100, 
                             value=0, 
                             step=1, 
                             interactive=False,
-                            label="Progression"
+                            label="Progression",
+                            visible=False
                         )
+                    
+                    # Zone de téléchargement (maintenant placée sous le bouton)
+                    with gr.Group(visible=False) as download_group:
+                        gr.Markdown("### Téléchargement")
+                        pdf_output = gr.File(label="Votre contrat est prêt!")
                 
                 # Boutons de navigation entre les étapes
                 with gr.Row():
                     back_button = gr.Button("Précédent", variant="secondary")
                     next_button = gr.Button("Suivant", variant="primary")
-                
-                # Bouton de génération (visible uniquement à la dernière étape)
-                with gr.Row(visible=False) as generate_button_row:
-                    generate_button = gr.Button("Générer le PDF", variant="primary", elem_id="generate-btn")
             
             # COLONNE DROITE - PRÉVISUALISATION EN TEMPS RÉEL
             with gr.Column(scale=2):
@@ -307,16 +311,11 @@ def create_wizard_interface(generate_pdf_fn, preview_contract_fn):
                     "Au fur et à mesure que vous remplissez le formulaire, votre contrat se construit ici."
                 )
                 
-                # Prévisualisation du contrat
-                contract_preview = gr.Markdown(
-                    value="*Commencez à remplir le formulaire pour voir l'aperçu du contrat*",
+                # Prévisualisation du contrat - avec classe spéciale pour avoir une hauteur fixe
+                contract_preview = gr.HTML(
+                    value="<div class='fixed-preview'>*Commencez à remplir le formulaire pour voir l'aperçu du contrat*</div>",
                     elem_id="contract-preview"
                 )
-                
-                # Zone de téléchargement (visible uniquement après génération)
-                with gr.Group(visible=False) as download_group:
-                    gr.Markdown("### Téléchargement")
-                    pdf_output = gr.File(label="Votre contrat est prêt!")
         
         # ===== FONCTIONS DE NAVIGATION ET MISE À JOUR =====
         
@@ -442,9 +441,6 @@ def create_wizard_interface(generate_pdf_fn, preview_contract_fn):
             show_physical_person = (current == 3 and author_type_val == "Personne physique")
             show_legal_entity = (current == 3 and author_type_val == "Personne morale")
             
-            # Visibilité du bouton de génération (uniquement à la dernière étape)
-            show_generate_button = (current == TOTAL_STEPS)
-            
             # Mettre à jour l'aperçu du contrat
             preview = preview_contract(data)
             
@@ -464,7 +460,6 @@ def create_wizard_interface(generate_pdf_fn, preview_contract_fn):
                 gr.update(visible=rights_visibility), gr.update(visible=remuneration_visibility),
                 gr.update(visible=show_work_desc), gr.update(visible=show_image_desc),
                 gr.update(visible=show_physical_person), gr.update(visible=show_legal_entity),
-                gr.update(visible=show_generate_button),
                 # Aperçu du contrat
                 preview
             )
@@ -502,9 +497,6 @@ def create_wizard_interface(generate_pdf_fn, preview_contract_fn):
             show_physical_person = (current == 3 and data["auteur_type"] == "Personne physique")
             show_legal_entity = (current == 3 and data["auteur_type"] == "Personne morale")
             
-            # Visibilité du bouton de génération (uniquement à la dernière étape)
-            show_generate_button = (current == TOTAL_STEPS)
-            
             # Mettre à jour l'aperçu du contrat
             preview = preview_contract(data)
             
@@ -524,7 +516,6 @@ def create_wizard_interface(generate_pdf_fn, preview_contract_fn):
                 gr.update(visible=rights_visibility), gr.update(visible=remuneration_visibility),
                 gr.update(visible=show_work_desc), gr.update(visible=show_image_desc),
                 gr.update(visible=show_physical_person), gr.update(visible=show_legal_entity),
-                gr.update(visible=show_generate_button),
                 # Aperçu du contrat
                 preview
             )
@@ -545,20 +536,16 @@ def create_wizard_interface(generate_pdf_fn, preview_contract_fn):
         def generate_pdf(contract_data, filename):
             """Génère le PDF du contrat avec indication de progression."""
             
-            # Mise à jour de l'interface pour indiquer le début de la génération
-            yield gr.update(visible=True), gr.update(value="Préparation des données..."), 0, gr.update(visible=False), None
-            time.sleep(0.5)
-            
             # Étape 1: Préparation du contrat (25%)
-            yield gr.update(visible=True), gr.update(value="Construction du contrat..."), 25, gr.update(visible=False), None
+            yield gr.update(value="Préparation des données..."), gr.update(visible=True, value=25), gr.update(visible=False), None
             time.sleep(0.5)
             
             # Étape 2: Mise en forme (50%)
-            yield gr.update(visible=True), gr.update(value="Mise en forme du document..."), 50, gr.update(visible=False), None
+            yield gr.update(value="Construction du contrat..."), gr.update(visible=True, value=50), gr.update(visible=False), None
             time.sleep(0.5)
             
             # Étape 3: Génération du PDF (75%)
-            yield gr.update(visible=True), gr.update(value="Génération du PDF..."), 75, gr.update(visible=False), None
+            yield gr.update(value="Génération du PDF..."), gr.update(visible=True, value=75), gr.update(visible=False), None
             
             # Appel à la fonction de génération réelle
             pdf_path = generate_pdf_fn(
@@ -575,7 +562,7 @@ def create_wizard_interface(generate_pdf_fn, preview_contract_fn):
             )
             
             # Finalisation (100%)
-            yield gr.update(visible=True), gr.update(value="Contrat PDF généré avec succès!"), 100, gr.update(visible=True), pdf_path
+            yield gr.update(value="Contrat PDF généré avec succès!"), gr.update(visible=True, value=100), gr.update(visible=True), pdf_path
         
         # Fonction simplifiée pour prévisualiser le contrat
         def preview_contract(data):
@@ -583,7 +570,7 @@ def create_wizard_interface(generate_pdf_fn, preview_contract_fn):
             
             # Vérifier qu'il y a suffisamment de données pour prévisualiser
             if not data.get("type_contrat"):
-                return "*Complétez au moins le type de contrat pour voir l'aperçu*"
+                return "<div class='fixed-preview'>*Complétez au moins le type de contrat pour voir l'aperçu*</div>"
             
             # Appeler la fonction de prévisualisation
             try:
@@ -608,9 +595,10 @@ def create_wizard_interface(generate_pdf_fn, preview_contract_fn):
                     if ligne.strip().startswith("ARTICLE") or ligne.strip().isupper():
                         preview_html = preview_html.replace(ligne, f"<h3>{ligne}</h3>")
                 
-                return preview_html
+                # Encapsuler le contenu dans une div avec la classe spéciale
+                return f"<div class='fixed-preview'>{preview_html}</div>"
             except Exception as e:
-                return f"*Erreur de prévisualisation: {str(e)}*"
+                return f"<div class='fixed-preview'>*Erreur de prévisualisation: {str(e)}*</div>"
         
         # ===== ÉVÉNEMENTS =====
         
@@ -642,7 +630,6 @@ def create_wizard_interface(generate_pdf_fn, preview_contract_fn):
                 group_rights, group_remuneration,
                 group_work_description, group_image_description,
                 group_physical_person, group_legal_entity,
-                generate_button_row,
                 # Aperçu du contrat
                 contract_preview
             ]
@@ -661,7 +648,6 @@ def create_wizard_interface(generate_pdf_fn, preview_contract_fn):
                 group_rights, group_remuneration,
                 group_work_description, group_image_description,
                 group_physical_person, group_legal_entity,
-                generate_button_row,
                 # Aperçu du contrat
                 contract_preview
             ]
@@ -685,8 +671,8 @@ def create_wizard_interface(generate_pdf_fn, preview_contract_fn):
             fn=generate_pdf,
             inputs=[contract_data, contract_name],
             outputs=[
-                generation_status_group, generation_status, 
-                generation_progress, download_group, pdf_output
+                generation_status, generation_progress, 
+                download_group, pdf_output
             ]
         )
         
