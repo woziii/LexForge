@@ -18,12 +18,15 @@ class ContractBuilder:
     def get_styles():
         """
         Retourne les styles pour le document PDF.
-        Version corrigée pour utiliser les polices Vera.
+        Version corrigée pour éviter les conflits de styles.
         
         Returns:
             dict: Dictionnaire des styles
         """
         styles = getSampleStyleSheet()
+        
+        # Modifier les styles existants plutôt que d'en ajouter de nouveaux
+        # ou utiliser des noms différents pour éviter les conflits
         
         # Ajouter un style personnalisé pour le titre
         styles.add(ParagraphStyle(name='ContractTitle', 
@@ -125,7 +128,7 @@ class ContractBuilder:
                 if paragraph.startswith("ARTICLE"):
                     elements.append(Paragraph(paragraph, styles['ContractArticle']))
                 # Si c'est un sous-titre (comme "1.1 Œuvre concernée")
-                elif paragraph.strip().startswith("1.") and len(paragraph.split("\n")[0]) < 250:
+                elif paragraph.strip().startswith("1.") and len(paragraph.split("\n")[0]) < 50:
                     elements.append(Paragraph(paragraph, styles['ContractSubArticle']))
                 else:
                     elements.append(Paragraph(paragraph, styles['ContractText']))
