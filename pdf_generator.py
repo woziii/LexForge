@@ -1,6 +1,7 @@
 """
 Module pour la génération des contrats en format PDF.
 Module optimisé pour une génération plus rapide et efficace.
+Version corrigée pour l'encodage des caractères accentués et UTF-8.
 """
 import io
 from reportlab.pdfgen import canvas
@@ -11,11 +12,19 @@ from reportlab.pdfbase import pdfform
 from reportlab.lib.colors import black
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 import time
 
 from config import PDF_CONFIG
 from contract_builder import ContractBuilder
 from utils import create_temp_file, ensure_default_supports
+
+
+# Enregistrement des polices pour les caractères accentués
+# Utiliser les polices standard de ReportLab qui supportent les caractères UTF-8
+pdfmetrics.registerFont(TTFont('Helvetica', 'Helvetica'))
+pdfmetrics.registerFont(TTFont('Helvetica-Bold', 'Helvetica-Bold'))
 
 
 def generate_pdf(contract_type, is_free, author_type, author_info,
@@ -57,7 +66,7 @@ def generate_pdf(contract_type, is_free, author_type, author_info,
         additional_rights, remuneration, is_exclusive_bool
     )
     
-    # Créer un document PDF avec moins d'options pour accélérer la génération
+    # Créer un document PDF avec encodage UTF-8
     buffer = io.BytesIO()
     
     # Utiliser des marges plus petites et des réglages plus simples
@@ -67,7 +76,8 @@ def generate_pdf(contract_type, is_free, author_type, author_info,
         rightMargin=15*mm, 
         leftMargin=15*mm,
         topMargin=15*mm, 
-        bottomMargin=15*mm
+        bottomMargin=15*mm,
+        encoding='UTF-8'  # Spécifier l'encodage UTF-8 pour les caractères accentués
     )
     
     # Construire le document en une seule passe
@@ -75,6 +85,10 @@ def generate_pdf(contract_type, is_free, author_type, author_info,
     
     # Ajouter des champs interactifs pour les signatures
     buffer.seek(0)
+    
+    # Réduire la complexité des champs interactifs
+    with open(output_filename, 'wb') as f:
+        f.write(buffer.getvalue())
     
     # Version simplifiée des champs interactifs dans un second fichier
     p = canvas.Canvas(output_filename, pagesize=A4)
@@ -113,15 +127,8 @@ def generate_pdf(contract_type, is_free, author_type, author_info,
                   x=350, y=60, width=150, height=30,
                   borderWidth=0, forceBorder=True)
     
-    # Ne pas essayer d'ajouter des champs de paraphe sur chaque page
-    # Cela causait une erreur car SimpleDocTemplate n'a pas d'attribut page_count
-    
     # Finaliser et sauvegarder le PDF
     p.save()
-    
-    # Sauvegarder le PDF dans un fichier
-    with open(output_filename, 'wb') as f:
-        f.write(buffer.getvalue())
     
     return output_filename
 
