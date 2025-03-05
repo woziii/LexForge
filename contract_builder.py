@@ -18,34 +18,49 @@ class ContractBuilder:
     def get_styles():
         """
         Retourne les styles pour le document PDF.
+        Version corrigée pour éviter les conflits de styles.
         
         Returns:
             dict: Dictionnaire des styles
         """
         styles = getSampleStyleSheet()
-        styles.add(ParagraphStyle(name='Titre', 
+        
+        # Modifier les styles existants plutôt que d'en ajouter de nouveaux
+        # ou utiliser des noms différents pour éviter les conflits
+        
+        # Ajouter un style personnalisé pour le titre
+        styles.add(ParagraphStyle(name='ContractTitle', 
                                  fontName='Helvetica-Bold', 
                                  fontSize=14, 
                                  alignment=TA_CENTER,
                                  spaceAfter=12))
-        styles.add(ParagraphStyle(name='Sous-titre', 
+        
+        # Ajouter un style personnalisé pour les sous-titres
+        styles.add(ParagraphStyle(name='ContractSubtitle', 
                                  fontName='Helvetica-Bold', 
                                  fontSize=12, 
                                  spaceAfter=10,
                                  alignment=TA_CENTER))
-        styles.add(ParagraphStyle(name='Normal', 
+        
+        # Ajouter un style personnalisé pour le texte normal
+        styles.add(ParagraphStyle(name='ContractText', 
                                  fontName='Helvetica', 
                                  fontSize=10, 
                                  alignment=TA_JUSTIFY,
                                  spaceAfter=6))
-        styles.add(ParagraphStyle(name='Article', 
+        
+        # Ajouter un style personnalisé pour les articles
+        styles.add(ParagraphStyle(name='ContractArticle', 
                                  fontName='Helvetica-Bold', 
                                  fontSize=11, 
                                  spaceAfter=8))
-        styles.add(ParagraphStyle(name='Sous-article', 
+        
+        # Ajouter un style personnalisé pour les sous-articles
+        styles.add(ParagraphStyle(name='ContractSubArticle', 
                                  fontName='Helvetica-Bold', 
                                  fontSize=10, 
                                  spaceAfter=6))
+        
         return styles
     
     @staticmethod
@@ -78,7 +93,7 @@ class ContractBuilder:
         
         # 1. Titre du contrat
         title = ContractTemplates.get_title(contract_type)
-        elements.append(Paragraph(title, styles['Titre']))
+        elements.append(Paragraph(title, styles['ContractTitle']))
         elements.append(Spacer(1, 15))
         
         # 2. Préambule
@@ -88,9 +103,9 @@ class ContractBuilder:
             if paragraph.strip():
                 # Si c'est un titre comme "PRÉAMBULE" ou "ENTRE LES SOUSSIGNÉS"
                 if paragraph.isupper() and len(paragraph) < 50:
-                    elements.append(Paragraph(paragraph, styles['Sous-titre']))
+                    elements.append(Paragraph(paragraph, styles['ContractSubtitle']))
                 else:
-                    elements.append(Paragraph(paragraph, styles['Normal']))
+                    elements.append(Paragraph(paragraph, styles['ContractText']))
                 
                 # Ajouter un espace plus grand après les titres
                 if paragraph.isupper() and len(paragraph) < 50:
@@ -111,12 +126,12 @@ class ContractBuilder:
             if paragraph.strip():
                 # Si c'est un titre d'article (commence par "ARTICLE")
                 if paragraph.startswith("ARTICLE"):
-                    elements.append(Paragraph(paragraph, styles['Article']))
+                    elements.append(Paragraph(paragraph, styles['ContractArticle']))
                 # Si c'est un sous-titre (comme "1.1 Œuvre concernée")
                 elif paragraph.strip().startswith("1.") and len(paragraph.split("\n")[0]) < 50:
-                    elements.append(Paragraph(paragraph, styles['Sous-article']))
+                    elements.append(Paragraph(paragraph, styles['ContractSubArticle']))
                 else:
-                    elements.append(Paragraph(paragraph, styles['Normal']))
+                    elements.append(Paragraph(paragraph, styles['ContractText']))
                 elements.append(Spacer(1, 6))
         
         # Compteur d'articles
@@ -130,12 +145,12 @@ class ContractBuilder:
                 if paragraph.strip():
                     # Si c'est un titre d'article (commence par "ARTICLE")
                     if paragraph.startswith("ARTICLE"):
-                        elements.append(Paragraph(paragraph, styles['Article']))
+                        elements.append(Paragraph(paragraph, styles['ContractArticle']))
                     # Si c'est un sous-titre (comme "2.1 Nature de la cession")
                     elif paragraph.strip().startswith("2.") and len(paragraph.split("\n")[0]) < 50:
-                        elements.append(Paragraph(paragraph, styles['Sous-article']))
+                        elements.append(Paragraph(paragraph, styles['ContractSubArticle']))
                     else:
-                        elements.append(Paragraph(paragraph, styles['Normal']))
+                        elements.append(Paragraph(paragraph, styles['ContractText']))
                     elements.append(Spacer(1, 6))
             article_num += 1
         
@@ -157,12 +172,12 @@ class ContractBuilder:
                 if paragraph.strip():
                     # Si c'est un titre d'article (commence par "ARTICLE")
                     if paragraph.startswith("ARTICLE"):
-                        elements.append(Paragraph(paragraph, styles['Article']))
+                        elements.append(Paragraph(paragraph, styles['ContractArticle']))
                     # Si c'est un sous-titre (comme "3.1 Objet de l'autorisation")
                     elif paragraph.strip()[0].isdigit() and "." in paragraph.strip()[:3] and len(paragraph.split("\n")[0]) < 50:
-                        elements.append(Paragraph(paragraph, styles['Sous-article']))
+                        elements.append(Paragraph(paragraph, styles['ContractSubArticle']))
                     else:
-                        elements.append(Paragraph(paragraph, styles['Normal']))
+                        elements.append(Paragraph(paragraph, styles['ContractText']))
                     elements.append(Spacer(1, 6))
             article_num += 1
         
@@ -173,12 +188,12 @@ class ContractBuilder:
             if paragraph.strip():
                 # Si c'est un titre d'article (commence par "ARTICLE")
                 if paragraph.startswith("ARTICLE"):
-                    elements.append(Paragraph(paragraph, styles['Article']))
+                    elements.append(Paragraph(paragraph, styles['ContractArticle']))
                 # Si c'est un sous-titre (comme "4.1 Durée")
                 elif paragraph.strip()[0].isdigit() and "." in paragraph.strip()[:3] and len(paragraph.split("\n")[0]) < 50:
-                    elements.append(Paragraph(paragraph, styles['Sous-article']))
+                    elements.append(Paragraph(paragraph, styles['ContractSubArticle']))
                 else:
-                    elements.append(Paragraph(paragraph, styles['Normal']))
+                    elements.append(Paragraph(paragraph, styles['ContractText']))
                 elements.append(Spacer(1, 6))
         article_num += 1
         
@@ -190,12 +205,12 @@ class ContractBuilder:
             if paragraph.strip():
                 # Si c'est un titre d'article (commence par "ARTICLE")
                 if paragraph.startswith("ARTICLE"):
-                    elements.append(Paragraph(paragraph, styles['Article']))
+                    elements.append(Paragraph(paragraph, styles['ContractArticle']))
                 # Si c'est un sous-titre (comme "5.1 Supports autorisés")
                 elif paragraph.strip()[0].isdigit() and "." in paragraph.strip()[:3] and len(paragraph.split("\n")[0]) < 50:
-                    elements.append(Paragraph(paragraph, styles['Sous-article']))
+                    elements.append(Paragraph(paragraph, styles['ContractSubArticle']))
                 else:
-                    elements.append(Paragraph(paragraph, styles['Normal']))
+                    elements.append(Paragraph(paragraph, styles['ContractText']))
                 elements.append(Spacer(1, 6))
         article_num += 1
         
@@ -206,12 +221,12 @@ class ContractBuilder:
             if paragraph.strip():
                 # Si c'est un titre d'article (commence par "ARTICLE")
                 if paragraph.startswith("ARTICLE"):
-                    elements.append(Paragraph(paragraph, styles['Article']))
+                    elements.append(Paragraph(paragraph, styles['ContractArticle']))
                 # Si c'est un sous-titre (comme "6.1 Cession à titre gratuit")
                 elif paragraph.strip()[0].isdigit() and "." in paragraph.strip()[:3] and len(paragraph.split("\n")[0]) < 50:
-                    elements.append(Paragraph(paragraph, styles['Sous-article']))
+                    elements.append(Paragraph(paragraph, styles['ContractSubArticle']))
                 else:
-                    elements.append(Paragraph(paragraph, styles['Normal']))
+                    elements.append(Paragraph(paragraph, styles['ContractText']))
                 elements.append(Spacer(1, 6))
         article_num += 1
         
@@ -222,12 +237,12 @@ class ContractBuilder:
             if paragraph.strip():
                 # Si c'est un titre d'article (commence par "ARTICLE")
                 if paragraph.startswith("ARTICLE"):
-                    elements.append(Paragraph(paragraph, styles['Article']))
+                    elements.append(Paragraph(paragraph, styles['ContractArticle']))
                 # Si c'est un sous-titre (comme "7.1 Garanties de l'Auteur")
                 elif paragraph.strip()[0].isdigit() and "." in paragraph.strip()[:3] and len(paragraph.split("\n")[0]) < 50:
-                    elements.append(Paragraph(paragraph, styles['Sous-article']))
+                    elements.append(Paragraph(paragraph, styles['ContractSubArticle']))
                 else:
-                    elements.append(Paragraph(paragraph, styles['Normal']))
+                    elements.append(Paragraph(paragraph, styles['ContractText']))
                 elements.append(Spacer(1, 6))
         article_num += 1
         
@@ -238,12 +253,12 @@ class ContractBuilder:
             if paragraph.strip():
                 # Si c'est un titre d'article (commence par "ARTICLE")
                 if paragraph.startswith("ARTICLE"):
-                    elements.append(Paragraph(paragraph, styles['Article']))
+                    elements.append(Paragraph(paragraph, styles['ContractArticle']))
                 # Si c'est un sous-titre (comme "8.1 Résiliation pour inexécution")
                 elif paragraph.strip()[0].isdigit() and "." in paragraph.strip()[:3] and len(paragraph.split("\n")[0]) < 50:
-                    elements.append(Paragraph(paragraph, styles['Sous-article']))
+                    elements.append(Paragraph(paragraph, styles['ContractSubArticle']))
                 else:
-                    elements.append(Paragraph(paragraph, styles['Normal']))
+                    elements.append(Paragraph(paragraph, styles['ContractText']))
                 elements.append(Spacer(1, 6))
         article_num += 1
         
@@ -254,12 +269,12 @@ class ContractBuilder:
             if paragraph.strip():
                 # Si c'est un titre d'article (commence par "ARTICLE")
                 if paragraph.startswith("ARTICLE"):
-                    elements.append(Paragraph(paragraph, styles['Article']))
+                    elements.append(Paragraph(paragraph, styles['ContractArticle']))
                 # Si c'est un sous-titre (comme "9.1 Clause de non-dénigrement")
                 elif paragraph.strip()[0].isdigit() and "." in paragraph.strip()[:3] and len(paragraph.split("\n")[0]) < 50:
-                    elements.append(Paragraph(paragraph, styles['Sous-article']))
+                    elements.append(Paragraph(paragraph, styles['ContractSubArticle']))
                 else:
-                    elements.append(Paragraph(paragraph, styles['Normal']))
+                    elements.append(Paragraph(paragraph, styles['ContractText']))
                 elements.append(Spacer(1, 6))
         article_num += 1
         
@@ -270,12 +285,12 @@ class ContractBuilder:
             if paragraph.strip():
                 # Si c'est un titre d'article (commence par "ARTICLE")
                 if paragraph.startswith("ARTICLE"):
-                    elements.append(Paragraph(paragraph, styles['Article']))
+                    elements.append(Paragraph(paragraph, styles['ContractArticle']))
                 # Si c'est un sous-titre (comme "10.1 Loi applicable")
                 elif paragraph.strip()[0].isdigit() and "." in paragraph.strip()[:3] and len(paragraph.split("\n")[0]) < 50:
-                    elements.append(Paragraph(paragraph, styles['Sous-article']))
+                    elements.append(Paragraph(paragraph, styles['ContractSubArticle']))
                 else:
-                    elements.append(Paragraph(paragraph, styles['Normal']))
+                    elements.append(Paragraph(paragraph, styles['ContractText']))
                 elements.append(Spacer(1, 6))
         
         # 13. Signatures
@@ -284,7 +299,7 @@ class ContractBuilder:
         paragraphs = signatures.split('\n\n')
         for paragraph in paragraphs:
             if paragraph.strip():
-                elements.append(Paragraph(paragraph, styles['Normal']))
+                elements.append(Paragraph(paragraph, styles['ContractText']))
                 elements.append(Spacer(1, 8))
         
         return elements
