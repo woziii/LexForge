@@ -1,6 +1,6 @@
 ---
 title: LexForge
-emoji: 🏃
+emoji: 🛠️
 colorFrom: indigo
 colorTo: red
 sdk: gradio
