@@ -1,5 +1,6 @@
 """
 Fonctions utilitaires utilisées dans l'application.
+Version corrigée pour gérer correctement les caractères accentués et UTF-8.
 """
 import os
 import tempfile
@@ -69,6 +70,7 @@ def ensure_default_supports(selected_supports):
 def sanitize_text(text):
     """
     Nettoie le texte pour éviter les problèmes d'affichage dans le PDF.
+    Version corrigée pour préserver les caractères accentués et UTF-8.
     
     Args:
         text (str): Texte à nettoyer
@@ -79,14 +81,16 @@ def sanitize_text(text):
     if not text:
         return ""
     
-    # Remplace les caractères spéciaux qui pourraient poser problème
-    text = re.sub(r'[^\x00-\x7F]+', ' ', text)
+    # Limiter la longueur des lignes pour éviter les débordements
+    # tout en préservant les caractères Unicode/accentués
+    lines = []
+    for line in text.split('\n'):
+        if len(line) < 80:
+            lines.append(line)
+        else:
+            lines.append(line[:77] + '...')
     
-    # Limite la longueur des lignes pour éviter les débordements
-    text = '\n'.join(line if len(line) < 80 else line[:77] + '...' 
-                     for line in text.split('\n'))
-    
-    return text
+    return '\n'.join(lines)
 
 
 def create_temp_file(prefix="contrat_", suffix=".pdf"):
