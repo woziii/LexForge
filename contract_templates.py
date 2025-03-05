@@ -164,30 +164,26 @@ class ContractTemplates:
         
         Args:
             is_free (bool): True si la cession est gratuite, False sinon
-            is_exclusive (bool): True si la cession est exclusive, False sinon
+            is_exclusive (bool): True si la cession est exclusive (ignoré si is_free est True)
             additional_rights (list): Liste des droits supplémentaires sélectionnés
-            
-        Returns:
-            str: Clause des droits cédés
         """
+        # Si la cession est gratuite, forcer non-exclusif et pas de droits supplémentaires
+        if is_free:
+            is_exclusive = False
+            additional_rights = []
+
+        # Début de la clause standard
         rights_clause = "ARTICLE 2 – ÉTENDUE DES DROITS CÉDÉS\n\n"
         
+        # Nature de la cession
         rights_clause += "2.1 Nature de la cession\n\n"
-        rights_clause += "L'Auteur cède au Cessionnaire, "
-        
-        if is_exclusive:
-            rights_clause += "à titre exclusif, "
-        else:
-            rights_clause += "à titre non exclusif, "
-        
-        if is_free:
-            rights_clause += f"gratuitement et pour la durée précisée à l'article 4, les droits patrimoniaux détaillés ci-après.\n\n"
-        else:
-            rights_clause += f"pour la durée précisée à l'article 4 et moyennant la rémunération précisée à l'article 6, les droits patrimoniaux détaillés ci-après.\n\n"
-        
+        rights_clause += f"L'Auteur cède au Cessionnaire, à titre {'exclusif' if is_exclusive else 'non exclusif'}, "
+        rights_clause += "pour la durée précisée à l'article 4 et "
+        rights_clause += "gratuitement" if is_free else "moyennant la rémunération précisée à l'article 6"
+        rights_clause += ", les droits patrimoniaux détaillés ci-après.\n\n"
+
+        # Droits patrimoniaux de base
         rights_clause += "2.2 Droits patrimoniaux cédés\n\n"
-        
-        # Section pour les droits toujours inclus (reproduction et représentation)
         rights_clause += "2.2.1 Droits de base\n\n"
         
         # Droit de reproduction
@@ -205,53 +201,59 @@ class ContractTemplates:
         rights_clause += "- Par tous procédés connus ou inconnus à ce jour, notamment par diffusion numérique en ligne sur Internet (sites web, réseaux sociaux, blogs, plateformes de partage, applications mobiles), diffusion par satellite, câble, réseaux informatiques, etc. ;\n"
         rights_clause += "- À destination de tout public, restreint ou non.\n\n"
         
-        # Droits supplémentaires pour les cessions onéreuses
+        # Droits supplémentaires uniquement pour les cessions onéreuses
         if not is_free and additional_rights:
             rights_clause += "2.2.2 Droits supplémentaires\n\n"
             
-            if "distribution" in additional_rights:
-                rights_clause += "c) Droit de distribution\n\n"
-                rights_clause += "L'Auteur cède au Cessionnaire le droit de distribution qui s'entend comme le droit de mettre à disposition du public l'original de l'Œuvre ou ses copies, par la vente, la location, le prêt ou tout autre mode de mise à disposition. Ce droit comprend notamment :\n"
-                rights_clause += "- Le droit de vendre ou faire vendre, d'offrir à la vente tout ou partie de l'Œuvre ;\n"
-                rights_clause += "- Le droit de diffuser et de faire diffuser tout ou partie de l'Œuvre par tous moyens et sur tous supports ;\n"
-                rights_clause += "- Le droit de distribuer l'Œuvre à des fins commerciales ou non commerciales.\n\n"
+            # Utiliser un dictionnaire pour mapper les clés aux noms complets
+            rights_mapping = {
+                "distribution": "distribution - droit de distribuer l'original ou les copies de l'œuvre au public",
+                "usage": "usage - droit d'utiliser l'œuvre pour les besoins du cessionnaire",
+                "adaptation": "adaptation - droit de modifier, transformer, traduire l'œuvre",
+                "pret": "pret - droit de mettre l'œuvre à disposition pour un usage temporaire",
+                "location": "location - droit de mettre l'œuvre à disposition contre rémunération",
+                "suite": "suite - droit de percevoir un pourcentage lors de reventes"
+            }
             
-            if "usage" in additional_rights:
-                rights_clause += "d) Droit d'usage\n\n"
-                rights_clause += "L'Auteur cède au Cessionnaire le droit d'usage qui s'entend comme le droit d'utiliser l'Œuvre pour les besoins propres du Cessionnaire, notamment :\n"
-                rights_clause += "- Dans le cadre de ses activités professionnelles, commerciales ou promotionnelles ;\n"
-                rights_clause += "- À des fins d'illustration de ses services ou produits ;\n"
-                rights_clause += "- Pour toute communication interne ou externe en lien avec son activité ;\n"
-                rights_clause += "- Pour l'intégration dans ses outils, bases de données ou systèmes d'information.\n\n"
-            
-            if "adaptation" in additional_rights:
-                rights_clause += "e) Droit d'adaptation\n\n"
-                rights_clause += "L'Auteur cède au Cessionnaire le droit d'adaptation qui s'entend comme le droit de modifier, transformer, arranger, traduire l'Œuvre ou de l'incorporer dans toute autre œuvre ou création, notamment :\n"
-                rights_clause += "- Le droit de traduire tout ou partie de l'Œuvre en toutes langues ;\n"
-                rights_clause += "- Le droit d'adapter tout ou partie de l'Œuvre pour tous types de supports et formats ;\n"
-                rights_clause += "- Le droit de modifier le format, les couleurs, les dimensions de l'Œuvre ;\n"
-                rights_clause += "- Le droit d'intégrer tout ou partie de l'Œuvre au sein d'une œuvre composite ou collective ;\n"
-                rights_clause += "- Le droit de modifier tout ou partie de l'Œuvre nécessaire à des fins d'exploitation techniques.\n\n"
-                rights_clause += "Ces adaptations seront réalisées dans le respect du droit moral de l'Auteur.\n\n"
-            
-            if "pret" in additional_rights:
-                rights_clause += "f) Droit de prêt\n\n"
-                rights_clause += "L'Auteur cède au Cessionnaire le droit de prêt qui s'entend comme le droit de mettre l'Œuvre à disposition des utilisateurs pour un usage temporaire et non commercial :\n"
-                rights_clause += "- Le droit de prêter l'Œuvre ou ses reproductions à des tiers, à titre gratuit ;\n"
-                rights_clause += "- Le droit d'autoriser le prêt public de l'Œuvre ou de ses reproductions.\n\n"
-            
-            if "location" in additional_rights:
-                rights_clause += "g) Droit de location\n\n"
-                rights_clause += "L'Auteur cède au Cessionnaire le droit de location qui s'entend comme le droit de mettre l'Œuvre à disposition des utilisateurs pour un usage temporaire et moyennant une contrepartie économique directe ou indirecte :\n"
-                rights_clause += "- Le droit de louer l'Œuvre ou ses reproductions à des tiers, à titre onéreux ;\n"
-                rights_clause += "- Le droit d'autoriser la location de l'Œuvre ou de ses reproductions.\n\n"
-            
-            if "suite" in additional_rights:
-                rights_clause += "h) Droit de suite\n\n"
-                rights_clause += "Les parties reconnaissent l'existence du droit de suite, qui s'applique aux œuvres graphiques et plastiques. "
-                rights_clause += "Conformément aux articles L. 122-8 et R. 122-1 à R. 122-12 du Code de la propriété intellectuelle, ce droit inaliénable permet à l'auteur d'une œuvre graphique ou plastique de percevoir un pourcentage sur le prix de revente de son œuvre lorsque intervient un professionnel du marché de l'art. "
-                rights_clause += "Les parties s'engagent à respecter les dispositions légales en vigueur concernant le droit de suite.\n\n"
-        
+            # Traiter chaque droit supplémentaire
+            for i, right in enumerate(additional_rights, start=3):
+                right_key = next((k for k in rights_mapping.keys() if k in right.lower()), None)
+                if right_key:
+                    letter = chr(ord('c') + i - 3)  # Commence à 'c'
+                    rights_clause += f"{letter}) {rights_mapping[right_key]}\n\n"
+                    # Ajouter le contenu détaillé de chaque droit comme dans le code existant
+                    if right_key == "distribution":
+                        rights_clause += "L'Auteur cède au Cessionnaire le droit de distribution qui s'entend comme le droit de mettre à disposition du public l'original de l'Œuvre ou ses copies, par la vente, la location, le prêt ou tout autre mode de mise à disposition. Ce droit comprend notamment :\n"
+                        rights_clause += "- Le droit de vendre ou faire vendre, d'offrir à la vente tout ou partie de l'Œuvre ;\n"
+                        rights_clause += "- Le droit de diffuser et de faire diffuser tout ou partie de l'Œuvre par tous moyens et sur tous supports ;\n"
+                        rights_clause += "- Le droit de distribuer l'Œuvre à des fins commerciales ou non commerciales.\n\n"
+                    elif right_key == "usage":
+                        rights_clause += "L'Auteur cède au Cessionnaire le droit d'usage qui s'entend comme le droit d'utiliser l'Œuvre pour les besoins propres du Cessionnaire, notamment :\n"
+                        rights_clause += "- Dans le cadre de ses activités professionnelles, commerciales ou promotionnelles ;\n"
+                        rights_clause += "- À des fins d'illustration de ses services ou produits ;\n"
+                        rights_clause += "- Pour toute communication interne ou externe en lien avec son activité ;\n"
+                        rights_clause += "- Pour l'intégration dans ses outils, bases de données ou systèmes d'information.\n\n"
+                    elif right_key == "adaptation":
+                        rights_clause += "L'Auteur cède au Cessionnaire le droit d'adaptation qui s'entend comme le droit de modifier, transformer, arranger, traduire l'Œuvre ou de l'incorporer dans toute autre œuvre ou création, notamment :\n"
+                        rights_clause += "- Le droit de traduire tout ou partie de l'Œuvre en toutes langues ;\n"
+                        rights_clause += "- Le droit d'adapter tout ou partie de l'Œuvre pour tous types de supports et formats ;\n"
+                        rights_clause += "- Le droit de modifier le format, les couleurs, les dimensions de l'Œuvre ;\n"
+                        rights_clause += "- Le droit d'intégrer tout ou partie de l'Œuvre au sein d'une œuvre composite ou collective ;\n"
+                        rights_clause += "- Le droit de modifier tout ou partie de l'Œuvre nécessaire à des fins d'exploitation techniques.\n\n"
+                        rights_clause += "Ces adaptations seront réalisées dans le respect du droit moral de l'Auteur.\n\n"
+                    elif right_key == "pret":
+                        rights_clause += "L'Auteur cède au Cessionnaire le droit de prêt qui s'entend comme le droit de mettre l'Œuvre à disposition des utilisateurs pour un usage temporaire et non commercial :\n"
+                        rights_clause += "- Le droit de prêter l'Œuvre ou ses reproductions à des tiers, à titre gratuit ;\n"
+                        rights_clause += "- Le droit d'autoriser le prêt public de l'Œuvre ou de ses reproductions.\n\n"
+                    elif right_key == "location":
+                        rights_clause += "L'Auteur cède au Cessionnaire le droit de location qui s'entend comme le droit de mettre l'Œuvre à disposition des utilisateurs pour un usage temporaire et moyennant une contrepartie économique directe ou indirecte :\n"
+                        rights_clause += "- Le droit de louer l'Œuvre ou ses reproductions à des tiers, à titre onéreux ;\n"
+                        rights_clause += "- Le droit d'autoriser la location de l'Œuvre ou de ses reproductions.\n\n"
+                    elif right_key == "suite":
+                        rights_clause += "Les parties reconnaissent l'existence du droit de suite, qui s'applique aux œuvres graphiques et plastiques. "
+                        rights_clause += "Conformément aux articles L. 122-8 et R. 122-1 à R. 122-12 du Code de la propriété intellectuelle, ce droit inaliénable permet à l'auteur d'une œuvre graphique ou plastique de percevoir un pourcentage sur le prix de revente de son œuvre lorsque intervient un professionnel du marché de l'art. "
+                        rights_clause += "Les parties s'engagent à respecter les dispositions légales en vigueur concernant le droit de suite.\n\n"
+
         rights_clause += "2.3 Droits réservés\n\n"
         rights_clause += "Tous les droits non expressément cédés par le présent contrat demeurent la propriété exclusive de l'Auteur. "
         rights_clause += "Toute exploitation non prévue au présent contrat devra faire l'objet d'un accord complémentaire entre les Parties.\n\n"
