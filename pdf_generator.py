@@ -32,26 +32,14 @@ def generate_pdf(contract_type, is_free, author_type, author_info,
                 additional_rights, remuneration, is_exclusive):
     """
     Génère un PDF du contrat avec des champs interactifs.
-    Version optimisée pour une génération plus rapide.
-    
-    Args:
-        contract_type (list): Liste des types de contrats sélectionnés
-        is_free (bool): True si la cession est gratuite, False sinon
-        author_type (str): Type d'auteur ("Personne physique" ou "Personne morale")
-        author_info (dict): Informations sur l'auteur
-        work_description (str): Description de l'œuvre
-        image_description (str): Description de l'image
-        supports (list): Liste des supports sélectionnés
-        additional_rights (list): Liste des droits supplémentaires sélectionnés
-        remuneration (str): Modalités de rémunération
-        is_exclusive (bool): True si la cession est exclusive, False sinon
-        
-    Returns:
-        str: Chemin vers le fichier PDF généré
     """
     # Conversion des paramètres
     is_free_bool = (is_free == "Gratuite")
-    is_exclusive_bool = bool(is_exclusive)
+    # L'exclusivité n'est possible que si la cession est onéreuse
+    is_exclusive_bool = bool(is_exclusive) and not is_free_bool
+    
+    # Filtrer les droits supplémentaires si la cession est gratuite
+    final_additional_rights = [] if is_free_bool else additional_rights
     
     # Ajouter les supports par défaut
     final_supports = ensure_default_supports(supports)
@@ -59,11 +47,11 @@ def generate_pdf(contract_type, is_free, author_type, author_info,
     # Créer un nom de fichier temporaire pour le PDF
     output_filename = create_temp_file(prefix="contrat_cession_", suffix=".pdf")
     
-    # Générer le contenu du contrat - version simplifiée pour plus de rapidité
+    # Générer le contenu du contrat avec les paramètres mis à jour
     contract_elements = ContractBuilder.build_contract_elements(
         contract_type, is_free_bool, author_type, author_info,
         work_description, image_description, final_supports,
-        additional_rights, remuneration, is_exclusive_bool
+        final_additional_rights, remuneration, is_exclusive_bool
     )
     
     # Créer un document PDF avec moins d'options pour accélérer la génération
