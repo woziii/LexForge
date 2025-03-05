@@ -18,46 +18,43 @@ class ContractBuilder:
     def get_styles():
         """
         Retourne les styles pour le document PDF.
-        Version corrigée pour éviter les conflits de styles.
+        Version corrigée pour utiliser les polices Vera.
         
         Returns:
             dict: Dictionnaire des styles
         """
         styles = getSampleStyleSheet()
         
-        # Modifier les styles existants plutôt que d'en ajouter de nouveaux
-        # ou utiliser des noms différents pour éviter les conflits
-        
         # Ajouter un style personnalisé pour le titre
         styles.add(ParagraphStyle(name='ContractTitle', 
-                                 fontName='Helvetica-Bold', 
+                                 fontName='VeraBd', 
                                  fontSize=14, 
                                  alignment=TA_CENTER,
                                  spaceAfter=12))
         
         # Ajouter un style personnalisé pour les sous-titres
         styles.add(ParagraphStyle(name='ContractSubtitle', 
-                                 fontName='Helvetica-Bold', 
+                                 fontName='VeraBd', 
                                  fontSize=12, 
                                  spaceAfter=10,
                                  alignment=TA_CENTER))
         
         # Ajouter un style personnalisé pour le texte normal
         styles.add(ParagraphStyle(name='ContractText', 
-                                 fontName='Helvetica', 
+                                 fontName='Vera', 
                                  fontSize=10, 
                                  alignment=TA_JUSTIFY,
                                  spaceAfter=6))
         
         # Ajouter un style personnalisé pour les articles
         styles.add(ParagraphStyle(name='ContractArticle', 
-                                 fontName='Helvetica-Bold', 
+                                 fontName='VeraBd', 
                                  fontSize=11, 
                                  spaceAfter=8))
         
         # Ajouter un style personnalisé pour les sous-articles
         styles.add(ParagraphStyle(name='ContractSubArticle', 
-                                 fontName='Helvetica-Bold', 
+                                 fontName='VeraBd', 
                                  fontSize=10, 
                                  spaceAfter=6))
         
