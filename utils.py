@@ -85,7 +85,7 @@ def sanitize_text(text):
     # tout en préservant les caractères Unicode/accentués
     lines = []
     for line in text.split('\n'):
-        if len(line) < 280:
+        if len(line) < 500:
             lines.append(line)
         else:
             lines.append(line[:77] + '...')
