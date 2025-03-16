@@ -95,18 +95,25 @@ def sanitize_text(text):
 
 def create_temp_file(prefix="contrat_", suffix=".pdf"):
     """
-    Crée un fichier temporaire.
+    Crée un fichier temporaire avec le préfixe et le suffixe spécifiés.
+    Version compatible avec Vercel.
     
     Args:
-        prefix (str): Préfixe du nom du fichier
-        suffix (str): Suffixe du nom du fichier
+        prefix (str): Préfixe du nom de fichier
+        suffix (str): Suffixe du nom de fichier
         
     Returns:
-        str: Chemin vers le fichier temporaire
+        str: Chemin du fichier temporaire
     """
-    temp_dir = tempfile.gettempdir()
-    filename = f"{prefix}{tempfile.NamedTemporaryFile().name}{suffix}"
-    return os.path.join(temp_dir, os.path.basename(filename))
+    # Créer le répertoire tmp s'il n'existe pas
+    if not os.path.exists('tmp'):
+        os.makedirs('tmp')
+    
+    # Générer un nom de fichier unique basé sur le timestamp
+    timestamp = str(int(os.path.getmtime(__file__) if os.path.exists(__file__) else 0))
+    filename = f"tmp/{prefix}{timestamp}{suffix}"
+    
+    return filename
 
 
 def format_supports_list(supports):

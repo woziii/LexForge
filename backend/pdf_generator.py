@@ -3,6 +3,7 @@ Module pour la génération des contrats en format PDF.
 Module optimisé pour une génération plus complète et détaillée.
 """
 import io
+import os
 import reportlab
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
@@ -16,16 +17,32 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.styles import getSampleStyleSheet
 import time
+import uuid
 
 from config import PDF_CONFIG
 from contract_builder import ContractBuilder
-from utils import create_temp_file, ensure_default_supports
+from utils import ensure_default_supports
 from contract_templates import ContractTemplates  # Import this to use title generation
 
-pdfmetrics.registerFont(TTFont('Vera', 'Vera.ttf'))
-pdfmetrics.registerFont(TTFont('VeraBd', 'VeraBd.ttf'))
+# Vérifier si les polices sont disponibles, sinon utiliser des polices par défaut
+try:
+    pdfmetrics.registerFont(TTFont('Vera', 'Vera.ttf'))
+    pdfmetrics.registerFont(TTFont('VeraBd', 'VeraBd.ttf'))
+except:
+    # Utiliser des polices par défaut si les polices personnalisées ne sont pas disponibles
+    pass
 
-
+def create_temp_file(prefix="", suffix=""):
+    """
+    Crée un fichier temporaire compatible avec Vercel.
+    """
+    # Créer le répertoire tmp s'il n'existe pas
+    if not os.path.exists('tmp'):
+        os.makedirs('tmp')
+    
+    # Générer un nom de fichier unique
+    filename = f"tmp/{prefix}{uuid.uuid4().hex}{suffix}"
+    return filename
 
 def generate_pdf(contract_type, is_free, author_type, author_info,
                 work_description, image_description, supports,
