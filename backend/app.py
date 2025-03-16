@@ -21,7 +21,7 @@ CORS(app, resources={r"/api/*": {"origins": "*"}})  # Configuration CORS plus pe
 if not os.path.exists('tmp'):
     os.makedirs('tmp')
 
-@app.route('/', methods=['GET'])
+@app.route('/api', methods=['GET'])
 def index():
     """
     Route racine pour vérifier que l'API est en ligne.

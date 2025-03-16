@@ -1,6 +1,6 @@
 # Guide de déploiement de LexForge sur Vercel
 
-Ce guide explique comment déployer l'application LexForge (backend et frontend) sur Vercel.
+Ce guide explique comment déployer l'application LexForge (backend et frontend ensemble) sur Vercel.
 
 ## Prérequis
 
@@ -9,51 +9,66 @@ Ce guide explique comment déployer l'application LexForge (backend et frontend)
 - [Node.js](https://nodejs.org/) (version 14 ou supérieure)
 - [npm](https://www.npmjs.com/) (généralement installé avec Node.js)
 
-## Déploiement du backend (API Flask)
+## Déploiement monolithique (backend + frontend)
+
+LexForge est configuré pour être déployé comme une application monolithique sur Vercel, avec le backend Flask et le frontend React dans le même déploiement.
+
+### Étapes de déploiement
 
 1. **Connectez-vous à Vercel** et créez un nouveau projet.
 
-2. **Importez votre dépôt Git** ou téléchargez le dossier `backend`.
+2. **Importez votre dépôt Git** depuis GitHub (https://github.com/woziii/LexForge).
 
 3. **Configurez le projet** :
    - Framework Preset : `Other`
-   - Root Directory : `backend` (si vous importez tout le dépôt)
-   - Build Command : laissez vide
-   - Output Directory : laissez vide
-   - Install Command : `pip install -r requirements.txt`
+   - Root Directory : `.` (répertoire racine)
+   - Build Command : `cd frontend && npm install && npm run build`
+   - Output Directory : `frontend/build`
+   - Install Command : `pip install -r backend/requirements.txt && cd frontend && npm install`
 
-4. **Ajoutez les variables d'environnement** si nécessaire.
+4. **Déployez** en cliquant sur "Deploy".
 
-5. **Déployez** en cliquant sur "Deploy".
+### Comment ça fonctionne
 
-6. **Notez l'URL de déploiement** (par exemple, `https://lexforge-api.vercel.app`).
+Le fichier `vercel.json` à la racine du projet configure Vercel pour :
 
-## Déploiement du frontend (React)
+1. Installer les dépendances Python et Node.js
+2. Construire l'application React
+3. Servir l'API Flask sur le chemin `/api/*`
+4. Servir l'application React sur tous les autres chemins
 
-1. **Modifiez l'URL de l'API** dans le fichier `.env.production` pour qu'elle pointe vers votre backend déployé :
-   ```
-   REACT_APP_API_URL=https://votre-backend-url.vercel.app/api
-   ```
-
-2. **Connectez-vous à Vercel** et créez un nouveau projet.
-
-3. **Importez votre dépôt Git** ou téléchargez le dossier `frontend`.
-
-4. **Configurez le projet** :
-   - Framework Preset : `Create React App`
-   - Root Directory : `frontend` (si vous importez tout le dépôt)
-   - Build Command : `npm run build`
-   - Output Directory : `build`
-   - Install Command : `npm install`
-
-5. **Ajoutez les variables d'environnement** :
-   - `REACT_APP_API_URL` : l'URL de votre backend déployé (par exemple, `https://lexforge-api.vercel.app/api`)
-
-6. **Déployez** en cliquant sur "Deploy".
+```json
+{
+  "version": 2,
+  "buildCommand": "cd frontend && npm install && npm run build",
+  "outputDirectory": "frontend/build",
+  "installCommand": "pip install -r backend/requirements.txt && cd frontend && npm install",
+  "builds": [
+    {
+      "src": "backend/app.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "frontend/build/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "backend/app.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "frontend/build/$1"
+    }
+  ]
+}
+```
 
 ## Vérification du déploiement
 
-1. **Accédez à l'URL du frontend** fournie par Vercel.
+1. **Accédez à l'URL** fournie par Vercel après le déploiement.
 
 2. **Testez l'application** en créant un contrat et en vérifiant que toutes les fonctionnalités marchent correctement.
 
@@ -65,6 +80,6 @@ Vercel peut être configuré pour redéployer automatiquement votre application 
 
 ## Problèmes courants
 
-- **Erreurs CORS** : Vérifiez que la configuration CORS dans le backend autorise les requêtes depuis votre frontend déployé.
-- **Erreurs 404** : Assurez-vous que les routes sont correctement configurées dans le fichier `vercel.json`.
-- **Problèmes avec les variables d'environnement** : Vérifiez qu'elles sont correctement définies dans le tableau de bord Vercel. 
+- **Erreurs 404 pour les routes API** : Vérifiez que toutes les routes API commencent bien par `/api/` dans le fichier `backend/app.py`.
+- **Erreurs lors de la génération de PDF** : Vérifiez que le dossier `tmp` est correctement créé et accessible en écriture.
+- **Problèmes de CORS** : Vérifiez la configuration CORS dans `backend/app.py`. 
