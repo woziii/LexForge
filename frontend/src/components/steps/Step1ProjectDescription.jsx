@@ -1,31 +1,43 @@
 import React, { useState } from 'react';
-import { Check } from 'lucide-react';
+import { Check, Search, FileText, Image, Sparkles, Info, HelpCircle, Lightbulb } from 'lucide-react';
 import { analyzeProject } from '../../services/api';
 
 // Importer les constantes depuis un fichier de configuration
 const CONTRACT_TYPES = [
-  "Auteur (droits d'auteur)",
-  "Image (droit à l'image)"
+  { 
+    id: "auteur", 
+    label: "Auteur (droits d'auteur)", 
+    icon: <FileText size={20} />,
+    description: "Protège vos créations intellectuelles et artistiques",
+    color: "from-blue-500 to-indigo-600"
+  },
+  { 
+    id: "image", 
+    label: "Image (droit à l'image)", 
+    icon: <Image size={20} />,
+    description: "Encadre l'utilisation de votre image ou celle de vos modèles",
+    color: "from-emerald-500 to-teal-600"
+  }
 ];
 
 const Step1ProjectDescription = ({ contractData, updateContractData }) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [suggestion, setSuggestion] = useState('');
+  const [showTooltip, setShowTooltip] = useState(null);
   
   const handleDescriptionChange = (e) => {
     updateContractData({ description_oeuvre: e.target.value });
   };
   
-  const handleContractTypeChange = (e) => {
-    const value = e.target.value;
-    const isChecked = e.target.checked;
+  const handleContractTypeChange = (typeId) => {
+    const type = CONTRACT_TYPES.find(t => t.id === typeId)?.label;
     
     let updatedTypes = [...contractData.type_contrat];
     
-    if (isChecked) {
-      updatedTypes.push(value);
+    if (updatedTypes.includes(type)) {
+      updatedTypes = updatedTypes.filter(t => t !== type);
     } else {
-      updatedTypes = updatedTypes.filter(type => type !== value);
+      updatedTypes.push(type);
     }
     
     updateContractData({ type_contrat: updatedTypes });
@@ -58,64 +70,174 @@ const Step1ProjectDescription = ({ contractData, updateContractData }) => {
   };
   
   return (
-    <div>
-      <h2 className="text-xl font-bold text-gray-800 mb-4">Décrivez votre projet</h2>
-      <p className="text-gray-600 mb-6">
-        Décrivez en quelques mots l'œuvre ou le contenu pour lequel vous souhaitez établir un contrat.
-        Exemples: "Une chanson que j'ai composée", "Des photos de mannequins", "Un logo pour une entreprise", etc.
-      </p>
-      
-      <div className="mb-6">
-        <textarea 
-          className="input"
-          rows="3"
-          placeholder="Ex: Une vidéo où je me filme en train de jouer ma composition au piano"
-          value={contractData.description_oeuvre}
-          onChange={handleDescriptionChange}
-        ></textarea>
+    <div className="max-w-2xl mx-auto">
+      {/* Bandeau d'introduction avec une légère animation */}
+      <div className="mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 p-5 rounded-xl border border-blue-100 transform transition-all hover:shadow-md">
+        <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-2 flex items-center">
+          <Sparkles size={22} className="mr-2 text-blue-500 animate-pulse" />
+          Décrivez votre projet
+        </h2>
+        <p className="text-sm text-gray-600 pl-7">
+          Nous allons vous aider à créer le contrat parfait pour votre situation.
+        </p>
       </div>
       
-      <button 
-        className="btn btn-secondary mb-6"
-        onClick={handleAnalyzeProject}
-        disabled={isAnalyzing}
-      >
-        {isAnalyzing ? 'Analyse en cours...' : 'Analyser mon projet'}
-      </button>
+      {/* Progression visuelle */}
+      <div className="flex items-center mb-6 text-xs text-gray-500">
+        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold shadow-sm">1</div>
+        <div className="ml-2 h-0.5 flex-grow bg-gray-200">
+          <div className="h-0.5 w-1/5 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full"></div>
+        </div>
+        <span className="ml-2">Étape 1/5 : Type de contrat</span>
+      </div>
       
+      {/* Champ de description avec design amélioré */}
+      <div className="mb-8 bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all">
+        <label htmlFor="project-description" className="text-sm font-medium text-gray-700 mb-2 flex items-center">
+          <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white w-6 h-6 rounded-full inline-flex items-center justify-center mr-2 text-xs font-bold shadow-sm">1</div>
+          <span className="mr-1">De quel type de contenu s'agit-il ?</span>
+          <div 
+            className="text-gray-400 hover:text-blue-500 cursor-help transition-colors relative"
+            onMouseEnter={() => setShowTooltip('description')}
+            onMouseLeave={() => setShowTooltip(null)}
+          >
+            <HelpCircle size={14} />
+            {showTooltip === 'description' && (
+              <div className="absolute left-full ml-2 top-0 z-10 p-2 bg-white rounded-lg shadow-lg border border-gray-200 text-xs w-52">
+                La description nous permet de comprendre votre besoin et de vous suggérer le type de contrat adapté.
+              </div>
+            )}
+          </div>
+        </label>
+        <div className="relative mt-1">
+          <textarea 
+            id="project-description"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+            rows="3"
+            placeholder="Ex: Une vidéo où je me filme en train de jouer ma composition au piano"
+            value={contractData.description_oeuvre}
+            onChange={handleDescriptionChange}
+          ></textarea>
+          <button 
+            className="absolute bottom-3 right-3 p-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-md hover:shadow-md transition-all flex items-center group"
+            onClick={handleAnalyzeProject}
+            disabled={isAnalyzing}
+          >
+            {isAnalyzing ? (
+              <div className="flex items-center">
+                <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-1"></div>
+                <span className="text-xs">Analyse...</span>
+              </div>
+            ) : (
+              <>
+                <Search size={14} className="mr-1 group-hover:animate-pulse" />
+                <span className="text-xs">Analyser</span>
+              </>
+            )}
+          </button>
+        </div>
+        <div className="flex items-center mt-2">
+          <Lightbulb size={14} className="text-amber-500 mr-1" />
+          <p className="text-xs text-gray-500">
+            Décrivez brièvement l'œuvre ou le contenu pour lequel vous souhaitez établir un contrat.
+          </p>
+        </div>
+      </div>
+      
+      {/* Affichage de la suggestion avec un design amélioré */}
       {suggestion && (
-        <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <Check className="h-5 w-5 text-blue-600" />
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-blue-800">Suggestion basée sur votre description</h3>
-              <div className="mt-2 text-sm text-blue-700">
-                <p>{suggestion}</p>
+        <div className="mb-8 relative">
+          <div className="absolute -left-10 top-2 w-6 h-10 flex justify-center">
+            <div className="h-full w-0.5 bg-blue-200"></div>
+          </div>
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-5 rounded-lg border border-blue-100 transition-all shadow-sm">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center shadow-sm">
+                  <Lightbulb size={18} className="text-white" />
+                </div>
+              </div>
+              <div className="ml-4">
+                <h3 className="text-sm font-medium text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
+                  Suggestion intelligente
+                </h3>
+                <div className="mt-1 text-sm text-gray-700">
+                  <p>{suggestion}</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
       )}
       
-      <div className="mb-6">
-        <h3 className="text-lg font-medium text-gray-700 mb-3">Type de contrat nécessaire</h3>
+      {/* Sélection du type de contrat avec un design amélioré */}
+      <div className="mb-6 bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all">
+        <label className="text-sm font-medium text-gray-700 mb-4 flex items-center">
+          <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white w-6 h-6 rounded-full inline-flex items-center justify-center mr-2 text-xs font-bold shadow-sm">2</div>
+          <span className="mr-1">Type de contrat nécessaire</span>
+          <div 
+            className="text-gray-400 hover:text-blue-500 cursor-help transition-colors relative"
+            onMouseEnter={() => setShowTooltip('contractType')}
+            onMouseLeave={() => setShowTooltip(null)}
+          >
+            <HelpCircle size={14} />
+            {showTooltip === 'contractType' && (
+              <div className="absolute left-full ml-2 top-0 z-10 p-2 bg-white rounded-lg shadow-lg border border-gray-200 text-xs w-52">
+                Le type de contrat détermine les clauses qui seront incluses et les protections juridiques offertes.
+              </div>
+            )}
+          </div>
+        </label>
         
-        <div className="space-y-3">
-          {CONTRACT_TYPES.map((type) => (
-            <div key={type} className="flex items-start">
-              <input 
-                type="checkbox" 
-                id={`contract-type-${type}`}
-                value={type}
-                checked={contractData.type_contrat.includes(type)}
-                onChange={handleContractTypeChange}
-                className="mt-1 mr-2"
-              />
-              <label htmlFor={`contract-type-${type}`} className="text-gray-700">{type}</label>
-            </div>
-          ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {CONTRACT_TYPES.map((type) => {
+            const isSelected = contractData.type_contrat.includes(type.label);
+            return (
+              <button
+                key={type.id}
+                type="button"
+                onClick={() => handleContractTypeChange(type.id)}
+                className={`flex items-center p-4 border ${
+                  isSelected 
+                    ? 'border-blue-500 bg-gradient-to-r from-blue-50 to-indigo-50' 
+                    : 'border-gray-300 bg-white hover:bg-gray-50'
+                } rounded-lg transition-all duration-300 transform ${
+                  isSelected ? 'scale-[1.02] shadow-md' : 'scale-100'
+                } hover:shadow-md`}
+              >
+                <div className={`flex-shrink-0 mr-3 transition-all duration-300 ${
+                  isSelected 
+                    ? `bg-gradient-to-r ${type.color} p-2 rounded-lg text-white shadow-sm` 
+                    : 'text-gray-500'
+                }`}>
+                  {type.icon}
+                </div>
+                <div className="text-left">
+                  <span className={`font-medium ${isSelected ? 'text-blue-700' : 'text-gray-700'}`}>
+                    {type.label.split(' ')[0]}
+                  </span>
+                  <span className="block text-xs text-gray-500 mt-0.5">
+                    {type.description}
+                  </span>
+                </div>
+                {isSelected && (
+                  <div className="ml-auto">
+                    <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-sm animate-pulse">
+                      <Check size={14} className="text-white" />
+                    </div>
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        
+        <div className="flex items-center mt-4">
+          <Info size={14} className="text-blue-500 mr-1" />
+          <p className="text-xs text-gray-500">
+            Vous pouvez sélectionner plusieurs types de contrats si nécessaire. 
+            <span className="text-blue-600 ml-1">Vos choix influenceront les clauses de votre contrat.</span>
+          </p>
         </div>
       </div>
     </div>

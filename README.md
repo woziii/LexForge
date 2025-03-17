@@ -15,7 +15,16 @@ Check out the configuration reference at https://huggingface.co/docs/hub/spaces-
 ---
 # LexForge
 
-LexForge est un assistant intelligent de création de contrats juridiques, conçu pour simplifier la rédaction de documents légaux complexes.
+LexForge est un assistant intelligent de création de contrats juridiques, conçu pour simplifier la rédaction de documents légaux complexes à travers une expérience utilisateur intuitive et visuellement engageante.
+
+## Présentation
+
+LexForge guide les utilisateurs à travers un processus étape par étape pour créer des contrats juridiques professionnels, même sans expertise juridique préalable. L'interface a été conçue pour être :
+
+- **Intuitive** : Guidage visuel clair et indications contextuelles à chaque étape
+- **Accessible** : Vocabulaire simplifié et aide contextuelle pour comprendre les termes juridiques
+- **Visuelle** : Éléments interactifs et retours visuels pour une expérience agréable
+- **Sécurisante** : Explications claires de l'impact de chaque choix sur le contrat final
 
 ## Structure du projet
 
@@ -63,7 +72,7 @@ chmod +x run.py
 Le script va :
 1. Vérifier que Python et Node.js sont installés avec les bonnes versions
 2. Installer/mettre à jour les dépendances du backend et du frontend
-3. Démarrer le serveur backend sur http://localhost:5000
+3. Démarrer le serveur backend sur http://localhost:5001
 4. Démarrer le serveur frontend sur http://localhost:3000
 5. Ouvrir automatiquement votre navigateur
 
@@ -87,7 +96,7 @@ cd backend
 python app.py
 ```
 
-Le serveur backend sera accessible à l'adresse http://localhost:5000.
+Le serveur backend sera accessible à l'adresse http://localhost:5001.
 
 #### Frontend
 
@@ -107,11 +116,37 @@ L'application frontend sera accessible à l'adresse http://localhost:3000.
 
 ## Fonctionnalités
 
-- **Interface utilisateur moderne** : Interface React intuitive avec navigation par étapes
-- **Analyse intelligente** : Suggestion automatique du type de contrat en fonction de la description du projet
-- **Prévisualisation en temps réel** : Aperçu du contrat mis à jour à chaque modification
+- **Interface utilisateur moderne et intuitive** : Navigation fluide à travers chaque étape du processus
+- **Design visuel engageant** : Dégradés de couleurs, animations subtiles et retours visuels pour une expérience agréable
+- **Aide contextuelle** : Tooltips et explications pour comprendre les implications juridiques de chaque choix
+- **Analyse intelligente** : Suggestion automatique du type de contrat adapté à partir de la description du projet
+- **Prévisualisation en temps réel** : Aperçu du contrat mis à jour à chaque modification avec typographie moderne
 - **Génération de PDF** : Création de contrats professionnels au format PDF
 - **Architecture modulaire** : Facilité d'ajout de nouveaux templates de contrats
+
+## Éléments d'expérience utilisateur
+
+LexForge propose une expérience utilisateur améliorée grâce à plusieurs éléments visuels et interactifs :
+
+### 1. Guidage progressif
+- Barre de progression visuelle indiquant l'avancement dans le processus
+- Numérotation claire des étapes avec indicateurs visuels
+- Affichage du contexte à chaque étape du processus
+
+### 2. Retours visuels riches
+- Animations subtiles sur les éléments interactifs (survol, sélection)
+- Indications visuelles des choix effectués (icônes, couleurs, ombres)
+- Transformations visuelles pour indiquer l'état des éléments (sélectionné, actif, désactivé)
+
+### 3. Aide contextuelle
+- Tooltips explicatifs accessibles via des icônes d'aide
+- Messages contextuels sur l'impact des choix sur le contrat
+- Suggestions intelligentes basées sur les entrées de l'utilisateur
+
+### 4. Design moderne et accessible
+- Palette de couleurs harmonieuse avec dégradés subtils
+- Typographie lisible et hiérarchie visuelle claire
+- Espacement et organisation des éléments pour une lisibilité optimale
 
 ## Ajout de nouveaux templates de contrats
 
@@ -121,6 +156,7 @@ Pour ajouter un nouveau template de contrat :
 2. Créer les clauses correspondantes dans `backend/contract_templates.py`
 3. Mettre à jour la logique d'analyse dans `backend/text_analyzer.py` pour détecter le nouveau type de contrat
 4. Ajouter la logique de construction dans `backend/contract_builder.py`
+5. Créer une icône et une description pour le nouveau type dans le frontend
 
 ## Licence
 
@@ -145,23 +181,29 @@ Le projet est organisé de manière modulaire pour une meilleure séparation des
 - `contract_previewer.py` - Prévisualisation du contrat
 - `pdf_generator.py` - Génération du PDF final avec champs interactifs
 
-## Fonctionnalités
+## Fonctionnalités détaillées
 
-- Création de contrats de cession de droits d'auteur
-- Création de contrats de droit à l'image
-- Génération de contrats combinés (droits d'auteur + droits à l'image)
-- Adaptation automatique des clauses selon le type de cession (gratuit/onéreux)
-- Gestion des clauses d'exclusivité
-- Support pour les auteurs personnes physiques ou morales
-- Prévisualisation du contrat avant génération
-- Export au format PDF avec champs interactifs pour les signatures et paraphes
+- **Création de contrats spécialisés**
+  - Contrats de cession de droits d'auteur avec descriptions visuelles
+  - Contrats de droit à l'image avec indications contextuelles
+  - Contrats combinés avec explications des implications
+
+- **Personnalisation intuitive**
+  - Adaptation automatique des clauses selon le type de cession (gratuit/onéreux)
+  - Interface visuelle pour la gestion des clauses d'exclusivité
+  - Support pour les auteurs personnes physiques ou morales avec champs adaptés
+
+- **Expérience utilisateur optimisée**
+  - Prévisualisation du contrat avec typographie moderne et mise en page professionnelle
+  - Retours visuels immédiats lors des modifications
+  - Export au format PDF avec champs interactifs pour les signatures et paraphes
 
 ## Arbre de décision du formulaire
 
 1. **Type de contrat**
-   - Droits d'auteur
-   - Droit à l'image
-   - Les deux
+   - Droits d'auteur (avec icône et description visuelle)
+   - Droit à l'image (avec icône et description visuelle)
+   - Les deux (avec explications contextuelles)
 
 2. **Mode de cession**
    - Gratuite (limite les droits à la reproduction et représentation)

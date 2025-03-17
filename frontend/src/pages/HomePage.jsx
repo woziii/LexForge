@@ -1,134 +1,95 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, Check, ArrowRight } from 'lucide-react';
+import { ArrowRight, FileText, Image, Sparkles, Shield } from 'lucide-react';
 
 const HomePage = () => {
   return (
-    <div className="max-w-7xl mx-auto px-4 py-12 sm:px-6">
-      {/* Section Hero */}
-      <div className="text-center mb-16">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">
-          Créez des contrats juridiques professionnels en quelques minutes
-        </h1>
-        <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-          LexForge vous guide pas à pas dans la création de contrats de cession de droits d'auteur et de droits à l'image adaptés à vos besoins spécifiques.
-        </p>
-        <Link 
-          to="/wizard" 
-          className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
-        >
-          Commencer maintenant
-          <ArrowRight size={20} className="ml-2" />
-        </Link>
-      </div>
-
-      {/* Section Fonctionnalités */}
-      <div className="mb-16">
-        <h2 className="text-3xl font-bold text-center text-gray-900 mb-8">
-          Pourquoi choisir LexForge ?
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-              <Check className="h-6 w-6 text-blue-600" />
-            </div>
-            <h3 className="text-xl font-semibold mb-2">Simple et intuitif</h3>
-            <p className="text-gray-600">
-              Interface guidée pas à pas qui vous accompagne tout au long du processus de création de contrat.
-            </p>
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-white via-blue-50 to-indigo-50">
+      {/* Section principale */}
+      <main className="flex-grow flex flex-col items-center justify-center px-4 py-16">
+        <div className="max-w-3xl mx-auto text-center">
+          {/* Logo animé */}
+          <div className="mb-8 inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg transform transition-all duration-500 hover:rotate-6 hover:scale-110">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-              <Check className="h-6 w-6 text-blue-600" />
-            </div>
-            <h3 className="text-xl font-semibold mb-2">Juridiquement fiable</h3>
-            <p className="text-gray-600">
-              Contrats rédigés selon les normes juridiques en vigueur pour garantir la protection de vos droits.
+          
+          {/* Titre principal avec effet de dégradé */}
+          <h1 className="text-5xl font-extrabold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+            LexForge
+          </h1>
+          
+          {/* Description avec badge */}
+          <div className="relative mb-8">
+            <p className="text-xl text-gray-700 mb-2">
+              Créez des contrats juridiques professionnels en quelques clics
             </p>
+            <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+              <Sparkles size={12} className="mr-1" />
+              Simple et rapide
+            </div>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-              <Check className="h-6 w-6 text-blue-600" />
+          
+          {/* Bouton d'action principal avec animation */}
+          <Link 
+            to="/wizard" 
+            className="inline-flex items-center px-8 py-4 border border-transparent text-base font-medium rounded-xl shadow-md text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transform transition-all duration-200 hover:scale-105 hover:shadow-lg"
+          >
+            Créer un contrat
+            <ArrowRight size={18} className="ml-2 animate-pulse" />
+          </Link>
+          
+          {/* Caractéristiques en badges */}
+          <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
+            <div className="flex flex-col items-center p-4 bg-white rounded-xl shadow-sm border border-gray-100 transform transition-all duration-200 hover:shadow-md hover:-translate-y-1">
+              <FileText size={24} className="text-blue-500 mb-2" />
+              <span className="font-medium text-gray-800">Droits d'auteur</span>
+              <span className="text-xs text-gray-500 mt-1">Protection de vos créations</span>
             </div>
-            <h3 className="text-xl font-semibold mb-2">Personnalisable</h3>
-            <p className="text-gray-600">
-              Adaptez chaque clause selon vos besoins spécifiques et visualisez les modifications en temps réel.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Section Types de contrats */}
-      <div className="mb-16">
-        <h2 className="text-3xl font-bold text-center text-gray-900 mb-8">
-          Types de contrats disponibles
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <div className="flex items-center mb-4">
-              <FileText className="h-8 w-8 text-blue-600 mr-3" />
-              <h3 className="text-xl font-semibold">Contrat de cession de droits d'auteur</h3>
+            <div className="flex flex-col items-center p-4 bg-white rounded-xl shadow-sm border border-gray-100 transform transition-all duration-200 hover:shadow-md hover:-translate-y-1">
+              <Image size={24} className="text-blue-500 mb-2" />
+              <span className="font-medium text-gray-800">Droits à l'image</span>
+              <span className="text-xs text-gray-500 mt-1">Encadrement légal</span>
             </div>
-            <p className="text-gray-600 mb-4">
-              Protégez vos créations intellectuelles et définissez précisément les conditions de leur utilisation par des tiers.
-            </p>
-            <ul className="space-y-2">
-              <li className="flex items-start">
-                <Check className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
-                <span>Cession gratuite ou onéreuse</span>
-              </li>
-              <li className="flex items-start">
-                <Check className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
-                <span>Options d'exclusivité</span>
-              </li>
-              <li className="flex items-start">
-                <Check className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
-                <span>Définition précise des supports d'exploitation</span>
-              </li>
-            </ul>
-          </div>
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <div className="flex items-center mb-4">
-              <FileText className="h-8 w-8 text-blue-600 mr-3" />
-              <h3 className="text-xl font-semibold">Contrat de cession de droits à l'image</h3>
+            <div className="flex flex-col items-center p-4 bg-white rounded-xl shadow-sm border border-gray-100 transform transition-all duration-200 hover:shadow-md hover:-translate-y-1">
+              <Shield size={24} className="text-blue-500 mb-2" />
+              <span className="font-medium text-gray-800">Contrats combinés</span>
+              <span className="text-xs text-gray-500 mt-1">Protection complète</span>
             </div>
-            <p className="text-gray-600 mb-4">
-              Encadrez l'utilisation de votre image ou celle de vos modèles dans un cadre légal clair et sécurisé.
-            </p>
-            <ul className="space-y-2">
-              <li className="flex items-start">
-                <Check className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
-                <span>Protection de la vie privée</span>
-              </li>
-              <li className="flex items-start">
-                <Check className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
-                <span>Limitation des usages autorisés</span>
-              </li>
-              <li className="flex items-start">
-                <Check className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
-                <span>Définition de la durée et du territoire</span>
-              </li>
-            </ul>
           </div>
         </div>
-      </div>
-
-      {/* Call to Action */}
-      <div className="text-center">
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">
-          Prêt à créer votre contrat ?
-        </h2>
-        <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-          Notre assistant vous guide étape par étape pour créer un contrat parfaitement adapté à vos besoins.
-        </p>
-        <Link 
-          to="/wizard" 
-          className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
-        >
-          Commencer maintenant
-          <ArrowRight size={20} className="ml-2" />
-        </Link>
-      </div>
+      </main>
+      
+      {/* Footer amélioré */}
+      <footer className="bg-white py-8 border-t border-gray-200">
+        <div className="max-w-5xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center">
+          <div className="flex items-center mb-4 md:mb-0">
+            <div className="w-8 h-8 rounded-md bg-blue-100 flex items-center justify-center mr-2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+              </svg>
+            </div>
+            <span className="font-medium text-gray-800">LexForge</span>
+          </div>
+          
+          <div className="flex space-x-6 mb-4 md:mb-0">
+            <a href="#" className="text-gray-600 hover:text-blue-600 transition-colors">À propos</a>
+            <a href="#" className="text-gray-600 hover:text-blue-600 transition-colors">Confidentialité</a>
+            <a href="#" className="text-gray-600 hover:text-blue-600 transition-colors">Conditions</a>
+            <a href="#" className="text-gray-600 hover:text-blue-600 transition-colors">Contact</a>
+          </div>
+          
+          <div className="text-sm text-gray-500">
+            © {new Date().getFullYear()} LexForge. Tous droits réservés.
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };

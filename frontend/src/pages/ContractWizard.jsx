@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Check, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Check, ArrowRight, ArrowLeft, FileText, Sparkles } from 'lucide-react';
 import PreviewPanel from '../components/PreviewPanel';
 import Step1ProjectDescription from '../components/steps/Step1ProjectDescription';
 import Step2CessionMode from '../components/steps/Step2CessionMode';
@@ -11,12 +11,12 @@ import { previewContract } from '../services/api';
 
 // Définition des étapes
 const STEPS = [
-  { id: 1, name: "Type d'œuvre", description: "Description du projet et type de contrat" },
-  { id: 2, name: "Mode de cession", description: "Modalités de cession et droits" },
-  { id: 3, name: "Informations auteur", description: "Informations sur l'auteur ou le modèle" },
-  { id: 4, name: "Description œuvre", description: "Description détaillée de l'œuvre ou de l'image" },
-  { id: 5, name: "Supports", description: "Supports d'exploitation et rémunération" },
-  { id: 6, name: "Finalisation", description: "Validation et génération du contrat" },
+  { id: 1, name: "Type de contrat", description: "Description du projet" },
+  { id: 2, name: "Mode de cession", description: "Modalités et droits" },
+  { id: 3, name: "Informations", description: "Auteur ou modèle" },
+  { id: 4, name: "Description", description: "Détails de l'œuvre" },
+  { id: 5, name: "Supports", description: "Exploitation et rémunération" },
+  { id: 6, name: "Finalisation", description: "Génération du contrat" },
 ];
 
 const ContractWizard = () => {
@@ -45,12 +45,16 @@ const ContractWizard = () => {
   const handleNextStep = () => {
     if (activeStep < totalSteps) {
       setActiveStep(activeStep + 1);
+      // Scroll to top when changing steps
+      window.scrollTo(0, 0);
     }
   };
   
   const handlePrevStep = () => {
     if (activeStep > 1) {
       setActiveStep(activeStep - 1);
+      // Scroll to top when changing steps
+      window.scrollTo(0, 0);
     }
   };
   
@@ -118,80 +122,121 @@ const ContractWizard = () => {
                  updateContractData={updateContractData} 
                />;
       default:
-        return <Step1ProjectDescription 
-                 contractData={contractData} 
-                 updateContractData={updateContractData} 
-               />;
+        return null;
     }
   };
   
   return (
-    <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-8">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">Assistant de création de contrat</h1>
-        <p className="mt-2 text-gray-600">
-          Cet assistant vous guide pas à pas dans la création d'un contrat adapté à vos besoins spécifiques.
-        </p>
-      </div>
-      
-      {/* Indicateur de progression */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-gray-700">Progression</span>
-          <span className="text-sm font-medium text-gray-700">{activeStep} sur {totalSteps}</span>
-        </div>
-        <div className="w-full bg-gray-200 rounded-full h-2.5">
-          <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${progress}%` }}></div>
-        </div>
-        <div className="flex justify-between mt-1">
-          <span className="text-xs text-gray-500">Étape {activeStep}</span>
-          <span className="text-xs text-gray-500">
-            {STEPS.find(step => step.id === activeStep)?.name}
-          </span>
-        </div>
-      </div>
-      
-      {/* Grille de contenu principal */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Colonne de gauche: Formulaire */}
-        <div className="bg-white rounded-lg shadow p-6">
-          {renderStepContent()}
-          
-          {/* Boutons de navigation */}
-          <div className="mt-8 flex justify-between">
-            <button 
-              onClick={handlePrevStep}
-              disabled={activeStep === 1}
-              className={`flex items-center px-4 py-2 rounded-md ${activeStep === 1 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-            >
-              <ArrowLeft size={18} className="mr-2" />
-              Précédent
-            </button>
-            <button 
-              onClick={handleNextStep}
-              className={`flex items-center px-4 py-2 rounded-md ${activeStep === totalSteps ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} text-white`}
-            >
-              {activeStep === totalSteps ? (
-                <>
-                  Finaliser
-                  <Check size={18} className="ml-2" />
-                </>
-              ) : (
-                <>
-                  Suivant
-                  <ArrowRight size={18} className="ml-2" />
-                </>
-              )}
-            </button>
+    <div className="min-h-screen bg-gradient-to-br from-white via-blue-50 to-indigo-50 pb-12">
+      {/* En-tête avec progression */}
+      <div className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="py-4">
+            <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center">
+              <FileText className="mr-2 text-blue-600" size={20} />
+              Création de contrat
+            </h1>
+            
+            {/* Barre de progression */}
+            <div className="mt-4 relative">
+              <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                <div 
+                  className="h-1.5 bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-500 ease-out"
+                  style={{ width: `${progress}%` }}
+                ></div>
+              </div>
+              
+              {/* Étapes */}
+              <div className="flex justify-between mt-2">
+                {STEPS.map((step) => (
+                  <div 
+                    key={step.id} 
+                    className={`flex flex-col items-center relative ${
+                      step.id < activeStep ? 'text-blue-600' : 
+                      step.id === activeStep ? 'text-gray-900' : 'text-gray-400'
+                    }`}
+                    style={{ width: `${100/totalSteps}%` }}
+                  >
+                    <div 
+                      className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium transition-all duration-300 ${
+                        step.id < activeStep ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-sm' : 
+                        step.id === activeStep ? 'border-2 border-blue-600 text-blue-600 scale-110' : 
+                        'border border-gray-300 bg-white'
+                      }`}
+                    >
+                      {step.id < activeStep ? <Check size={14} /> : step.id}
+                    </div>
+                    <span className="hidden sm:block text-xs mt-1 font-medium">{step.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
-        
-        {/* Colonne de droite: Aperçu */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <PreviewPanel 
-            contractPreview={contractPreview} 
-            isLoading={isPreviewLoading} 
-          />
+      </div>
+      
+      {/* Contenu principal */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Formulaire */}
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div className="mb-6 flex items-center">
+              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+                <Sparkles size={16} className="text-blue-600" />
+              </div>
+              <div>
+                <h2 className="text-lg font-medium text-gray-900">
+                  {STEPS[activeStep-1].name}
+                </h2>
+                <p className="text-sm text-gray-500">
+                  {STEPS[activeStep-1].description}
+                </p>
+              </div>
+            </div>
+            
+            <div className="mb-8">
+              {renderStepContent()}
+            </div>
+            
+            {/* Boutons de navigation */}
+            <div className="flex justify-between pt-4 border-t border-gray-100">
+              <button
+                type="button"
+                onClick={handlePrevStep}
+                disabled={activeStep === 1}
+                className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  activeStep === 1 
+                  ? 'text-gray-400 cursor-not-allowed' 
+                  : 'text-gray-700 hover:bg-gray-100 hover:shadow-sm'
+                }`}
+              >
+                <ArrowLeft size={16} className="mr-1" />
+                Précédent
+              </button>
+              
+              <button
+                type="button"
+                onClick={handleNextStep}
+                disabled={activeStep === totalSteps}
+                className={`flex items-center px-5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  activeStep === totalSteps
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:shadow-md hover:scale-105'
+                }`}
+              >
+                {activeStep === totalSteps ? 'Terminé' : 'Suivant'}
+                {activeStep !== totalSteps && <ArrowRight size={16} className="ml-1" />}
+              </button>
+            </div>
+          </div>
+          
+          {/* Prévisualisation */}
+          <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
+            <PreviewPanel 
+              contractPreview={contractPreview} 
+              isLoading={isPreviewLoading} 
+            />
+          </div>
         </div>
       </div>
     </div>
