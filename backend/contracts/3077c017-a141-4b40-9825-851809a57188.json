@@ -1,0 +1,34 @@
+{
+  "id": "3077c017-a141-4b40-9825-851809a57188",
+  "title": "Lucas_Test",
+  "created_at": "2025-03-17T13:19:19.531909",
+  "updated_at": "2025-03-17T13:19:58.542560",
+  "data": {
+    "type_contrat": [
+      "Image (droit \u00e0 l'image)",
+      "Auteur (droits d'auteur)"
+    ],
+    "type_cession": "On\u00e9reuse",
+    "droits_cedes": [
+      "distribution - droit de distribuer l'original ou les copies de l'\u0153uvre au public",
+      "usage - droit d'utiliser l'\u0153uvre pour les besoins du cessionnaire",
+      "adaptation - droit de modifier, transformer, traduire l'\u0153uvre"
+    ],
+    "exclusivite": true,
+    "auteur_type": "Personne physique",
+    "auteur_info": {
+      "gentille": "M.",
+      "nom": "MAURICI",
+      "prenom": "Lucas",
+      "date_naissance": "1999-12-24",
+      "nationalite": "Fran\u00e7aise",
+      "adresse": "104 avenue de Versailles 75016"
+    },
+    "description_oeuvre": "chanson et une vid\u00e9o",
+    "description_image": "je sais pas",
+    "supports": [
+      "R\u00e9seaux sociaux (Facebook, Instagram, Twitter, etc.)"
+    ],
+    "remuneration": "10 \u20ac"
+  }
+}

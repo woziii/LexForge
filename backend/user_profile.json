@@ -1,0 +1,28 @@
+{
+  "type": "personal",
+  "profile": {
+    "personal": {
+      "adresse": "",
+      "civilite": "M.",
+      "codePostal": "",
+      "email": "",
+      "nom": "Maurici",
+      "pays": "France",
+      "prenom": "Lucas",
+      "telephone": "",
+      "ville": ""
+    },
+    "professional": {
+      "capital": "",
+      "forme_juridique": "",
+      "nom": "",
+      "rcs": "",
+      "representant": {
+        "fonction": "",
+        "nom": "",
+        "prenom": ""
+      },
+      "siege": ""
+    }
+  }
+}

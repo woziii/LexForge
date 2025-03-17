@@ -1,0 +1,30 @@
+{
+  "id": "4547ba49-bf06-4fe3-a172-d65dac0c41f2",
+  "title": "Test",
+  "created_at": "2025-03-17T14:11:41.483195",
+  "updated_at": "2025-03-17T14:12:52.082119",
+  "data": {
+    "type_contrat": [
+      "Auteur (droits d'auteur)",
+      "Image (droit \u00e0 l'image)"
+    ],
+    "type_cession": "Gratuite",
+    "droits_cedes": [],
+    "exclusivite": false,
+    "auteur_type": "Personne physique",
+    "auteur_info": {
+      "gentille": "M.",
+      "nom": "MAURICI",
+      "prenom": "Lucas",
+      "date_naissance": "1999-12-24",
+      "nationalite": "Fran\u00e7aise",
+      "adresse": "104 Avenue de Versailles 75016 Paris"
+    },
+    "description_oeuvre": "Une vid\u00e9o de moi qui chante",
+    "description_image": "Une vid\u00e9o de moi qui chante",
+    "supports": [
+      "R\u00e9seaux sociaux (Facebook, Instagram, Twitter, etc.)"
+    ],
+    "remuneration": ""
+  }
+}
