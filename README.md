@@ -17,7 +17,7 @@ Check out the configuration reference at https://huggingface.co/docs/hub/spaces-
 
 > **"Créez, modifiez et gérez vos contrats juridiques en toute simplicité !"**
 
-![Page d'accueil de LexForge](/frontend/public/images/images_exemples/lexforce_homepage.png)
+![Page d'accueil de LexForge](https://raw.githubusercontent.com/woziii/LexForge/main/frontend/public/images/images_exemples/lexforce_homepage.png)
 
 ## 🔥 Créez des contrats juridiques comme un professionnel, sans être juriste
 
@@ -29,31 +29,31 @@ LexForge est une plateforme intuitive et puissante qui révolutionne la créatio
 
 Notre interface intuitive vous accompagne à chaque étape du processus de création de contrat. Finis les maux de tête liés à la complexité juridique !
 
-![Suggestions intelligentes](/frontend/public/images/images_exemples/suggestion_intelligente.png)
+![Suggestions intelligentes](https://raw.githubusercontent.com/woziii/LexForge/main/frontend/public/images/images_exemples/suggestion_intelligente.png)
 
 ### Finalisation et export professionnel
 
 Une fois votre contrat personnalisé, visualisez-le et exportez-le en PDF prêt à l'emploi. Une présentation professionnelle en quelques clics !
 
-![Finalisation de contrat](/frontend/public/images/images_exemples/finalisation_contrat.png)
+![Finalisation de contrat](https://raw.githubusercontent.com/woziii/LexForge/main/frontend/public/images/images_exemples/finalisation_contrat.png)
 
 ### Gestion centralisée de vos contrats
 
 Accédez à tous vos contrats générés depuis une interface centralisée. Retrouvez, modifiez ou supprimez vos documents en toute simplicité.
 
-![Mes Contrats](/frontend/public/images/images_exemples/mes_contrats.png)
+![Mes Contrats](https://raw.githubusercontent.com/woziii/LexForge/main/frontend/public/images/images_exemples/mes_contrats.png)
 
 ### Éditeur avancé avec mise en forme
 
 Notre éditeur avancé vous permet de personnaliser chaque aspect de vos contrats. Modifiez le texte, ajoutez des sections, et ajustez la mise en forme selon vos préférences.
 
-![Éditeur de contrat](/frontend/public/images/images_exemples/lexforge_editeur.png)
+![Éditeur de contrat](https://raw.githubusercontent.com/woziii/LexForge/main/frontend/public/images/images_exemples/lexforge_editeur.png)
 
 ### Options de personnalisation étendues
 
 Adaptez l'interface à vos préférences avec les thèmes clair/sombre, les options de taille de texte et bien plus encore.
 
-![Paramètres de l'éditeur](/frontend/public/images/images_exemples/paramètre_editeur.png)
+![Paramètres de l'éditeur](https://raw.githubusercontent.com/woziii/LexForge/main/frontend/public/images/images_exemples/paramètre_editeur.png)
 
 ## 🚀 Pourquoi choisir LexForge ?
 
