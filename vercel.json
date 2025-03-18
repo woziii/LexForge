@@ -2,22 +2,14 @@
   "version": 2,
   "buildCommand": "cd frontend && npm install && npm run build",
   "outputDirectory": "frontend/build",
-  "installCommand": "pip install -r requirements.txt && cd frontend && npm install",
+  "installCommand": "cd frontend && npm install",
   "builds": [
-    {
-      "src": "backend/app.py",
-      "use": "@vercel/python"
-    },
     {
       "src": "frontend/build/**",
       "use": "@vercel/static"
     }
   ],
   "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "backend/app.py"
-    },
     {
       "src": "/",
       "dest": "frontend/build/index.html"
