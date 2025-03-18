@@ -2,8 +2,15 @@ services:
   - type: web
     name: lexforge-backend
     runtime: python
-    buildCommand: cd backend && pip install -r requirements.txt
+    buildCommand: pip install -r requirements.txt && pip install -r backend/requirements.txt && python backend/nltk_setup.py
     startCommand: cd backend && gunicorn app:app --bind 0.0.0.0:$PORT
     envVars:
       - key: PYTHON_VERSION
         value: 3.9.0
+      - key: FLASK_ENV
+        value: production
+      - key: ORIGIN
+        value: https://lexforge.vercel.app
+    cors:
+      allowOrigins:
+        - https://lexforge.vercel.app

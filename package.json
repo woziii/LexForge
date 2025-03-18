@@ -1,0 +1,26 @@
+{
+  "name": "lexforge",
+  "version": "1.0.0",
+  "description": "LexForge - Assistant de création de contrats juridiques",
+  "main": "index.js",
+  "scripts": {
+    "install-backend": "pip install -r requirements.txt && pip install -r backend/requirements.txt && python backend/nltk_setup.py",
+    "install-frontend": "cd frontend && npm install",
+    "build-frontend": "cd frontend && npm run build",
+    "install": "npm run install-backend && npm run install-frontend",
+    "build": "npm run build-frontend",
+    "start": "cd backend && gunicorn app:app --bind 0.0.0.0:$PORT"
+  },
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  },
+  "keywords": [
+    "contracts",
+    "legal",
+    "rights",
+    "copyright"
+  ],
+  "author": "",
+  "license": "ISC"
+} 

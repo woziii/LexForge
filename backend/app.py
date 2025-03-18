@@ -19,7 +19,11 @@ from utils import collect_author_info, ensure_default_supports
 from contract_builder import ContractBuilder
 
 app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": "*"}})  # Configuration CORS plus permissive pour le déploiement
+
+# Configuration CORS plus permissive pour le déploiement
+# Permettre l'accès depuis le frontend déployé sur Vercel
+frontend_origin = os.environ.get('ORIGIN', 'https://lexforge.vercel.app')
+CORS(app, resources={r"/api/*": {"origins": [frontend_origin, "http://localhost:3000"]}})
 
 # Définir le répertoire temporaire pour les fichiers PDF
 if not os.path.exists('tmp'):
