@@ -146,7 +146,7 @@ const ContractWizard = () => {
                 ></div>
               </div>
               
-              {/* Étapes */}
+              {/* Étapes - Optimisé pour mobile */}
               <div className="flex justify-between mt-2">
                 {STEPS.map((step) => (
                   <div 
@@ -158,7 +158,7 @@ const ContractWizard = () => {
                     style={{ width: `${100/totalSteps}%` }}
                   >
                     <div 
-                      className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium transition-all duration-300 ${
+                      className={`w-6 h-6 md:w-7 md:h-7 rounded-full flex items-center justify-center text-xs font-medium transition-all duration-300 ${
                         step.id < activeStep ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-sm' : 
                         step.id === activeStep ? 'border-2 border-blue-600 text-blue-600 scale-110' : 
                         'border border-gray-300 bg-white'
@@ -167,6 +167,9 @@ const ContractWizard = () => {
                       {step.id < activeStep ? <Check size={14} /> : step.id}
                     </div>
                     <span className="hidden sm:block text-xs mt-1 font-medium">{step.name}</span>
+                    {step.id === activeStep && (
+                      <span className="block sm:hidden text-xs mt-1 font-medium">{step.name}</span>
+                    )}
                   </div>
                 ))}
               </div>
@@ -179,7 +182,7 @@ const ContractWizard = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Formulaire */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100">
             <div className="mb-6 flex items-center">
               <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mr-3">
                 <Sparkles size={16} className="text-blue-600" />
@@ -204,38 +207,59 @@ const ContractWizard = () => {
                 type="button"
                 onClick={handlePrevStep}
                 disabled={activeStep === 1}
-                className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                className={`flex items-center px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                   activeStep === 1 
                   ? 'text-gray-400 cursor-not-allowed' 
                   : 'text-gray-700 hover:bg-gray-100 hover:shadow-sm'
                 }`}
               >
                 <ArrowLeft size={16} className="mr-1" />
-                Précédent
+                <span className="hidden xs:inline">Précédent</span>
               </button>
               
               <button
                 type="button"
                 onClick={handleNextStep}
                 disabled={activeStep === totalSteps}
-                className={`flex items-center px-5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                className={`flex items-center px-3 sm:px-5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                   activeStep === totalSteps
                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                   : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:shadow-md hover:scale-105'
                 }`}
               >
-                {activeStep === totalSteps ? 'Terminé' : 'Suivant'}
+                <span className="hidden xs:inline">{activeStep === totalSteps ? 'Terminé' : 'Suivant'}</span>
+                <span className="xs:hidden">{activeStep === totalSteps ? 'Fin' : 'Suivant'}</span>
                 {activeStep !== totalSteps && <ArrowRight size={16} className="ml-1" />}
               </button>
             </div>
           </div>
           
-          {/* Prévisualisation */}
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
+          {/* Prévisualisation - Cachée par défaut sur mobile mais accessible via un bouton */}
+          <div className="hidden lg:block bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
             <PreviewPanel 
               contractPreview={contractPreview} 
               isLoading={isPreviewLoading} 
             />
+          </div>
+          
+          {/* Bouton pour afficher la prévisualisation sur mobile */}
+          <div className="lg:hidden mt-4">
+            <button
+              onClick={() => {
+                document.getElementById('mobilePreview').classList.toggle('hidden');
+              }}
+              className="w-full bg-white py-3 px-4 rounded-xl shadow-sm border border-gray-100 text-center text-blue-600 font-medium flex items-center justify-center"
+            >
+              <FileText className="mr-2" size={18} />
+              Afficher/Masquer l'aperçu
+            </button>
+            
+            <div id="mobilePreview" className="hidden mt-4 bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
+              <PreviewPanel 
+                contractPreview={contractPreview} 
+                isLoading={isPreviewLoading} 
+              />
+            </div>
           </div>
         </div>
       </div>

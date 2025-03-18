@@ -4,7 +4,7 @@ import {
   ChevronLeft, Save, Download, Settings, CheckCircle, AlertCircle, 
   Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, 
   ArrowUp, ArrowDown, Maximize, Minimize, MessageCircle, X,
-  Moon, Sun, Edit, ChevronUp, ChevronDown
+  Moon, Sun, ChevronUp, ChevronRight
 } from 'lucide-react';
 import { getContractById, getContractElements, updateContract, generatePdf } from '../services/api';
 
@@ -31,6 +31,7 @@ const ContractEditorPage = () => {
   const [comments, setComments] = useState([]);
   const [showMobileSections, setShowMobileSections] = useState(false);
   const [isPdfGenerating, setIsPdfGenerating] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   
   // Récupérer les informations du contrat
   useEffect(() => {
@@ -205,6 +206,36 @@ const ContractEditorPage = () => {
               newText = text.replace(selectedText, `<u>${selectedText}</u>`);
             }
           break;
+        case 'alignLeft':
+            // Vérifier si le texte est déjà aligné à gauche
+            if (text.includes('<p style="text-align: left;">')) {
+              // Enlever l'alignement à gauche
+              newText = text.replace('<p style="text-align: left;">', '<p>');
+            } else {
+              // Ajouter l'alignement à gauche
+              newText = '<p style="text-align: left;">' + text + '</p>';
+            }
+          break;
+        case 'alignCenter':
+            // Vérifier si le texte est déjà centré
+            if (text.includes('<p style="text-align: center;">')) {
+              // Enlever le centrage
+              newText = text.replace('<p style="text-align: center;">', '<p>');
+            } else {
+              // Ajouter le centrage
+              newText = '<p style="text-align: center;">' + text + '</p>';
+            }
+          break;
+        case 'alignRight':
+            // Vérifier si le texte est déjà aligné à droite
+            if (text.includes('<p style="text-align: right;">')) {
+              // Enlever l'alignement à droite
+              newText = text.replace('<p style="text-align: right;">', '<p>');
+            } else {
+              // Ajouter l'alignement à droite
+              newText = '<p style="text-align: right;">' + text + '</p>';
+            }
+          break;
         default:
           break;
         }
@@ -242,26 +273,30 @@ const ContractEditorPage = () => {
     setCurrentTheme(currentTheme === 'light' ? 'dark' : 'light');
   };
   
-  const addComment = () => {
-    if (selectedElementIndex === null) return;
-    
+  const addComment = (index, text) => {
+    // Créer un nouveau commentaire
     const newComment = {
-      id: `comment-${Date.now()}`,
-      elementIndex: selectedElementIndex,
-      author: 'Vous',
+      id: Date.now(), // Utiliser un timestamp comme ID temporaire
+      elementIndex: index,
+      text: text,
       date: new Date().toISOString(),
-      text: 'Nouveau commentaire'
+      user: "Utilisateur"
     };
     
-    setComments([...comments, newComment]);
-    setShowCommentPanel(true);
+    // Ajouter le commentaire à la liste
+    setComments(prevComments => [...prevComments, newComment]);
   };
   
+  // eslint-disable-next-line no-unused-vars
   const updateComment = (commentId, newText) => {
-    const updatedComments = comments.map(comment => 
-      comment.id === commentId ? {...comment, text: newText} : comment
+    // Mettre à jour un commentaire existant
+    setComments(prevComments => 
+      prevComments.map(comment => 
+        comment.id === commentId 
+          ? {...comment, text: newText, date: new Date().toISOString()}
+          : comment
+      )
     );
-    setComments(updatedComments);
   };
   
   const deleteComment = (commentId) => {
@@ -360,7 +395,7 @@ const ContractEditorPage = () => {
               <button 
                 title="Ajouter un commentaire"
                 className="p-1 text-gray-500 hover:text-blue-600"
-                onClick={(e) => { e.stopPropagation(); addComment(); }}
+                onClick={(e) => { e.stopPropagation(); addComment(index, text); }}
               >
                 <MessageCircle size={14} />
               </button>
@@ -412,6 +447,10 @@ const ContractEditorPage = () => {
     );
   };
   
+  const toggleMobileMenu = () => {
+    setShowMobileMenu(!showMobileMenu);
+  };
+  
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-gray-50">
@@ -441,386 +480,363 @@ const ContractEditorPage = () => {
   }
   
   return (
-    <div className={`min-h-screen ${currentTheme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
-      <div className={`border-b ${currentTheme === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="py-3 flex items-center justify-between flex-wrap gap-y-2">
-            <div className="flex items-center flex-shrink-0">
-              <button 
+    <div className={`min-h-screen bg-gray-50 flex flex-col ${isFullscreen ? 'overflow-hidden' : ''}`} ref={editorRef}>
+      {/* En-tête */}
+      <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-20">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3">
+          <div className="flex justify-between items-center flex-wrap">
+            <div className="flex items-center space-x-3">
+              <button
                 onClick={handleGoBack}
-                className="mr-4 p-1.5 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="text-gray-600 hover:text-gray-900 p-1.5 rounded-lg hover:bg-gray-100"
+                aria-label="Retour"
               >
                 <ChevronLeft size={20} />
               </button>
-              <div>
+              <div className="flex-1 min-w-0">
                 <input
                   type="text"
                   value={title}
                   onChange={handleTitleChange}
-                  className={`font-bold text-lg sm:text-xl focus:ring-blue-500 focus:border-blue-500 block border-0 p-0 ${
-                    currentTheme === 'dark' ? 'bg-gray-800 text-white placeholder-gray-400' : 'bg-white text-gray-900 placeholder-gray-500'
-                  }`}
                   placeholder="Titre du contrat"
+                  className="text-lg font-medium text-gray-900 w-full bg-transparent border-0 focus:ring-0 focus:outline-none placeholder-gray-400"
+                  style={{ maxWidth: '200px' }}
                 />
               </div>
             </div>
             
-            <div className="flex items-center gap-2 flex-wrap justify-end">
-              <div className="bg-gray-100 rounded-md flex text-sm overflow-hidden">
-                <button 
-                  className={`px-3 py-1 rounded-md ${
-                    activeTab === 'editor' 
-                      ? (currentTheme === 'dark' ? 'bg-gray-600 text-white' : 'bg-white shadow-sm') 
-                      : (currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-600')
-                  }`}
-                  onClick={() => setActiveTab('editor')}
-                >
-                  <Edit size={16} className="inline mr-1" />
-                  <span className="hidden xs:inline">Éditeur</span>
-                </button>
-                <button 
-                  className={`px-3 py-1 rounded-md ${
-                    activeTab === 'settings' 
-                      ? (currentTheme === 'dark' ? 'bg-gray-600 text-white' : 'bg-white shadow-sm') 
-                      : (currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-600')
-                  }`}
-                  onClick={() => setActiveTab('settings')}
-                >
-                  <Settings size={16} className="inline mr-1" />
-                  <span className="hidden xs:inline">Paramètres</span>
-                </button>
-              </div>
-              <button 
+            <div className="flex items-center space-x-2">
+              <button
                 onClick={handleSave}
-                className="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-md transition duration-300"
-                aria-label="Enregistrer"
+                className="hidden sm:flex items-center text-xs sm:text-sm bg-blue-600 hover:bg-blue-700 text-white py-1.5 px-2 sm:px-3 rounded-lg shadow-sm transition-colors"
+                disabled={isLoading}
               >
                 <Save size={16} className="mr-1" />
-                <span className="hidden xs:inline">Enregistrer</span>
+                <span className="hidden sm:inline">Enregistrer</span>
               </button>
-              <button 
+              
+              <button
                 onClick={handleDownloadPdf}
-                className="inline-flex items-center px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-sm rounded-md transition duration-300"
-                aria-label="Télécharger PDF"
+                className="hidden sm:flex items-center text-xs sm:text-sm bg-gray-700 hover:bg-gray-800 text-white py-1.5 px-2 sm:px-3 rounded-lg shadow-sm transition-colors"
+                disabled={isLoading || isPdfGenerating}
               >
                 <Download size={16} className="mr-1" />
-                <span className="hidden xs:inline">PDF</span>
+                <span className="hidden sm:inline">PDF</span>
+              </button>
+              
+              <button
+                onClick={() => setActiveTab(activeTab === 'editor' ? 'settings' : 'editor')}
+                className="hidden sm:flex items-center text-xs sm:text-sm border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 py-1.5 px-2 sm:px-3 rounded-lg shadow-sm transition-colors"
+              >
+                <Settings size={16} className="mr-1" />
+                <span className="hidden sm:inline">{activeTab === 'editor' ? 'Réglages' : 'Éditeur'}</span>
+              </button>
+
+              {/* Menu mobile */}
+              <button
+                onClick={toggleMobileMenu}
+                className="sm:hidden flex items-center text-gray-600 hover:text-gray-900 p-1.5 rounded-lg hover:bg-gray-100"
+              >
+                {showMobileMenu ? <X size={20} /> : <Settings size={20} />}
               </button>
             </div>
           </div>
+
+          {/* Barre d'actions mobile */}
+          {showMobileMenu && (
+            <div className="sm:hidden py-2 mt-2 border-t border-gray-100 flex justify-between">
+              <button
+                onClick={handleSave}
+                className="flex items-center text-xs bg-blue-600 hover:bg-blue-700 text-white py-1.5 px-3 rounded-lg shadow-sm transition-colors"
+              >
+                <Save size={14} className="mr-1" />
+                Enregistrer
+              </button>
+              
+              <button
+                onClick={handleDownloadPdf}
+                className="flex items-center text-xs bg-gray-700 hover:bg-gray-800 text-white py-1.5 px-3 rounded-lg shadow-sm transition-colors"
+              >
+                <Download size={14} className="mr-1" />
+                PDF
+              </button>
+              
+              <button
+                onClick={() => setActiveTab(activeTab === 'editor' ? 'settings' : 'editor')}
+                className="flex items-center text-xs border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 py-1.5 px-3 rounded-lg shadow-sm transition-colors"
+              >
+                <Settings size={14} className="mr-1" />
+                {activeTab === 'editor' ? 'Réglages' : 'Éditeur'}
+              </button>
+            </div>
+          )}
+          
+          {savedMessage && (
+            <div className="absolute top-full right-0 mt-2 mr-4 px-3 py-2 bg-green-50 text-green-700 text-sm rounded-md shadow-sm border border-green-100 flex items-center">
+              <CheckCircle size={16} className="mr-2" />
+              Modifications enregistrées
+            </div>
+          )}
         </div>
-      </div>
+      </header>
       
-      {savedMessage && (
-        <div className="fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded-md flex items-center z-50">
-          <CheckCircle size={16} className="mr-2" />
-          <span className="text-sm">Sauvegardé</span>
-        </div>
-      )}
-      
-      {activeTab === 'editor' ? (
-        <div className="flex flex-col sm:flex-row">
-          {/* Navigation des sections - masquée par défaut sur mobile */}
-          <div className="sm:hidden p-2 bg-white border-b border-gray-200">
-            <button 
-              onClick={() => setShowMobileSections(!showMobileSections)}
-              className="w-full flex items-center justify-between px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm"
-            >
-              <span>Sections du contrat</span>
-              {showMobileSections ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            </button>
+      {/* Corps de l'application */}
+      <main className="flex-1 flex">
+        {/* Sidebar - Masquée sur mobile sauf si on clique sur le bouton dédié */}
+        <aside className={`bg-white border-r border-gray-200 ${
+          activeTab === 'editor' ? 'w-64 flex-shrink-0' : 'hidden'
+        } ${
+          !showMobileSections ? 'hidden md:block' : 'fixed inset-0 z-40 md:relative md:z-0 pt-20'
+        }`}>
+          <div className="p-4 h-full overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-medium text-gray-900">Sections</h2>
+              <button 
+                className="md:hidden p-1.5 text-gray-500 hover:text-gray-700 bg-gray-100 rounded-md"
+                onClick={() => setShowMobileSections(false)}
+              >
+                <X size={16} />
+              </button>
+            </div>
             
-            {showMobileSections && (
-              <div className="mt-2 bg-white border border-gray-200 rounded-md shadow-sm max-h-60 overflow-y-auto">
-                <ul className="divide-y divide-gray-200">
-                  {getSections().map((section) => (
-                    <li 
-                      key={section.index}
-                      className={`p-3 text-sm cursor-pointer ${selectedSection === section.index ? 'bg-blue-50 text-blue-700' : ''}`}
-                      onClick={() => {
-                        setSelectedSection(section.index);
-                        setSelectedElementIndex(section.index);
-                        setShowMobileSections(false);
-                        
-                        // Faire défiler jusqu'à cette section
-                        const element = document.getElementById(`element-${section.index}`);
-                        if (element) {
-                          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }
-                      }}
-                    >
-                      {section.text.substring(0, 30)}...
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-          
-          {/* Sidebar des sections - visible uniquement sur desktop */}
-          <div className="hidden sm:block bg-white border-r border-gray-200 w-60 p-4 overflow-y-auto h-[calc(100vh-6rem)]">
-            <h3 className="font-medium text-gray-800 mb-4">Sections du contrat</h3>
-            <ul className="space-y-2">
-              {getSections().map((section) => (
-                <li 
-                  key={section.index}
-                  className={`p-2 text-sm rounded cursor-pointer transition-colors ${selectedSection === section.index ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50'}`}
-                  onClick={() => {
-                    setSelectedSection(section.index);
-                    setSelectedElementIndex(section.index);
-                    
-                    // Faire défiler jusqu'à cette section
-                    const element = document.getElementById(`element-${section.index}`);
-                    if (element) {
-                      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                  }}
+            {/* Liste des sections */}
+            <nav className="space-y-1">
+              {getSections().map((section, index) => (
+                <button
+                  key={index}
+                  onClick={() => setSelectedSection(section.index)}
+                  className={`w-full px-3 py-2 text-left text-sm rounded-lg flex items-center justify-between ${
+                    selectedSection === section.index 
+                      ? 'bg-blue-50 text-blue-600' 
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
                 >
-                  {section.text.substring(0, 40)}...
-                </li>
+                  <span>{section.text.substring(0, 40)}...</span>
+                  {selectedSection === section.index && <ChevronRight size={16} />}
+                </button>
               ))}
-            </ul>
+            </nav>
           </div>
-          
-          <div className="flex-grow">
-            {/* Barre d'outils d'édition - version responsive */}
-            <div className="bg-white border-b border-gray-200 p-2 flex items-center justify-between overflow-x-auto">
-              <div className="flex space-x-1 items-center">
-                <button 
-                  title="Gras"
-                  className="p-1.5 rounded hover:bg-gray-100"
-                  onClick={() => applyFormatting('bold')}
-                >
-                  <Bold size={16} />
-                </button>
-                <button 
-                  title="Italique"
-                  className="p-1.5 rounded hover:bg-gray-100"
-                  onClick={() => applyFormatting('italic')}
-                >
-                  <Italic size={16} />
-                </button>
-                <button 
-                  title="Souligné"
-                  className="p-1.5 rounded hover:bg-gray-100"
-                  onClick={() => applyFormatting('underline')}
-                >
-                  <Underline size={16} />
-                </button>
-                
-                <div className="hidden sm:flex space-x-1 ml-2">
-                  <button title="Aligner à gauche" className="p-1.5 rounded hover:bg-gray-100">
+        </aside>
+        
+        {/* Bouton pour afficher les sections sur mobile */}
+        <button
+          className="md:hidden fixed bottom-4 left-4 z-30 bg-white shadow-lg rounded-full p-3 text-blue-600 border border-gray-200"
+          onClick={() => setShowMobileSections(true)}
+          style={{ display: showMobileSections ? 'none' : activeTab === 'editor' ? 'block' : 'none' }}
+        >
+          <ChevronUp size={20} />
+        </button>
+        
+        {/* Contenu principal */}
+        <div className="flex-1 overflow-y-auto p-4">
+          {activeTab === 'editor' ? (
+            <div className={`bg-white rounded-lg shadow-sm border border-gray-200 max-w-4xl mx-auto ${fontSize === 'small' ? 'text-sm' : fontSize === 'large' ? 'text-lg' : 'text-base'}`}>
+              {/* Barre d'outils */}
+              <div className="border-b border-gray-200 px-4 py-2 flex justify-between items-center flex-wrap gap-y-2">
+                <div className="flex space-x-1 flex-wrap">
+                  <button 
+                    onClick={() => applyFormatting('bold')}
+                    className="p-1.5 rounded-md hover:bg-gray-100 text-gray-700"
+                    title="Gras"
+                  >
+                    <Bold size={16} />
+                  </button>
+                  <button 
+                    onClick={() => applyFormatting('italic')}
+                    className="p-1.5 rounded-md hover:bg-gray-100 text-gray-700"
+                    title="Italique"
+                  >
+                    <Italic size={16} />
+                  </button>
+                  <button 
+                    onClick={() => applyFormatting('underline')}
+                    className="p-1.5 rounded-md hover:bg-gray-100 text-gray-700"
+                    title="Souligné"
+                  >
+                    <Underline size={16} />
+                  </button>
+                  <span className="border-r border-gray-200 mx-1"></span>
+                  <button 
+                    onClick={() => applyFormatting('alignLeft')}
+                    className="p-1.5 rounded-md hover:bg-gray-100 text-gray-700"
+                    title="Aligner à gauche"
+                  >
                     <AlignLeft size={16} />
                   </button>
-                  <button title="Centrer" className="p-1.5 rounded hover:bg-gray-100">
+                  <button 
+                    onClick={() => applyFormatting('alignCenter')}
+                    className="p-1.5 rounded-md hover:bg-gray-100 text-gray-700"
+                    title="Centrer"
+                  >
                     <AlignCenter size={16} />
                   </button>
-                  <button title="Aligner à droite" className="p-1.5 rounded hover:bg-gray-100">
+                  <button 
+                    onClick={() => applyFormatting('alignRight')}
+                    className="p-1.5 rounded-md hover:bg-gray-100 text-gray-700"
+                    title="Aligner à droite"
+                  >
                     <AlignRight size={16} />
+                  </button>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <select 
+                    className="text-sm border border-gray-300 rounded-md py-1 pl-2 pr-6 bg-white"
+                    onChange={(e) => changeFontSize(e.target.value)}
+                    value={fontSize}
+                  >
+                    <option value="small">Petit</option>
+                    <option value="normal">Normal</option>
+                    <option value="large">Grand</option>
+                  </select>
+                  
+                  <button
+                    onClick={toggleTheme}
+                    className="p-1.5 rounded-md hover:bg-gray-100 text-gray-700"
+                    title={currentTheme === 'light' ? 'Mode sombre' : 'Mode clair'}
+                  >
+                    {currentTheme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
+                  </button>
+                  
+                  <button
+                    onClick={toggleFullscreen}
+                    className="p-1.5 rounded-md hover:bg-gray-100 text-gray-700"
+                    title={isFullscreen ? 'Quitter le plein écran' : 'Plein écran'}
+                  >
+                    {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
+                  </button>
+                  
+                  <button
+                    onClick={() => setShowCommentPanel(!showCommentPanel)}
+                    className={`p-1.5 rounded-md hover:bg-gray-100 ${showCommentPanel ? 'text-blue-600 bg-blue-50' : 'text-gray-700'}`}
+                    title="Commentaires"
+                  >
+                    <MessageCircle size={16} />
                   </button>
                 </div>
               </div>
               
-              <div className="flex space-x-1 items-center">
-                <select 
-                  className="text-xs sm:text-sm border border-gray-200 rounded p-1"
-                  value={fontSize}
-                  onChange={(e) => changeFontSize(e.target.value)}
-                >
-                  <option value="small">Petit</option>
-                  <option value="normal">Normal</option>
-                  <option value="large">Grand</option>
-                </select>
-                
-                <button 
-                  title={isFullscreen ? "Quitter le mode plein écran" : "Mode plein écran"}
-                  className="p-1.5 rounded hover:bg-gray-100"
-                  onClick={toggleFullscreen}
-                >
-                  {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
-                </button>
-                <button 
-                  title={`Passer au thème ${currentTheme === 'light' ? 'sombre' : 'clair'}`}
-                  className="p-1.5 rounded hover:bg-gray-100"
-                  onClick={toggleTheme}
-                >
-                  {currentTheme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
-                </button>
-                
-                <button 
-                  title="Commentaires"
-                  className="p-1.5 rounded hover:bg-gray-100 sm:hidden"
-                  onClick={() => setShowCommentPanel(!showCommentPanel)}
-                >
-                  <MessageCircle size={16} />
-                  {comments.length > 0 && (
-                    <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-500 rounded-full">
-                      {comments.length}
-                    </span>
-                  )}
-                </button>
-              </div>
-            </div>
-            
-            {/* Contenu du contrat */}
-            <div className={`p-2 sm:p-8 overflow-y-auto ${isFullscreen ? 'h-[calc(100vh-6rem)]' : 'h-[calc(100vh-12rem)]'}`}>
-              <div className={`max-w-4xl mx-auto ${currentTheme === 'dark' ? 'bg-gray-800' : 'bg-white'} border ${currentTheme === 'dark' ? 'border-gray-700' : 'border-gray-200'} rounded-lg shadow-sm p-4 sm:p-8 overflow-hidden`}>
+              {/* Zone d'édition du contrat */}
+              <div className="p-4 sm:p-8">
                 {elementsLoading ? (
-                  <div className="flex justify-center items-center py-20">
-                    <div className={`animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 ${currentTheme === 'dark' ? 'border-blue-400' : 'border-blue-500'}`}></div>
+                  <div className="flex justify-center items-center h-64">
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
                   </div>
                 ) : (
-                  <div className={`contract-editor text-sm sm:text-base ${currentTheme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
-                    {contractElements.map((element, index) => (
-                      <div id={`element-${index}`} key={index}>
-                        {renderContractElement(element, index)}
-                      </div>
-                    ))}
+                  <div className="space-y-6">
+                    {contractElements.map((element, index) => renderContractElement(element, index))}
                   </div>
                 )}
               </div>
             </div>
-          </div>
-          
-          {/* Panneau de commentaires - masqué par défaut sur mobile */}
-          <div className={`${showCommentPanel ? 'block' : 'hidden'} sm:block bg-white border-l border-gray-200 w-full sm:w-64 md:w-80 ${
-            showCommentPanel && comments.length > 0 ? 'fixed inset-0 z-30 sm:static' : ''
-          }`}>
-          {renderCommentPanel()}
-          </div>
-          
-          {/* Overlay pour fermer le panneau de commentaires sur mobile */}
-          {showCommentPanel && comments.length > 0 && (
-            <div className="sm:hidden fixed inset-0 z-20 bg-black bg-opacity-50" onClick={() => setShowCommentPanel(false)}></div>
-          )}
-        </div>
-      ) : (
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
-          <div className={`${currentTheme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border rounded-lg shadow-sm p-4 sm:p-8`}>
-            <h2 className={`text-xl font-bold ${currentTheme === 'dark' ? 'text-white' : 'text-gray-800'} mb-6`}>
-              Paramètres du contrat
-            </h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
-              <div>
-                <div className="mb-6">
-                  <label className={`block text-sm font-medium ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
-                    Titre du contrat
-                  </label>
-                  <input
-                    type="text"
-                    value={title}
-                    onChange={handleTitleChange}
-                    className={`w-full ${
-                      currentTheme === 'dark' 
-                        ? 'bg-gray-700 border-gray-600 text-white focus:ring-blue-500 focus:border-blue-500' 
-                        : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
-                    } rounded-md shadow-sm p-2`}
-                    placeholder="Titre du contrat"
-                  />
-                </div>
-                
-                <div className="mb-6">
-                  <h3 className={`text-lg font-medium ${currentTheme === 'dark' ? 'text-white' : 'text-gray-800'} mb-2`}>
-                    Apparence
-                  </h3>
-                  <div className={`mb-4 ${currentTheme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'} rounded-md p-4`}>
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-2">
-                      <label className={`text-sm ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                        Thème
-                      </label>
-                      <div className={`flex p-1 ${currentTheme === 'dark' ? 'bg-gray-600' : 'bg-gray-200'} rounded-full`}>
-                        <button 
-                          className={`px-3 py-1 rounded-full text-sm ${currentTheme === 'light' ? 'bg-white shadow' : ''}`}
-                          onClick={() => setCurrentTheme('light')}
-                        >
-                          Clair
-                        </button>
-                        <button 
-                          className={`px-3 py-1 rounded-full text-sm ${currentTheme === 'dark' ? 'bg-gray-800 shadow' : ''}`}
-                          onClick={() => setCurrentTheme('dark')}
-                        >
-                          Sombre
-                        </button>
-                      </div>
-                    </div>
-                    
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-                      <label className={`text-sm ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                        Taille du texte
-                      </label>
-                      <div className={`flex p-1 ${currentTheme === 'dark' ? 'bg-gray-600' : 'bg-gray-200'} rounded-full`}>
-                        <button 
-                          className={`px-3 py-1 rounded-full text-sm ${fontSize === 'small' ? (currentTheme === 'dark' ? 'bg-gray-800 shadow' : 'bg-white shadow') : ''}`}
+          ) : (
+            // Afficher les paramètres ici
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 max-w-4xl mx-auto p-6">
+              <h2 className="text-xl font-medium text-gray-900 mb-6">Paramètres du document</h2>
+              
+              {/* Paramètres à implémenter ici */}
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-base font-medium text-gray-800 mb-3">Apparence</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Taille du texte</label>
+                      <div className="flex space-x-2">
+                        <button
                           onClick={() => changeFontSize('small')}
+                          className={`px-3 py-1.5 rounded-md text-sm ${fontSize === 'small' ? 'bg-blue-100 text-blue-700 border border-blue-200' : 'bg-gray-100 text-gray-800 border border-gray-200'}`}
                         >
                           Petit
                         </button>
-                        <button 
-                          className={`px-3 py-1 rounded-full text-sm ${fontSize === 'normal' ? (currentTheme === 'dark' ? 'bg-gray-800 shadow' : 'bg-white shadow') : ''}`}
+                        <button
                           onClick={() => changeFontSize('normal')}
+                          className={`px-3 py-1.5 rounded-md text-sm ${fontSize === 'normal' ? 'bg-blue-100 text-blue-700 border border-blue-200' : 'bg-gray-100 text-gray-800 border border-gray-200'}`}
                         >
                           Normal
                         </button>
-                        <button 
-                          className={`px-3 py-1 rounded-full text-sm ${fontSize === 'large' ? (currentTheme === 'dark' ? 'bg-gray-800 shadow' : 'bg-white shadow') : ''}`}
+                        <button
                           onClick={() => changeFontSize('large')}
+                          className={`px-3 py-1.5 rounded-md text-sm ${fontSize === 'large' ? 'bg-blue-100 text-blue-700 border border-blue-200' : 'bg-gray-100 text-gray-800 border border-gray-200'}`}
                         >
                           Grand
                         </button>
                       </div>
                     </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div>
-                <div className="mb-6">
-                  <h3 className={`text-lg font-medium ${currentTheme === 'dark' ? 'text-white' : 'text-gray-800'} mb-2`}>
-                    Options de sécurité
-                  </h3>
-                  <div className={`${currentTheme === 'dark' ? 'bg-gray-700 border-blue-800' : 'bg-blue-50 border-blue-400'} border-l-4 p-4 mb-4`}>
-                    <p className={`text-sm ${currentTheme === 'dark' ? 'text-blue-300' : 'text-blue-700'}`}>
-                      <strong>Note :</strong> L'éditeur de contrat est protégé contre le copier-coller. Les utilisateurs ne peuvent pas sélectionner ou copier le texte du contrat.
-                    </p>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Thème</label>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => setCurrentTheme('light')}
+                          className={`px-3 py-1.5 rounded-md text-sm flex items-center ${currentTheme === 'light' ? 'bg-blue-100 text-blue-700 border border-blue-200' : 'bg-gray-100 text-gray-800 border border-gray-200'}`}
+                        >
+                          <Sun size={16} className="mr-1.5" />
+                          Clair
+                        </button>
+                        <button
+                          onClick={() => setCurrentTheme('dark')}
+                          className={`px-3 py-1.5 rounded-md text-sm flex items-center ${currentTheme === 'dark' ? 'bg-blue-100 text-blue-700 border border-blue-200' : 'bg-gray-100 text-gray-800 border border-gray-200'}`}
+                        >
+                          <Moon size={16} className="mr-1.5" />
+                          Sombre
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 
-                <div className="mb-6">
-                  <h3 className={`text-lg font-medium ${currentTheme === 'dark' ? 'text-white' : 'text-gray-800'} mb-2`}>
-                    Téléchargement du contrat
-                  </h3>
-                  <p className={`text-sm ${currentTheme === 'dark' ? 'text-gray-300' : 'text-gray-600'} mb-4`}>
-                    Vous pouvez télécharger votre contrat au format PDF pour l'imprimer ou le partager.
-                  </p>
-                  <button 
-                    onClick={handleDownloadPdf}
-                    className="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition duration-300"
-                  >
-                    <Download size={16} className="mr-2" />
-                    Télécharger au format PDF
-                  </button>
-                </div>
-                
-                <div className="mb-6">
-                  <h3 className={`text-lg font-medium ${currentTheme === 'dark' ? 'text-white' : 'text-gray-800'} mb-2`}>
-                    Commentaires et annotations
-                  </h3>
-                  <div className="flex space-x-4">
-                    <button 
-                      onClick={() => setShowCommentPanel(!showCommentPanel)}
-                      className={`inline-flex items-center px-4 py-2 ${
-                        currentTheme === 'dark' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                      } rounded-md transition duration-300`}
-                    >
-                      <MessageCircle size={16} className="mr-2" />
-                      {showCommentPanel ? 'Masquer les commentaires' : 'Afficher les commentaires'}
-                    </button>
+                <div>
+                  <h3 className="text-base font-medium text-gray-800 mb-3">Métadonnées</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <label htmlFor="document-title" className="block text-sm font-medium text-gray-700 mb-1">
+                        Titre du document
+                      </label>
+                      <input
+                        type="text"
+                        id="document-title"
+                        value={title}
+                        onChange={handleTitleChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
+        </div>
+        
+        {/* Panneau de commentaires */}
+        {showCommentPanel && activeTab === 'editor' && (
+          <aside className="fixed inset-y-0 right-0 w-full sm:w-80 bg-white border-l border-gray-200 z-40 overflow-y-auto p-4 pt-20 sm:pt-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-medium text-gray-900">Commentaires</h2>
+              <button 
+                className="p-1.5 text-gray-500 hover:text-gray-700 bg-gray-100 rounded-md"
+                onClick={() => setShowCommentPanel(false)}
+              >
+                <X size={16} />
+              </button>
+            </div>
+            
+            {renderCommentPanel()}
+          </aside>
+        )}
+      </main>
+      
+      {/* Message d'erreur */}
+      {error && (
+        <div className="fixed bottom-4 right-4 px-4 py-3 bg-red-50 text-red-700 rounded-md shadow-lg border border-red-100 flex items-center">
+          <AlertCircle size={20} className="mr-2 flex-shrink-0" />
+          <p>{error}</p>
+          <button 
+            className="ml-3 p-1 text-red-500 hover:text-red-700"
+            onClick={() => setError(null)}
+          >
+            <X size={18} />
+          </button>
         </div>
       )}
     </div>
