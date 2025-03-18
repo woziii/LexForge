@@ -60,20 +60,12 @@ const ContractEditorPage = () => {
         const response = await getContractElements(contractId);
         setContractElements(response.elements);
         
-        // Initialiser les commentaires (exemple)
-        const initialComments = [];
-        response.elements.forEach((element, index) => {
-          if (element.type === 'paragraph' && Math.random() > 0.85) {
-            initialComments.push({
-              id: `comment-${index}`,
-              elementIndex: index,
-              author: 'Vous',
-              date: new Date().toISOString(),
-              text: 'Exemple de commentaire sur cette clause.'
-            });
-          }
-        });
-        setComments(initialComments);
+        // Charger les commentaires depuis le backend
+        if (response.comments && Array.isArray(response.comments)) {
+          setComments(response.comments);
+        } else {
+          setComments([]);
+        }
         
         setError(null);
       } catch (error) {
@@ -93,9 +85,11 @@ const ContractEditorPage = () => {
   
   const handleSave = async () => {
     try {
+      // Ajouter les commentaires aux données mises à jour
       await updateContract(contractId, { 
         title,
-        updatedElements: editedElements
+        updatedElements: editedElements,
+        comments: comments
       });
       
       setSavedMessage(true);
@@ -150,26 +144,58 @@ const ContractEditorPage = () => {
   const applyFormatting = (format) => {
     if (selectedElementIndex === null) return;
     
-    // Simuler l'application d'un format (gras, italique, etc.)
+    // Récupérer l'élément sélectionné
     const element = contractElements[selectedElementIndex];
     if (element && element.type === 'paragraph') {
       const text = editedElements[selectedElementIndex] || element.text;
       
-      // Cette partie est simplifiée - dans un vrai éditeur on aurait besoin
-      // d'appliquer le formatage plus intelligemment en tenant compte de la sélection
       let newText = text;
-      switch (format) {
-        case 'bold':
-          newText = `**${text}**`;
-          break;
-        case 'italic':
-          newText = `*${text}*`;
-          break;
-        case 'underline':
-          newText = `_${text}_`;
-          break;
-        default:
-          break;
+      
+      // Obtenir la sélection de texte actuelle
+      const selection = window.getSelection();
+      
+      // Si une partie du texte est sélectionnée
+      if (selection && selection.toString().length > 0) {
+        const selectedText = selection.toString();
+        
+        // Appliquer le formatage uniquement au texte sélectionné
+        switch (format) {
+          case 'bold':
+            // Vérifier si le texte est déjà en gras (entouré de balises <strong>)
+            if (text.includes(`<strong>${selectedText}</strong>`)) {
+              // Enlever le formatage gras
+              newText = text.replace(`<strong>${selectedText}</strong>`, selectedText);
+            } else {
+              // Ajouter le formatage gras
+              newText = text.replace(selectedText, `<strong>${selectedText}</strong>`);
+            }
+            break;
+          case 'italic':
+            // Vérifier si le texte est déjà en italique
+            if (text.includes(`<em>${selectedText}</em>`)) {
+              // Enlever le formatage italique
+              newText = text.replace(`<em>${selectedText}</em>`, selectedText);
+            } else {
+              // Ajouter le formatage italique
+              newText = text.replace(selectedText, `<em>${selectedText}</em>`);
+            }
+            break;
+          case 'underline':
+            // Vérifier si le texte est déjà souligné
+            if (text.includes(`<u>${selectedText}</u>`)) {
+              // Enlever le soulignement
+              newText = text.replace(`<u>${selectedText}</u>`, selectedText);
+            } else {
+              // Ajouter le soulignement
+              newText = text.replace(selectedText, `<u>${selectedText}</u>`);
+            }
+            break;
+          default:
+            break;
+        }
+      } else {
+        // Si aucun texte n'est sélectionné, ne rien faire
+        return;
       }
       
       handleElementChange(selectedElementIndex, newText);
@@ -290,7 +316,7 @@ const ContractEditorPage = () => {
             className={`w-full min-h-[1.5em] ${hasComment ? 'border-r-4 border-yellow-300' : ''}`}
             contentEditable={element.style !== 'ContractTitle'} // Titres non éditables pour cet exemple
             suppressContentEditableWarning={true}
-            onBlur={(e) => handleElementChange(index, e.target.innerText)}
+            onBlur={(e) => handleElementChange(index, e.currentTarget.innerHTML)}
             dangerouslySetInnerHTML={{ __html: text }}
           ></div>
           

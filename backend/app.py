@@ -204,6 +204,7 @@ def update_contract(contract_id):
     data = request.json
     title = data.get('title')
     updated_elements = data.get('updatedElements', {})
+    comments = data.get('comments', [])
     
     # Charger le contrat existant
     with open(file_path, 'r', encoding='utf-8') as f:
@@ -214,10 +215,16 @@ def update_contract(contract_id):
         contract['title'] = title
     
     # Mettre à jour les éléments modifiés si fournis
-    if updated_elements and 'data' in contract:
-        # Mettre à jour les données spécifiques si nécessaire
-        # Cela dépend de la structure exacte des données
-        pass
+    if updated_elements and 'elements' in contract:
+        for index, content in updated_elements.items():
+            index = int(index)
+            if index < len(contract['elements']):
+                if 'text' in contract['elements'][index]:
+                    contract['elements'][index]['text'] = content
+    
+    # Mettre à jour ou ajouter les commentaires si fournis
+    if comments is not None:
+        contract['comments'] = comments
     
     # Mettre à jour la date de mise à jour
     contract['updated_at'] = datetime.now().isoformat()
@@ -256,6 +263,11 @@ def get_contract_elements(contract_id):
     with open(file_path, 'r', encoding='utf-8') as f:
         contract = json.load(f)
     
+    # Vérifier si le contrat a déjà des éléments stockés
+    if 'elements' in contract:
+        return jsonify({'elements': contract['elements'], 'comments': contract.get('comments', [])})
+    
+    # Si non, générer les éléments à partir des données du contrat
     # Récupérer les données du contrat
     contract_data = contract['data']
     
@@ -297,7 +309,15 @@ def get_contract_elements(contract_id):
                 'height': element.height
             })
     
-    return jsonify({'elements': editor_elements})
+    # Stocker les éléments générés dans le contrat pour référence future
+    contract['elements'] = editor_elements
+    contract['comments'] = []
+    
+    # Sauvegarder le contrat avec les éléments
+    with open(file_path, 'w', encoding='utf-8') as f:
+        json.dump(contract, f, ensure_ascii=False, indent=2)
+    
+    return jsonify({'elements': editor_elements, 'comments': []})
 
 # Pour le développement local
 if __name__ == '__main__':

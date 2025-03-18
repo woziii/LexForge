@@ -62,9 +62,7 @@ const AboutPage = () => {
           <div>
             <h3 className="text-lg font-semibold mb-1">Éditeur</h3>
             <p className="text-gray-600">
-              LexForge est édité par Tellers, société par actions simplifiée unipersonnelle au capital de 1000 €, 
-              immatriculée au RCS de Lyon sous le numéro 932 553 266, dont le siège social est situé au 
-              12 RUE DE LA PART-DIEU, 69003 LYON.
+              
             </p>
           </div>
           <div>
