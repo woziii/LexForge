@@ -1,6 +1,12 @@
 import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Home, FileText, Settings, User } from 'lucide-react';
+import { 
+  Home, 
+  FolderKanban, 
+  FilePlus2, 
+  InfoIcon, 
+  UserCircle 
+} from 'lucide-react';
 
 const Layout = () => {
   const location = useLocation();
@@ -24,33 +30,36 @@ const Layout = () => {
               to="/"
               className={`flex items-center ${isActive('/') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
             >
-              <Home size={18} className="mr-1" />
+              <Home size={18} className="mr-1" strokeWidth={2} />
               <span>Accueil</span>
             </Link>
             <Link
               to="/wizard"
               className={`flex items-center ${isActive('/wizard') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
             >
-              <FileText size={18} className="mr-1" />
+              <FilePlus2 size={18} className="mr-1" strokeWidth={2} />
               <span>Générateur</span>
             </Link>
             <Link
               to="/contracts"
               className={`flex items-center ${isActive('/contracts') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
             >
-              <FileText size={18} className="mr-1" />
+              <FolderKanban size={18} className="mr-1" strokeWidth={2} />
               <span>Contrats</span>
             </Link>
             <Link
               to="/about"
               className={`flex items-center ${isActive('/about') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
             >
-              <Settings size={18} className="mr-1" />
+              <InfoIcon size={18} className="mr-1" strokeWidth={2} />
               <span>À propos</span>
             </Link>
-            <a href="#" className="text-gray-500 hover:text-gray-700 flex items-center">
-              <User size={18} />
-            </a>
+            <button 
+              className="text-gray-500 hover:text-gray-700 flex items-center focus:outline-none"
+              aria-label="Profil utilisateur"
+            >
+              <UserCircle size={20} strokeWidth={2} />
+            </button>
           </nav>
         </div>
       </header>
