@@ -7,7 +7,7 @@ const HomePage = () => {
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-white via-blue-50 to-indigo-50">
       {/* Section principale */}
       <main className="flex-grow flex flex-col items-center justify-center px-4 py-16">
-        <div className="max-w-3xl mx-auto text-center">
+        <div className="max-w-4xl mx-auto text-center">
           {/* Logo animé */}
           <div className="mb-8 inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg transform transition-all duration-500 hover:rotate-6 hover:scale-110">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -26,7 +26,7 @@ const HomePage = () => {
           
           {/* Description avec badge */}
           <div className="relative mb-8">
-            <p className="text-xl text-gray-700 mb-2">
+            <p className="text-xl text-gray-700 mb-4">
               Créez des contrats juridiques professionnels en quelques clics
             </p>
             <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
@@ -43,55 +43,37 @@ const HomePage = () => {
             Créer un contrat
             <ArrowRight size={18} className="ml-2 animate-pulse" />
           </Link>
+        </div>
+        
+        {/* Caractéristiques en badges */}
+        <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+          <div className="flex flex-col items-center p-6 bg-white rounded-xl shadow-sm border border-gray-100 transform transition-all duration-200 hover:shadow-md hover:-translate-y-1">
+            <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mb-4">
+              <FileText size={28} className="text-blue-600" />
+            </div>
+            <span className="font-medium text-lg text-gray-800 mb-2">Droits d'auteur</span>
+            <span className="text-sm text-center text-gray-500">Protection de vos créations intellectuelles et artistiques</span>
+          </div>
           
-          {/* Caractéristiques en badges */}
-          <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
-            <div className="flex flex-col items-center p-4 bg-white rounded-xl shadow-sm border border-gray-100 transform transition-all duration-200 hover:shadow-md hover:-translate-y-1">
-              <FileText size={24} className="text-blue-500 mb-2" />
-              <span className="font-medium text-gray-800">Droits d'auteur</span>
-              <span className="text-xs text-gray-500 mt-1">Protection de vos créations</span>
+          <div className="flex flex-col items-center p-6 bg-white rounded-xl shadow-sm border border-gray-100 transform transition-all duration-200 hover:shadow-md hover:-translate-y-1">
+            <div className="w-16 h-16 rounded-full bg-teal-100 flex items-center justify-center mb-4">
+              <Image size={28} className="text-teal-600" />
             </div>
-            <div className="flex flex-col items-center p-4 bg-white rounded-xl shadow-sm border border-gray-100 transform transition-all duration-200 hover:shadow-md hover:-translate-y-1">
-              <Image size={24} className="text-blue-500 mb-2" />
-              <span className="font-medium text-gray-800">Droits à l'image</span>
-              <span className="text-xs text-gray-500 mt-1">Encadrement légal</span>
+            <span className="font-medium text-lg text-gray-800 mb-2">Droits à l'image</span>
+            <span className="text-sm text-center text-gray-500">Encadrement légal de l'utilisation de votre image ou celle de vos modèles</span>
+          </div>
+          
+          <div className="flex flex-col items-center p-6 bg-white rounded-xl shadow-sm border border-gray-100 transform transition-all duration-200 hover:shadow-md hover:-translate-y-1">
+            <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center mb-4">
+              <Shield size={28} className="text-purple-600" />
             </div>
-            <div className="flex flex-col items-center p-4 bg-white rounded-xl shadow-sm border border-gray-100 transform transition-all duration-200 hover:shadow-md hover:-translate-y-1">
-              <Shield size={24} className="text-blue-500 mb-2" />
-              <span className="font-medium text-gray-800">Contrats combinés</span>
-              <span className="text-xs text-gray-500 mt-1">Protection complète</span>
-            </div>
+            <span className="font-medium text-lg text-gray-800 mb-2">Contrats combinés</span>
+            <span className="text-sm text-center text-gray-500">Protection complète en combinant les droits d'auteur et les droits à l'image</span>
           </div>
         </div>
       </main>
-      
-      {/* Footer amélioré */}
-      <footer className="bg-white py-8 border-t border-gray-200">
-        <div className="max-w-5xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center">
-          <div className="flex items-center mb-4 md:mb-0">
-            <div className="w-8 h-8 rounded-md bg-blue-100 flex items-center justify-center mr-2">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
-              </svg>
-            </div>
-            <span className="font-medium text-gray-800">LexForge</span>
-          </div>
-          
-          <div className="flex space-x-6 mb-4 md:mb-0">
-            <a href="#" className="text-gray-600 hover:text-blue-600 transition-colors">À propos</a>
-            <a href="#" className="text-gray-600 hover:text-blue-600 transition-colors">Confidentialité</a>
-            <a href="#" className="text-gray-600 hover:text-blue-600 transition-colors">Conditions</a>
-            <a href="#" className="text-gray-600 hover:text-blue-600 transition-colors">Contact</a>
-          </div>
-          
-          <div className="text-sm text-gray-500">
-            © {new Date().getFullYear()} LexForge. Tous droits réservés.
-          </div>
-        </div>
-      </footer>
     </div>
   );
 };
 
-export default HomePage; 
+export default HomePage;

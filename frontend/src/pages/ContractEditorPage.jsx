@@ -3,8 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { 
   Save, Download, ChevronLeft, CheckCircle, AlertCircle, Settings, Eye, 
   Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, 
-  Type, Scissors, Copy, Plus, Minus, ArrowUp, ArrowDown, RefreshCw,
-  Calendar, Maximize, Minimize, History, MessageCircle, Lock, Unlock, PenTool, X,
+  ArrowUp, ArrowDown, Maximize, Minimize, MessageCircle, X,
   Moon, Sun
 } from 'lucide-react';
 import { getContractById, getContractElements, updateContract, generatePdf } from '../services/api';
@@ -25,7 +24,6 @@ const ContractEditorPage = () => {
   const [activeTab, setActiveTab] = useState('editor'); // 'editor' ou 'settings'
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedElementIndex, setSelectedElementIndex] = useState(null);
-  const [showHistory, setShowHistory] = useState(false);
   const [selectedSection, setSelectedSection] = useState(null);
   const [currentTheme, setCurrentTheme] = useState('light');
   const [fontSize, setFontSize] = useState('normal');
@@ -776,4 +774,4 @@ const ContractEditorPage = () => {
   );
 };
 
-export default ContractEditorPage; 
+export default ContractEditorPage;

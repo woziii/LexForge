@@ -1,0 +1,27 @@
+{
+  "id": "5584b322-07ae-4524-86c7-4e9cf44c5ab7",
+  "title": "test",
+  "created_at": "2025-03-18T11:45:43.220934",
+  "updated_at": "2025-03-18T11:46:50.836085",
+  "data": {
+    "type_contrat": [
+      "Image (droit à l'image)"
+    ],
+    "type_cession": "Gratuite",
+    "droits_cedes": [],
+    "exclusivite": false,
+    "auteur_type": "Personne physique",
+    "auteur_info": {
+      "gentille": "M.",
+      "nom": "azdaz",
+      "prenom": "dadaz",
+      "date_naissance": "1999-12-24",
+      "nationalite": "fdfs",
+      "adresse": "sfsdfsd"
+    },
+    "description_oeuvre": "photo\n",
+    "description_image": "sdfsdfsd",
+    "supports": [],
+    "remuneration": ""
+  }
+}

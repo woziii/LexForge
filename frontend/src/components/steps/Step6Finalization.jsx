@@ -1,15 +1,25 @@
 import React, { useState } from 'react';
-import { Download, Check } from 'lucide-react';
-import { generatePdf } from '../../services/api';
+import { useNavigate } from 'react-router-dom';
+import { Download, Check, Edit } from 'lucide-react';
+import { generatePdf, saveContract } from '../../services/api';
 
 const Step6Finalization = ({ contractData }) => {
   const [filename, setFilename] = useState('');
+  const [title, setTitle] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [generationSuccess, setGenerationSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [savedContractId, setSavedContractId] = useState(null);
+  
+  const navigate = useNavigate();
   
   const handleFilenameChange = (e) => {
     setFilename(e.target.value);
+  };
+  
+  const handleTitleChange = (e) => {
+    setTitle(e.target.value);
   };
   
   const handleGeneratePdf = async () => {
@@ -25,6 +35,27 @@ const Step6Finalization = ({ contractData }) => {
       setError('Une erreur est survenue lors de la génération du PDF. Veuillez réessayer.');
     } finally {
       setIsGenerating(false);
+    }
+  };
+  
+  const handleAccessEditor = async () => {
+    setIsSaving(true);
+    setError('');
+    
+    try {
+      // Sauvegarder le contrat avant d'accéder à l'éditeur si ce n'est pas déjà fait
+      if (!savedContractId) {
+        const result = await saveContract(contractData, title || 'Contrat sans titre');
+        setSavedContractId(result.id);
+        navigate(`/editor/${result.id}`);
+      } else {
+        navigate(`/editor/${savedContractId}`);
+      }
+    } catch (error) {
+      console.error('Error saving contract:', error);
+      setError('Une erreur est survenue lors de la sauvegarde du contrat. Veuillez réessayer.');
+    } finally {
+      setIsSaving(false);
     }
   };
   
@@ -125,29 +156,50 @@ const Step6Finalization = ({ contractData }) => {
       </div>
       
       <div className="mb-6">
-        <h3 className="text-lg font-medium text-gray-700 mb-3">Génération du contrat</h3>
+        <h3 className="text-lg font-medium text-gray-700 mb-3">Options de finalisation</h3>
         
-        <div className="mb-4">
-          <label htmlFor="filename" className="block text-sm font-medium text-gray-700 mb-1">
-            Nom du fichier (optionnel)
-          </label>
-          <input 
-            type="text" 
-            id="filename" 
-            className="input"
-            placeholder="Ex: Contrat_Cession_Droits_2023"
-            value={filename}
-            onChange={handleFilenameChange}
-          />
-          <p className="mt-1 text-sm text-gray-500">
-            Si non spécifié, le fichier sera nommé "contrat.pdf"
-          </p>
+        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm space-y-6">
+          <div>
+            <label htmlFor="filename" className="block text-sm font-medium text-gray-700 mb-1">
+              Nom du fichier PDF (optionnel)
+            </label>
+            <input 
+              type="text" 
+              id="filename" 
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              placeholder="Ex: Contrat_Cession_Droits_2023"
+              value={filename}
+              onChange={handleFilenameChange}
+            />
+            <p className="mt-1 text-sm text-gray-500">
+              Si non spécifié, le fichier sera nommé "contrat.pdf"
+            </p>
+          </div>
+          
+          <div>
+            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+              Titre du contrat (pour l'éditeur)
+            </label>
+            <input 
+              type="text" 
+              id="title" 
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              placeholder="Ex: Contrat de cession de droits d'auteur"
+              value={title}
+              onChange={handleTitleChange}
+            />
+            <p className="mt-1 text-sm text-gray-500">
+              Ce titre sera utilisé pour identifier votre contrat dans la liste des contrats.
+            </p>
+          </div>
         </div>
-        
+      </div>
+      
+      <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
         <button 
-          className={`w-full flex items-center justify-center py-3 px-4 rounded-md ${
+          className={`flex items-center justify-center py-3 px-4 rounded-md shadow-sm text-white font-medium transition-colors ${
             isFormComplete 
-              ? 'bg-green-600 hover:bg-green-700 text-white' 
+              ? 'bg-green-600 hover:bg-green-700' 
               : 'bg-gray-300 text-gray-500 cursor-not-allowed'
           }`}
           onClick={handleGeneratePdf}
@@ -161,33 +213,55 @@ const Step6Finalization = ({ contractData }) => {
           ) : (
             <>
               <Download size={18} className="mr-2" />
-              Télécharger le contrat au format PDF
+              Télécharger au format PDF
             </>
           )}
         </button>
         
-        {error && (
-          <div className="mt-4 bg-red-50 border-l-4 border-red-400 p-4">
-            <div className="flex">
-              <div className="ml-3">
-                <p className="text-sm text-red-700">{error}</p>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {generationSuccess && (
-          <div className="mt-4 bg-green-50 border-l-4 border-green-400 p-4">
-            <div className="flex">
-              <div className="ml-3">
-                <p className="text-sm text-green-700">
-                  Le contrat a été généré avec succès et le téléchargement devrait commencer automatiquement.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
+        <button 
+          className={`flex items-center justify-center py-3 px-4 rounded-md shadow-sm text-white font-medium transition-colors ${
+            isFormComplete 
+              ? 'bg-blue-600 hover:bg-blue-700' 
+              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+          }`}
+          onClick={handleAccessEditor}
+          disabled={!isFormComplete || isSaving}
+        >
+          {isSaving ? (
+            <>
+              <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white mr-2"></div>
+              Préparation de l'éditeur...
+            </>
+          ) : (
+            <>
+              <Edit size={18} className="mr-2" />
+              Accéder à l'éditeur
+            </>
+          )}
+        </button>
       </div>
+      
+      {error && (
+        <div className="mt-4 bg-red-50 border-l-4 border-red-400 p-4">
+          <div className="flex">
+            <div className="ml-3">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {generationSuccess && (
+        <div className="mt-4 bg-green-50 border-l-4 border-green-400 p-4">
+          <div className="flex">
+            <div className="ml-3">
+              <p className="text-sm text-green-700">
+                Le contrat a été généré avec succès et le téléchargement devrait commencer automatiquement.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
       
       <div className="mb-6">
         <h3 className="text-lg font-medium text-gray-700 mb-3">Informations importantes</h3>
@@ -207,4 +281,4 @@ const Step6Finalization = ({ contractData }) => {
   );
 };
 
-export default Step6Finalization; 
+export default Step6Finalization;

@@ -57,11 +57,79 @@ export const generatePdf = async (contractData, filename) => {
   }
 };
 
+// Nouvelles fonctions pour la gestion des contrats
+
+export const saveContract = async (contractData, title, id = null) => {
+  try {
+    const response = await api.post('/contracts', { contractData, title, id });
+    return response.data;
+  } catch (error) {
+    console.error('Error saving contract:', error);
+    throw error;
+  }
+};
+
+export const getContracts = async () => {
+  try {
+    const response = await api.get('/contracts');
+    return response.data.contracts;
+  } catch (error) {
+    console.error('Error fetching contracts:', error);
+    throw error;
+  }
+};
+
+export const getContractById = async (contractId) => {
+  try {
+    const response = await api.get(`/contracts/${contractId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching contract:', error);
+    throw error;
+  }
+};
+
+export const getContractElements = async (contractId) => {
+  try {
+    const response = await api.get(`/contracts/${contractId}/elements`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching contract elements:', error);
+    throw error;
+  }
+};
+
+export const updateContract = async (contractId, updates) => {
+  try {
+    const response = await api.put(`/contracts/${contractId}`, updates);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating contract:', error);
+    throw error;
+  }
+};
+
+export const deleteContract = async (contractId) => {
+  try {
+    const response = await api.delete(`/contracts/${contractId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting contract:', error);
+    throw error;
+  }
+};
+
 // Corriger l'avertissement ESLint en créant une variable pour l'export par défaut
 const apiService = {
   analyzeProject,
   previewContract,
   generatePdf,
+  saveContract,
+  getContracts,
+  getContractById,
+  getContractElements,
+  updateContract,
+  deleteContract
 };
 
-export default apiService; 
+export default apiService;
