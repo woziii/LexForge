@@ -28,12 +28,21 @@ module.exports = {
       },
       animation: {
         'fadeIn': 'fadeIn 0.2s ease-in-out',
+        'gradient-slow': 'gradientFlow 5s ease infinite',
       },
       keyframes: {
         fadeIn: {
           '0%': { opacity: '0' },
           '100%': { opacity: '1' },
         },
+        gradientFlow: {
+          '0%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
+          '100%': { backgroundPosition: '0% 50%' },
+        },
+      },
+      backgroundSize: {
+        'gradient-size': '200% 200%',
       },
     },
   },

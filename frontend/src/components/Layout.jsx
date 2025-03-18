@@ -29,7 +29,7 @@ const Layout = () => {
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 py-3 sm:py-4 sm:px-6 flex items-center justify-between">
           <div className="flex items-center">
-            <Link to="/" className="text-xl sm:text-2xl font-bold text-blue-700">LexForge</Link>
+            <Link to="/" className="text-xl sm:text-2xl font-black text-blue-700">LexForge</Link>
             <span className="ml-2 text-xs sm:text-sm bg-blue-100 text-blue-800 py-0.5 sm:py-1 px-1.5 sm:px-2 rounded-md">Beta</span>
           </div>
 
@@ -144,7 +144,7 @@ const Layout = () => {
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="mb-4 md:mb-0">
               <div className="flex items-center">
-                <div className="text-lg sm:text-xl font-bold text-white">LexForge</div>
+                <div className="text-lg sm:text-xl font-black text-white">LexForge</div>
                 <span className="ml-2 text-xs bg-gray-700 text-gray-300 py-0.5 px-2 rounded-md">Beta</span>
               </div>
               <p className="text-xs sm:text-sm text-gray-400 mt-1">Assistant de création de contrats juridiques</p>
