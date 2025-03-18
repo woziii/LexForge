@@ -1,19 +1,26 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { 
   Home, 
   FolderKanban, 
   FilePlus2, 
   InfoIcon, 
-  UserCircle 
+  UserCircle,
+  Menu,
+  X
 } from 'lucide-react';
 
 const Layout = () => {
   const location = useLocation();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   
   // Détermine si un lien est actif
   const isActive = (path) => {
     return location.pathname === path;
+  };
+  
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
   };
   
   return (
@@ -25,7 +32,20 @@ const Layout = () => {
             <Link to="/" className="text-2xl font-bold text-blue-700">LexForge</Link>
             <span className="ml-2 text-sm bg-blue-100 text-blue-800 py-1 px-2 rounded-md">Beta</span>
           </div>
-          <nav className="flex items-center space-x-6">
+
+          {/* Menu Hamburger pour mobile */}
+          <div className="md:hidden">
+            <button 
+              onClick={toggleMenu}
+              className="text-gray-500 hover:text-gray-700 focus:outline-none"
+              aria-label={isMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
+            >
+              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
+
+          {/* Navigation desktop */}
+          <nav className="hidden md:flex items-center space-x-6">
             <Link
               to="/"
               className={`flex items-center ${isActive('/') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
@@ -62,6 +82,55 @@ const Layout = () => {
             </button>
           </nav>
         </div>
+
+        {/* Menu mobile */}
+        {isMenuOpen && (
+          <div className="md:hidden bg-white border-t border-gray-200 py-2">
+            <div className="flex flex-col px-4 space-y-3">
+              <Link
+                to="/"
+                className={`flex items-center py-2 ${isActive('/') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <Home size={18} className="mr-2" strokeWidth={2} />
+                <span>Accueil</span>
+              </Link>
+              <Link
+                to="/wizard"
+                className={`flex items-center py-2 ${isActive('/wizard') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <FilePlus2 size={18} className="mr-2" strokeWidth={2} />
+                <span>Générateur</span>
+              </Link>
+              <Link
+                to="/contracts"
+                className={`flex items-center py-2 ${isActive('/contracts') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <FolderKanban size={18} className="mr-2" strokeWidth={2} />
+                <span>Contrats</span>
+              </Link>
+              <Link
+                to="/about"
+                className={`flex items-center py-2 ${isActive('/about') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <InfoIcon size={18} className="mr-2" strokeWidth={2} />
+                <span>À propos</span>
+              </Link>
+              <div className="border-t border-gray-100 pt-2">
+                <button 
+                  className="flex items-center py-2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                  aria-label="Profil utilisateur"
+                >
+                  <UserCircle size={20} className="mr-2" strokeWidth={2} />
+                  <span>Profil</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </header>
       
       {/* Contenu principal */}

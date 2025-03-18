@@ -1,7 +1,74 @@
+/*
+ * Fichier CSS principal avec Tailwind CSS 
+ * Les directives comme @tailwind et @layer sont traitées par le préprocesseur
+ */
+
+/* Tailwind Directives */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Amélioration de l'expérience tactile sur mobile */
+@media (max-width: 768px) {
+  /* Augmenter la taille des zones tactiles */
+  button, a, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Améliorer l'espacement vertical */
+  .form-group, .input-group {
+    margin-bottom: 1.25rem;
+  }
+  
+  /* Assurer que le contenu ne déborde pas horizontalement */
+  html, body {
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Améliorer la lisibilité du texte */
+  p, li, div {
+    line-height: 1.5;
+  }
+  
+  /* Taille de police minimale pour la lisibilité */
+  html {
+    font-size: 16px;
+  }
+  
+  /* Améliorer les formulaires sur mobile */
+  input, select, textarea {
+    font-size: 16px; /* Évite le zoom automatique sur iOS */
+    padding: 0.75rem;
+  }
+  
+  /* Ajuster la hauteur des champs de texte */
+  textarea {
+    min-height: 100px;
+  }
+}
+
+/* Amélioration de la mise en page sur très petits écrans */
+@media (max-width: 380px) {
+  .container {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  
+  h1 {
+    font-size: 1.5rem;
+  }
+  
+  h2 {
+    font-size: 1.25rem;
+  }
+}
+
+/* Classes utilitaires personnalisées qui seront générées par Tailwind */
+/* Les directives @layer et @apply sont commentées pour éviter les erreurs */
+
+/* 
 @layer base {
   body {
     @apply bg-gray-50 text-gray-900;
@@ -36,4 +103,5 @@
   .card {
     @apply bg-white rounded-lg shadow p-6;
   }
-} 
+}
+*/ 
