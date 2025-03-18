@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
-  Save, Download, ChevronLeft, CheckCircle, AlertCircle, Settings, Eye, 
+  ChevronLeft, Save, Download, Settings, CheckCircle, AlertCircle, 
   Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, 
   ArrowUp, ArrowDown, Maximize, Minimize, MessageCircle, X,
   Moon, Sun, Edit, ChevronUp, ChevronDown
@@ -30,6 +30,7 @@ const ContractEditorPage = () => {
   const [showCommentPanel, setShowCommentPanel] = useState(false);
   const [comments, setComments] = useState([]);
   const [showMobileSections, setShowMobileSections] = useState(false);
+  const [isPdfGenerating, setIsPdfGenerating] = useState(false);
   
   // Récupérer les informations du contrat
   useEffect(() => {
@@ -102,13 +103,26 @@ const ContractEditorPage = () => {
   };
   
   const handleDownloadPdf = async () => {
-    if (!contract) return;
-    
     try {
-      await generatePdf(contract.data, title);
+      setIsPdfGenerating(true);
+      const response = await generatePdf(contractId);
+      
+      // Créer un lien de téléchargement
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${title || 'contrat'}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      
+      // Nettoyer
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('Error generating PDF:', error);
-      setError('Impossible de générer le PDF. Veuillez réessayer plus tard.');
+      console.error('Erreur lors de la génération du PDF', error);
+      setError("Impossible de générer le PDF du contrat.");
+    } finally {
+      setIsPdfGenerating(false);
     }
   };
   
@@ -160,8 +174,8 @@ const ContractEditorPage = () => {
         const selectedText = selection.toString();
         
         // Appliquer le formatage uniquement au texte sélectionné
-        switch (format) {
-          case 'bold':
+      switch (format) {
+        case 'bold':
             // Vérifier si le texte est déjà en gras (entouré de balises <strong>)
             if (text.includes(`<strong>${selectedText}</strong>`)) {
               // Enlever le formatage gras
@@ -170,8 +184,8 @@ const ContractEditorPage = () => {
               // Ajouter le formatage gras
               newText = text.replace(selectedText, `<strong>${selectedText}</strong>`);
             }
-            break;
-          case 'italic':
+          break;
+        case 'italic':
             // Vérifier si le texte est déjà en italique
             if (text.includes(`<em>${selectedText}</em>`)) {
               // Enlever le formatage italique
@@ -180,8 +194,8 @@ const ContractEditorPage = () => {
               // Ajouter le formatage italique
               newText = text.replace(selectedText, `<em>${selectedText}</em>`);
             }
-            break;
-          case 'underline':
+          break;
+        case 'underline':
             // Vérifier si le texte est déjà souligné
             if (text.includes(`<u>${selectedText}</u>`)) {
               // Enlever le soulignement
@@ -190,9 +204,9 @@ const ContractEditorPage = () => {
               // Ajouter le soulignement
               newText = text.replace(selectedText, `<u>${selectedText}</u>`);
             }
-            break;
-          default:
-            break;
+          break;
+        default:
+          break;
         }
       } else {
         // Si aucun texte n'est sélectionné, ne rien faire
@@ -362,172 +376,38 @@ const ContractEditorPage = () => {
   const renderCommentPanel = () => {
     if (!showCommentPanel) return null;
     
-    const relevantComments = selectedElementIndex !== null
-      ? comments.filter(comment => comment.elementIndex === selectedElementIndex)
-      : comments;
-    
     return (
-      <div className="bg-white border-l border-gray-200 w-80 p-4 overflow-y-auto h-full">
+      <div className="bg-white border-l border-gray-200 w-64 md:w-80 p-4 overflow-y-auto h-full">
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-medium text-gray-800">Commentaires</h3>
-          <button 
-            className="text-gray-500 hover:text-gray-700"
-            onClick={() => setShowCommentPanel(false)}
-          >
-            <X size={18} />
+          <button onClick={() => setShowCommentPanel(false)} className="p-1 rounded-full hover:bg-gray-100">
+            <X size={16} />
           </button>
         </div>
         
-        {relevantComments.length === 0 ? (
-          <p className="text-gray-500 text-center">Aucun commentaire</p>
+        {comments.length === 0 ? (
+          <div className="text-gray-500 text-sm p-4 text-center">
+            Aucun commentaire pour ce contrat
+          </div>
         ) : (
-          <div className="space-y-4">
-            {relevantComments.map(comment => (
-              <div key={comment.id} className="bg-yellow-50 border-l-4 border-yellow-300 p-3 rounded">
-                <div className="flex justify-between text-xs text-gray-500 mb-1">
-                  <span>{comment.author}</span>
-                  <span>{new Date(comment.date).toLocaleDateString()}</span>
-                </div>
-                <div 
-                  className="text-sm"
-                  contentEditable
-                  suppressContentEditableWarning
-                  onBlur={(e) => updateComment(comment.id, e.target.innerText)}
-                  dangerouslySetInnerHTML={{ __html: comment.text }}
-                ></div>
-                <div className="flex justify-end mt-2">
+          <ul className="space-y-4">
+            {comments.map((comment, index) => (
+              <li key={index} className="bg-gray-50 rounded-lg p-3">
+                <div className="flex justify-between items-start">
+                  <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full mb-2">Section {comment.elementIndex + 1}</span>
                   <button 
-                    className="text-xs text-red-500 hover:text-red-700"
                     onClick={() => deleteComment(comment.id)}
+                    className="text-gray-400 hover:text-gray-600"
                   >
-                    Supprimer
+                    <X size={14} />
                   </button>
                 </div>
-              </div>
+                <p className="text-gray-700 text-sm">{comment.text}</p>
+                <span className="text-gray-400 text-xs mt-2 block">Ajouté le {new Date(comment.date).toLocaleString()}</span>
+              </li>
             ))}
-          </div>
+          </ul>
         )}
-      </div>
-    );
-  };
-  
-  const renderEditorToolbar = () => {
-    return (
-      <div className="bg-white border-b border-gray-200 p-2 flex items-center space-x-1">
-        <div className="flex space-x-1 mr-4">
-          <button 
-            title="Gras"
-            className="p-1.5 rounded hover:bg-gray-100"
-            onClick={() => applyFormatting('bold')}
-          >
-            <Bold size={16} />
-          </button>
-          <button 
-            title="Italique"
-            className="p-1.5 rounded hover:bg-gray-100"
-            onClick={() => applyFormatting('italic')}
-          >
-            <Italic size={16} />
-          </button>
-          <button 
-            title="Souligné"
-            className="p-1.5 rounded hover:bg-gray-100"
-            onClick={() => applyFormatting('underline')}
-          >
-            <Underline size={16} />
-          </button>
-        </div>
-        
-        <div className="flex space-x-1 mr-4">
-          <button 
-            title="Aligner à gauche"
-            className="p-1.5 rounded hover:bg-gray-100"
-          >
-            <AlignLeft size={16} />
-          </button>
-          <button 
-            title="Centrer"
-            className="p-1.5 rounded hover:bg-gray-100"
-          >
-            <AlignCenter size={16} />
-          </button>
-          <button 
-            title="Aligner à droite"
-            className="p-1.5 rounded hover:bg-gray-100"
-          >
-            <AlignRight size={16} />
-          </button>
-        </div>
-        
-        <div className="flex space-x-1 mr-4">
-          <select 
-            className="text-sm border border-gray-200 rounded p-1"
-            value={fontSize}
-            onChange={(e) => changeFontSize(e.target.value)}
-          >
-            <option value="small">Petit</option>
-            <option value="normal">Normal</option>
-            <option value="large">Grand</option>
-          </select>
-        </div>
-        
-        <div className="flex space-x-1 mr-4">
-          <button 
-            title="Ajouter un commentaire"
-            className={`p-1.5 rounded ${selectedElementIndex !== null ? 'hover:bg-gray-100 text-gray-700' : 'text-gray-300 cursor-not-allowed'}`}
-            onClick={addComment}
-            disabled={selectedElementIndex === null}
-          >
-            <MessageCircle size={16} />
-          </button>
-        </div>
-        
-        <div className="flex space-x-1">
-          <button 
-            title={isFullscreen ? "Quitter le mode plein écran" : "Mode plein écran"}
-            className="p-1.5 rounded hover:bg-gray-100"
-            onClick={toggleFullscreen}
-          >
-            {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
-          </button>
-          <button 
-            title={`Passer au thème ${currentTheme === 'light' ? 'sombre' : 'clair'}`}
-            className="p-1.5 rounded hover:bg-gray-100"
-            onClick={toggleTheme}
-          >
-            {currentTheme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
-          </button>
-        </div>
-      </div>
-    );
-  };
-  
-  const renderSectionList = () => {
-    const sections = getSections();
-    
-    return (
-      <div className="bg-white border-r border-gray-200 w-60 p-4 overflow-y-auto h-full">
-        <h3 className="font-medium text-gray-800 mb-4">Sections du contrat</h3>
-        <ul className="space-y-2">
-          {sections.map((section) => (
-            <li 
-              key={section.index}
-              className={`p-2 text-sm rounded cursor-pointer transition-colors ${selectedSection === section.index ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50'}`}
-              onClick={() => {
-                setSelectedSection(section.index);
-                setSelectedElementIndex(section.index);
-                
-                // Faire défiler jusqu'à cette section
-                const element = document.getElementById(`element-${section.index}`);
-                if (element) {
-                  element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-              }}
-            >
-              {section.text.substring(0, 40)}...
-            </li>
-          ))}
-        </ul>
       </div>
     );
   };
@@ -806,7 +686,7 @@ const ContractEditorPage = () => {
           <div className={`${showCommentPanel ? 'block' : 'hidden'} sm:block bg-white border-l border-gray-200 w-full sm:w-64 md:w-80 ${
             showCommentPanel && comments.length > 0 ? 'fixed inset-0 z-30 sm:static' : ''
           }`}>
-            {renderCommentPanel()}
+          {renderCommentPanel()}
           </div>
           
           {/* Overlay pour fermer le panneau de commentaires sur mobile */}
