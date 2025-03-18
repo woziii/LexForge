@@ -119,7 +119,7 @@ const Step1ProjectDescription = ({ contractData, updateContractData }) => {
             onChange={handleDescriptionChange}
           ></textarea>
           <button 
-            className="absolute bottom-3 right-3 p-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-md hover:shadow-md transition-all flex items-center group"
+            className="absolute bottom-3 right-3 p-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-md hover:shadow-md transition-all items-center group hidden md:flex"
             onClick={handleAnalyzeProject}
             disabled={isAnalyzing}
           >
@@ -136,6 +136,26 @@ const Step1ProjectDescription = ({ contractData, updateContractData }) => {
             )}
           </button>
         </div>
+        
+        {/* Bouton d'analyse pour mobile */}
+        <button 
+          className="mt-3 w-full p-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-md hover:shadow-md transition-all flex items-center justify-center group md:hidden"
+          onClick={handleAnalyzeProject}
+          disabled={isAnalyzing}
+        >
+          {isAnalyzing ? (
+            <div className="flex items-center">
+              <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-1"></div>
+              <span className="text-sm">Analyse en cours...</span>
+            </div>
+          ) : (
+            <>
+              <Search size={16} className="mr-2 group-hover:animate-pulse" />
+              <span className="text-sm">Analyser mon projet</span>
+            </>
+          )}
+        </button>
+        
         <div className="flex items-center mt-2">
           <Lightbulb size={14} className="text-amber-500 mr-1" />
           <p className="text-xs text-gray-500">
