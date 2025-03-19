@@ -23,7 +23,7 @@ const HomePage = () => {
               <FileSignature className="h-8 w-8 sm:h-12 sm:w-12 text-white" strokeWidth={1.5} />
             </div>
             
-            <h1 className="text-7xl sm:text-9xl font-black mb-10 sm:mb-12 bg-clip-text text-transparent bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-500 tracking-tight py-6 px-2 leading-tight drop-shadow-xl animate-gradient-slow bg-gradient-size">
+            <h1 className="text-7xl sm:text-9xl font-black mb-10 sm:mb-12 bg-clip-text text-transparent bg-gradient-to-r from-blue-500 via-cyan-400 to-indigo-500 tracking-tight py-6 px-2 leading-tight drop-shadow-xl animate-gradient-slow bg-gradient-size">
               LexForge
             </h1>
           </div>
