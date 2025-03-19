@@ -29,6 +29,7 @@ module.exports = {
       animation: {
         'fadeIn': 'fadeIn 0.2s ease-in-out',
         'gradient-slow': 'gradientFlow 5s ease infinite',
+        'slideIn': 'slideIn 0.3s ease-in-out',
       },
       keyframes: {
         fadeIn: {
@@ -39,6 +40,10 @@ module.exports = {
           '0%': { backgroundPosition: '0% 50%' },
           '50%': { backgroundPosition: '100% 50%' },
           '100%': { backgroundPosition: '0% 50%' },
+        },
+        slideIn: {
+          '0%': { transform: 'translateX(100%)' },
+          '100%': { transform: 'translateX(0)' },
         },
       },
       backgroundSize: {

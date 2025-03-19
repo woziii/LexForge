@@ -4,9 +4,10 @@ import {
   ChevronLeft, Save, Download, Settings, CheckCircle, AlertCircle, 
   Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, 
   ArrowUp, ArrowDown, Maximize, Minimize, MessageCircle, X,
-  Moon, Sun, ChevronUp, ChevronRight
+  Moon, Sun, ChevronUp, ChevronRight, MessageSquarePlus
 } from 'lucide-react';
 import { getContractById, getContractElements, updateContract, generatePdf } from '../services/api';
+import EditorFloatingDock from '../components/ui/editor-floating-dock';
 
 const ContractEditorPage = () => {
   const { contractId } = useParams();
@@ -348,7 +349,11 @@ const ContractEditorPage = () => {
       const className = getElementStyle(element.style);
       const text = editedElements[index] !== undefined ? editedElements[index] : element.text;
       const isSelected = selectedElementIndex === index;
-      const hasComment = comments.some(comment => comment.elementIndex === index);
+      
+      // Vérifier si l'élément a des commentaires et combien
+      const elementComments = comments.filter(comment => comment.elementIndex === index);
+      const hasComments = elementComments.length > 0;
+      const commentCount = elementComments.length;
       
       // Classe CSS pour la taille de police
       let fontSizeClass = '';
@@ -359,43 +364,63 @@ const ContractEditorPage = () => {
       return (
         <div 
           key={`paragraph-${index}`}
-          className={`relative group ${className} ${fontSizeClass} ${isSelected ? 'bg-blue-50 border-l-4 border-blue-500 pl-2' : ''} hover:bg-gray-50 transition-colors py-1 rounded`}
+          className={`relative group ${className} ${fontSizeClass} ${isSelected ? 'bg-blue-50 dark:bg-blue-900/30 border-l-4 border-blue-500 pl-2' : ''} hover:bg-gray-50 dark:hover:bg-neutral-800/50 transition-colors py-1 rounded`}
           onClick={() => handleElementClick(index)}
         >
           <div 
-            className={`w-full min-h-[1.5em] ${hasComment ? 'border-r-4 border-yellow-300' : ''}`}
+            className={`w-full min-h-[1.5em] ${hasComments ? 'pr-7' : ''}`}
             contentEditable={element.style !== 'ContractTitle'} // Titres non éditables pour cet exemple
             suppressContentEditableWarning={true}
             onBlur={(e) => handleElementChange(index, e.currentTarget.innerHTML)}
             dangerouslySetInnerHTML={{ __html: text }}
           ></div>
           
-          {hasComment && (
-            <div className="absolute right-0 top-0 text-yellow-500">
-              <MessageCircle size={16} />
-            </div>
+          {/* Indicateur de commentaires amélioré avec l'icône cercle */}
+          {hasComments && (
+            <button 
+              className="absolute right-0 top-0 flex items-center justify-center h-full px-1 group-hover:bg-gray-100 dark:group-hover:bg-neutral-700 rounded-r"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowCommentPanel(true);
+                // Faire défiler jusqu'au commentaire dans le panneau si possible
+              }}
+              title={`${commentCount} commentaire${commentCount > 1 ? 's' : ''}`}
+            >
+              <div className="relative">
+                <MessageCircle size={16} className="text-yellow-500 dark:text-yellow-400" />
+                {commentCount > 1 && (
+                  <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full">
+                    {commentCount}
+                  </span>
+                )}
+              </div>
+            </button>
           )}
           
+          {/* Barre d'outils contextuelle sur hover */}
           {isSelected && (
-            <div className="absolute right-0 top-0 hidden group-hover:flex bg-white border border-gray-200 rounded-md shadow-sm p-1">
+            <div className="absolute -right-1 -top-8 hidden group-hover:flex bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-lg shadow-sm">
               <button 
                 title="Déplacer vers le haut"
-                className="p-1 text-gray-500 hover:text-blue-600"
+                className="p-1.5 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400"
                 onClick={(e) => { e.stopPropagation(); moveElement(index, 'up'); }}
               >
                 <ArrowUp size={14} />
               </button>
               <button 
                 title="Déplacer vers le bas"
-                className="p-1 text-gray-500 hover:text-blue-600"
+                className="p-1.5 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400"
                 onClick={(e) => { e.stopPropagation(); moveElement(index, 'down'); }}
               >
                 <ArrowDown size={14} />
               </button>
               <button 
                 title="Ajouter un commentaire"
-                className="p-1 text-gray-500 hover:text-blue-600"
-                onClick={(e) => { e.stopPropagation(); addComment(index, text); }}
+                className="p-1.5 text-gray-500 hover:text-yellow-500 dark:text-gray-400 dark:hover:text-yellow-400"
+                onClick={(e) => { 
+                  e.stopPropagation();
+                  handleAddComment();
+                }}
               >
                 <MessageCircle size={14} />
               </button>
@@ -408,40 +433,174 @@ const ContractEditorPage = () => {
     return null;
   };
   
+  // Améliorer le rendu des commentaires pour un meilleur visuel
   const renderCommentPanel = () => {
-    if (!showCommentPanel) return null;
+    // Trier les commentaires par section pour un affichage plus organisé
+    const commentsBySection = {};
     
+    comments.forEach(comment => {
+      if (!commentsBySection[comment.elementIndex]) {
+        commentsBySection[comment.elementIndex] = [];
+      }
+      commentsBySection[comment.elementIndex].push(comment);
+    });
+
     return (
-      <div className="bg-white border-l border-gray-200 w-64 md:w-80 p-4 overflow-y-auto h-full">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="font-medium text-gray-800">Commentaires</h3>
-          <button onClick={() => setShowCommentPanel(false)} className="p-1 rounded-full hover:bg-gray-100">
+      <div className="bg-white dark:bg-neutral-800 h-full overflow-y-auto">
+        <div className="sticky top-0 z-10 flex justify-between items-center p-4 bg-white dark:bg-neutral-800 border-b border-gray-200 dark:border-neutral-700">
+          <h3 className="font-medium text-gray-800 dark:text-gray-200">Commentaires ({comments.length})</h3>
+          <button 
+            onClick={() => setShowCommentPanel(false)}
+            className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-neutral-700 text-gray-500 dark:text-gray-400"
+            aria-label="Fermer les commentaires"
+          >
             <X size={16} />
           </button>
         </div>
         
         {comments.length === 0 ? (
-          <div className="text-gray-500 text-sm p-4 text-center">
-            Aucun commentaire pour ce contrat
+          <div className="text-gray-500 dark:text-gray-400 text-sm p-8 text-center flex flex-col items-center">
+            <MessageCircle size={24} className="mb-2 opacity-50" />
+            <p>Aucun commentaire</p>
+            <p className="text-xs mt-1">Sélectionnez du texte et utilisez l'outil de commentaire</p>
           </div>
         ) : (
-          <ul className="space-y-4">
-            {comments.map((comment, index) => (
-              <li key={index} className="bg-gray-50 rounded-lg p-3">
-                <div className="flex justify-between items-start">
-                  <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full mb-2">Section {comment.elementIndex + 1}</span>
-                  <button 
-                    onClick={() => deleteComment(comment.id)}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    <X size={14} />
-                  </button>
+          <div className="p-4">
+            {Object.keys(commentsBySection).map(sectionIndex => (
+              <div key={sectionIndex} className="mb-6">
+                <div 
+                  className="text-xs font-medium text-blue-600 dark:text-blue-400 mb-2 flex items-center cursor-pointer"
+                  onClick={() => handleElementClick(parseInt(sectionIndex))}
+                >
+                  <span className="mr-1">Section {parseInt(sectionIndex) + 1}</span>
+                  <ChevronRight size={14} />
                 </div>
-                <p className="text-gray-700 text-sm">{comment.text}</p>
-                <span className="text-gray-400 text-xs mt-2 block">Ajouté le {new Date(comment.date).toLocaleString()}</span>
-              </li>
+                
+                <div className="space-y-3">
+                  {commentsBySection[sectionIndex].map(comment => (
+                    <div 
+                      key={comment.id} 
+                      className="bg-gray-50 dark:bg-neutral-700 rounded-lg p-3 border border-gray-100 dark:border-neutral-600 hover:border-blue-200 dark:hover:border-blue-500 transition-colors"
+                    >
+                      {comment.isEditing ? (
+                        <div>
+                          {comment.selectedText && (
+                            <div className="bg-yellow-50 dark:bg-yellow-900/20 p-2 rounded-t border border-yellow-200 dark:border-yellow-800 text-gray-700 dark:text-gray-300 text-sm font-medium mb-0 overflow-hidden">
+                              <span className="block text-xs text-yellow-600 dark:text-yellow-400 font-medium mb-1">Texte sélectionné :</span>
+                              "{comment.selectedText}"
+                            </div>
+                          )}
+                          
+                          <textarea
+                            className={`w-full px-3 py-2 text-sm border border-gray-300 dark:border-neutral-600 ${comment.selectedText ? 'rounded-b border-t-0' : 'rounded'} bg-white dark:bg-neutral-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500`}
+                            value={comment.text}
+                            onChange={(e) => {
+                              const updatedComments = comments.map(c => 
+                                c.id === comment.id ? {...c, text: e.target.value} : c
+                              );
+                              setComments(updatedComments);
+                            }}
+                            placeholder="Ajoutez votre commentaire ici..."
+                            rows={3}
+                            autoFocus
+                          />
+                          
+                          <div className="flex justify-end space-x-2 mt-2">
+                            <button
+                              className="px-2 py-1 text-xs rounded border border-gray-300 dark:border-neutral-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-neutral-700"
+                              onClick={() => {
+                                // Si c'est un nouveau commentaire sans texte, on le supprime lors de l'annulation
+                                if (!comment.text.trim()) {
+                                  setComments(comments.filter(c => c.id !== comment.id));
+                                } else {
+                                  const updatedComments = comments.map(c => 
+                                    c.id === comment.id ? {...c, isEditing: false} : c
+                                  );
+                                  setComments(updatedComments);
+                                }
+                              }}
+                            >
+                              Annuler
+                            </button>
+                            
+                            <button
+                              className="px-2 py-1 text-xs rounded bg-blue-600 text-white hover:bg-blue-700"
+                              onClick={() => {
+                                // Si le commentaire est vide, on le supprime
+                                if (!comment.text.trim()) {
+                                  setComments(comments.filter(c => c.id !== comment.id));
+                                } else {
+                                  const updatedComments = comments.map(c => 
+                                    c.id === comment.id ? {...c, isEditing: false, date: new Date().toISOString()} : c
+                                  );
+                                  setComments(updatedComments);
+                                }
+                              }}
+                            >
+                              Enregistrer
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <div className="flex justify-between items-start">
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              {new Date(comment.date).toLocaleString('fr-FR', {
+                                day: 'numeric',
+                                month: 'short',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </span>
+                            
+                            <div className="flex space-x-1">
+                              <button
+                                onClick={() => {
+                                  const updatedComments = comments.map(c => 
+                                    c.id === comment.id ? {...c, isEditing: true} : c
+                                  );
+                                  setComments(updatedComments);
+                                }}
+                                className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                                title="Modifier"
+                              >
+                                <span className="sr-only">Modifier</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
+                                </svg>
+                              </button>
+                              
+                              <button
+                                onClick={() => deleteComment(comment.id)}
+                                className="p-1 text-gray-400 hover:text-red-500"
+                                title="Supprimer"
+                              >
+                                <span className="sr-only">Supprimer</span>
+                                <X size={14} />
+                              </button>
+                            </div>
+                          </div>
+                          
+                          {comment.selectedText && (
+                            <div className="bg-yellow-50 dark:bg-yellow-900/20 p-2 rounded-t border border-yellow-200 dark:border-yellow-800 text-gray-700 dark:text-gray-300 text-sm font-medium mb-0 overflow-hidden">
+                              <span className="block text-xs text-yellow-600 dark:text-yellow-400 font-medium mb-1">Texte sélectionné :</span>
+                              "{comment.selectedText}"
+                            </div>
+                          )}
+                          
+                          <div className={`bg-white dark:bg-neutral-800 p-2 rounded-b border border-gray-200 dark:border-neutral-700 text-gray-700 dark:text-gray-200 text-sm mb-1 ${comment.selectedText ? 'border-t-0 mt-0' : 'rounded-t'}`}>
+                            <p className="whitespace-pre-wrap">
+                              {comment.text}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
       </div>
     );
@@ -449,6 +608,45 @@ const ContractEditorPage = () => {
   
   const toggleMobileMenu = () => {
     setShowMobileMenu(!showMobileMenu);
+  };
+  
+  // Modifier la fonction handleAddComment pour créer un format plus clair
+  const handleAddComment = () => {
+    // Vérifier si un élément est sélectionné
+    if (selectedElementIndex !== null) {
+      // Créer un nouveau commentaire
+      const selection = window.getSelection();
+      const selectedText = selection && selection.toString() 
+        ? selection.toString() 
+        : '';
+      
+      // Créer un nouveau commentaire avec une meilleure séparation visuelle
+      const newComment = {
+        id: Date.now().toString(),
+        elementIndex: selectedElementIndex,
+        text: "", // Le texte sera ajouté par l'utilisateur
+        date: new Date().toISOString(),
+        user: "Utilisateur",
+        selectedText: selectedText,
+        isEditing: true
+      };
+      
+      // Ajouter le commentaire et afficher le panneau
+      setComments([...comments, newComment]);
+      setShowCommentPanel(true);
+      
+      // Animation subtile pour indiquer que le commentaire a été ajouté
+      setSelectedElementIndex(selectedElementIndex);
+    } else {
+      // Informer l'utilisateur qu'il doit sélectionner un élément
+      setError("Veuillez sélectionner un élément du contrat pour ajouter un commentaire.");
+      setTimeout(() => setError(null), 3000);
+    }
+  };
+  
+  // Fonction pour afficher/masquer les commentaires
+  const toggleComments = () => {
+    setShowCommentPanel(!showCommentPanel);
   };
   
   if (isLoading) {
@@ -480,7 +678,7 @@ const ContractEditorPage = () => {
   }
   
   return (
-    <div className={`min-h-screen bg-gray-50 flex flex-col ${isFullscreen ? 'overflow-hidden' : ''}`} ref={editorRef}>
+    <div className={`min-h-screen bg-gray-50 dark:bg-neutral-900 flex flex-col ${isFullscreen ? 'overflow-hidden' : ''}`} ref={editorRef}>
       {/* En-tête */}
       <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3">
@@ -631,55 +829,9 @@ const ContractEditorPage = () => {
         {/* Contenu principal */}
         <div className="flex-1 overflow-y-auto p-4">
           {activeTab === 'editor' ? (
-            <div className={`bg-white rounded-lg shadow-sm border border-gray-200 max-w-4xl mx-auto ${fontSize === 'small' ? 'text-sm' : fontSize === 'large' ? 'text-lg' : 'text-base'}`}>
-              {/* Barre d'outils */}
-              <div className="border-b border-gray-200 px-4 py-2 flex justify-between items-center flex-wrap gap-y-2">
-                <div className="flex space-x-1 flex-wrap">
-                  <button 
-                    onClick={() => applyFormatting('bold')}
-                    className="p-1.5 rounded-md hover:bg-gray-100 text-gray-700"
-                    title="Gras"
-                  >
-                    <Bold size={16} />
-                  </button>
-                  <button 
-                    onClick={() => applyFormatting('italic')}
-                    className="p-1.5 rounded-md hover:bg-gray-100 text-gray-700"
-                    title="Italique"
-                  >
-                    <Italic size={16} />
-                  </button>
-                  <button 
-                    onClick={() => applyFormatting('underline')}
-                    className="p-1.5 rounded-md hover:bg-gray-100 text-gray-700"
-                    title="Souligné"
-                  >
-                    <Underline size={16} />
-                  </button>
-                  <span className="border-r border-gray-200 mx-1"></span>
-                  <button 
-                    onClick={() => applyFormatting('alignLeft')}
-                    className="p-1.5 rounded-md hover:bg-gray-100 text-gray-700"
-                    title="Aligner à gauche"
-                  >
-                    <AlignLeft size={16} />
-                  </button>
-                  <button 
-                    onClick={() => applyFormatting('alignCenter')}
-                    className="p-1.5 rounded-md hover:bg-gray-100 text-gray-700"
-                    title="Centrer"
-                  >
-                    <AlignCenter size={16} />
-                  </button>
-                  <button 
-                    onClick={() => applyFormatting('alignRight')}
-                    className="p-1.5 rounded-md hover:bg-gray-100 text-gray-700"
-                    title="Aligner à droite"
-                  >
-                    <AlignRight size={16} />
-                  </button>
-                </div>
-                
+            <div className={`bg-white dark:bg-neutral-800 rounded-lg shadow-sm border border-gray-200 dark:border-neutral-700 max-w-4xl mx-auto ${fontSize === 'small' ? 'text-sm' : fontSize === 'large' ? 'text-lg' : 'text-base'}`}>
+              {/* En-tête minimaliste avec options essentielles uniquement */}
+              <div className="border-b border-gray-200 px-4 py-2 flex justify-end items-center">
                 <div className="flex items-center space-x-2">
                   <select 
                     className="text-sm border border-gray-300 rounded-md py-1 pl-2 pr-6 bg-white"
@@ -706,14 +858,6 @@ const ContractEditorPage = () => {
                   >
                     {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
                   </button>
-                  
-                  <button
-                    onClick={() => setShowCommentPanel(!showCommentPanel)}
-                    className={`p-1.5 rounded-md hover:bg-gray-100 ${showCommentPanel ? 'text-blue-600 bg-blue-50' : 'text-gray-700'}`}
-                    title="Commentaires"
-                  >
-                    <MessageCircle size={16} />
-                  </button>
                 </div>
               </div>
               
@@ -729,6 +873,15 @@ const ContractEditorPage = () => {
                   </div>
                 )}
               </div>
+              
+              {/* Ajouter le EditorFloatingDock pour les contrôles flottants */}
+              <EditorFloatingDock 
+                onFormat={applyFormatting}
+                onSave={handleSave}
+                onAddComment={handleAddComment}
+                onToggleComments={toggleComments}
+                showComments={showCommentPanel}
+              />
             </div>
           ) : (
             // Afficher les paramètres ici
@@ -808,21 +961,20 @@ const ContractEditorPage = () => {
           )}
         </div>
         
-        {/* Panneau de commentaires */}
+        {/* Panneau de commentaires - version améliorée */}
         {showCommentPanel && activeTab === 'editor' && (
-          <aside className="fixed inset-y-0 right-0 w-full sm:w-80 bg-white border-l border-gray-200 z-40 overflow-y-auto p-4 pt-20 sm:pt-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-medium text-gray-900">Commentaires</h2>
-              <button 
-                className="p-1.5 text-gray-500 hover:text-gray-700 bg-gray-100 rounded-md"
-                onClick={() => setShowCommentPanel(false)}
-              >
-                <X size={16} />
-              </button>
-            </div>
-            
+          <aside className="w-0 md:w-80 flex-shrink-0 border-l border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 transition-all duration-300 ease-in-out overflow-hidden">
             {renderCommentPanel()}
           </aside>
+        )}
+        
+        {/* Panneau de commentaires mobile */}
+        {showCommentPanel && activeTab === 'editor' && (
+          <div className="md:hidden fixed inset-0 bg-black bg-opacity-30 z-50 flex justify-end">
+            <div className="w-full max-w-xs bg-white dark:bg-neutral-800 h-full animate-slideIn">
+              {renderCommentPanel()}
+            </div>
+          </div>
         )}
       </main>
       
