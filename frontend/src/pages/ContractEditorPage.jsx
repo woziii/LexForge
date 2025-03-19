@@ -835,7 +835,7 @@ const ContractEditorPage = () => {
                     {commentCount}
                   </span>
                 )}
-              </div>
+            </div>
             </button>
           )}
           
@@ -899,7 +899,7 @@ const ContractEditorPage = () => {
       }
       commentsBySection[comment.elementIndex].push(comment);
     });
-
+    
     return (
       <div className="bg-white dark:bg-neutral-800 h-full overflow-y-auto">
         <div className="sticky top-0 z-10 flex justify-between items-center p-4 bg-white dark:bg-neutral-800 border-b border-gray-200 dark:border-neutral-700">
@@ -998,7 +998,7 @@ const ContractEditorPage = () => {
                         </div>
                       ) : (
                         <div>
-                          <div className="flex justify-between items-start">
+                <div className="flex justify-between items-start">
                             <span className="text-xs text-gray-500 dark:text-gray-400">
                               {new Date(comment.date).toLocaleString('fr-FR', {
                                 day: 'numeric',
@@ -1025,15 +1025,15 @@ const ContractEditorPage = () => {
                                 </svg>
                               </button>
                               
-                              <button
-                                onClick={() => deleteComment(comment.id)}
+                  <button 
+                    onClick={() => deleteComment(comment.id)}
                                 className="p-1 text-gray-400 hover:text-red-500"
                                 title="Supprimer"
-                              >
+                  >
                                 <span className="sr-only">Supprimer</span>
-                                <X size={14} />
-                              </button>
-                            </div>
+                    <X size={14} />
+                  </button>
+                </div>
                           </div>
                           
                           {comment.selectedText && (
