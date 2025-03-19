@@ -95,12 +95,11 @@ export default function EditorFloatingDock({
   ];
 
   return (
-    <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
-      <FloatingDock
-        items={editorTools}
-        desktopClassName="shadow-lg border border-gray-200/50 dark:border-neutral-700/50 bg-white/90 dark:bg-neutral-800/90 backdrop-blur-sm"
-        mobileClassName="shadow-lg border border-gray-200/50 dark:border-neutral-700/50 bg-white/90 dark:bg-neutral-800/90 backdrop-blur-sm"
-      />
-    </div>
+    <FloatingDock
+      items={editorTools}
+      desktopClassName="fixed left-1/2 bottom-6 transform -translate-x-1/2 z-50 shadow-lg border border-gray-200/50 dark:border-neutral-700/50 bg-white/90 dark:bg-neutral-800/90 backdrop-blur-sm"
+      tabletClassName="fixed left-1/2 bottom-6 transform -translate-x-1/2 z-50 shadow-lg border border-gray-200/50 dark:border-neutral-700/50 bg-white/90 dark:bg-neutral-800/90 backdrop-blur-sm"
+      mobileClassName="fixed right-4 bottom-16 z-50 shadow-lg border border-gray-200/50 dark:border-neutral-700/50 bg-white/90 dark:bg-neutral-800/90 backdrop-blur-sm"
+    />
   );
 } 

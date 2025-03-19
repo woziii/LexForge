@@ -3,11 +3,209 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { 
   ChevronLeft, Save, Download, Settings, CheckCircle, AlertCircle, 
   Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, 
-  ArrowUp, ArrowDown, Maximize, Minimize, MessageCircle, X,
+  ArrowUp, ArrowDown, Maximize, Minimize, MessageCircle, X, GripVertical,
   Moon, Sun, ChevronUp, ChevronRight, MessageSquarePlus
 } from 'lucide-react';
 import { getContractById, getContractElements, updateContract, generatePdf } from '../services/api';
 import EditorFloatingDock from '../components/ui/editor-floating-dock';
+import { motion } from 'motion/react';
+
+// Améliorons encore les styles CSS pour des animations plus dynamiques
+const dragStyles = `
+  .drop-target-top {
+    border-top: 2px solid #3b82f6 !important;
+    padding-top: 2px !important;
+    position: relative;
+    transform: translateY(-4px);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 5;
+  }
+  .drop-target-top::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: -2px;
+    height: 2px;
+    width: 100%;
+    background-color: #3b82f6;
+    z-index: 10;
+    animation: pulse-horizontal 1.5s infinite;
+  }
+  .drop-target-bottom {
+    border-bottom: 2px solid #3b82f6 !important;
+    padding-bottom: 2px !important;
+    position: relative;
+    transform: translateY(4px);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 5;
+  }
+  .drop-target-bottom::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -2px;
+    height: 2px;
+    width: 100%;
+    background-color: #3b82f6;
+    z-index: 10;
+    animation: pulse-horizontal 1.5s infinite;
+  }
+  @keyframes pulse-horizontal {
+    0% { opacity: 0.6; height: 2px; }
+    50% { opacity: 1; height: 3px; }
+    100% { opacity: 0.6; height: 2px; }
+  }
+  .dragging-active {
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+    opacity: 0.95;
+    border: 1.5px dashed #3b82f6;
+    background-color: rgba(59, 130, 246, 0.08);
+    z-index: 50;
+    position: relative;
+    transform: scale(1.03) translateY(-8px) rotate(-0.5deg);
+    transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    animation: float 3s infinite ease-in-out;
+  }
+  @keyframes float {
+    0% { transform: scale(1.03) translateY(-8px) rotate(-0.5deg); }
+    50% { transform: scale(1.03) translateY(-12px) rotate(0.5deg); }
+    100% { transform: scale(1.03) translateY(-8px) rotate(-0.5deg); }
+  }
+  .drag-handle {
+    cursor: grab;
+    border-radius: 50%;
+    opacity: 0;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    position: absolute;
+    left: 2px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    background-color: rgba(0, 0, 0, 0.03);
+  }
+  .contract-element-container:hover .drag-handle {
+    opacity: 0.5;
+    transform: translateY(-50%) scale(1.1);
+  }
+  .contract-element-container.element-selected .drag-handle {
+    opacity: 0.8;
+    transform: translateY(-50%) scale(1.2);
+  }
+  .drag-handle:hover {
+    opacity: 1 !important;
+    background-color: rgba(59, 130, 246, 0.2);
+    transform: translateY(-50%) scale(1.3) !important;
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
+  }
+  .drag-handle:active {
+    cursor: grabbing;
+    background-color: rgba(59, 130, 246, 0.3);
+    transform: translateY(-50%) scale(1.1) !important;
+  }
+  .dragging-cursor {
+    cursor: grabbing !important;
+  }
+  .contract-element-container {
+    transition: all 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+    position: relative;
+    will-change: transform, opacity, margin, box-shadow;
+  }
+  .contract-element-container.element-selected {
+    transform: scale(1.01);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+    z-index: 10;
+  }
+  /* Animation pour les autres paragraphes pendant le glisser-déposer avec rebond */
+  .contract-element-container.element-pushed-down {
+    transform: translateY(14px);
+    margin-top: 6px;
+    opacity: 0.8;
+    transition: all 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .contract-element-container.element-pushed-up {
+    transform: translateY(-14px);
+    margin-bottom: 6px;
+    opacity: 0.8;
+    transition: all 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  /* Effet de pulsation lors de la sélection */
+  @keyframes pulse-selection {
+    0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+  }
+  .element-pulse {
+    animation: pulse-selection 0.8s ease-out;
+  }
+  /* Effet de succès après le déplacement avec bounce */
+  @keyframes drop-success {
+    0% { transform: scale(1); background-color: rgba(59, 130, 246, 0); }
+    40% { transform: scale(1.03); background-color: rgba(59, 130, 246, 0.2); }
+    60% { transform: scale(0.98); background-color: rgba(59, 130, 246, 0.15); }
+    80% { transform: scale(1.01); background-color: rgba(59, 130, 246, 0.05); }
+    100% { transform: scale(1); background-color: transparent; }
+  }
+  .drop-success {
+    animation: drop-success 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  /* Effet de glissement quand l'élément est déplacé */
+  @keyframes slide-in-right {
+    0% { transform: translateX(-30px); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes slide-in-left {
+    0% { transform: translateX(30px); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+  }
+  .slide-in-right {
+    animation: slide-in-right 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+  }
+  .slide-in-left {
+    animation: slide-in-left 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+  }
+  /* Styles mobiles spécifiques */
+  @media (max-width: 768px) {
+    .drag-handle {
+      width: 22px;
+      height: 22px;
+      opacity: 0;
+      left: 0;
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+    .contract-element-container.element-selected .drag-handle {
+      opacity: 0.6;
+    }
+    .contract-element-container {
+      padding-left: 22px !important;
+    }
+    .contract-element-container.element-selected {
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.06);
+    }
+    .dragging-active {
+      transform: scale(1.02) translateY(-4px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+      animation: float-mobile 3s infinite ease-in-out;
+    }
+    @keyframes float-mobile {
+      0% { transform: scale(1.02) translateY(-4px) rotate(-0.2deg); }
+      50% { transform: scale(1.02) translateY(-6px) rotate(0.2deg); }
+      100% { transform: scale(1.02) translateY(-4px) rotate(-0.2deg); }
+    }
+    .element-pushed-down {
+      transform: translateY(8px);
+      margin-top: 3px;
+    }
+    .element-pushed-up {
+      transform: translateY(-8px);
+      margin-bottom: 3px;
+    }
+  }
+`;
 
 const ContractEditorPage = () => {
   const { contractId } = useParams();
@@ -33,6 +231,11 @@ const ContractEditorPage = () => {
   const [showMobileSections, setShowMobileSections] = useState(false);
   const [isPdfGenerating, setIsPdfGenerating] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [draggingIndex, setDraggingIndex] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
+  const dragIndexRef = useRef(null);
+  const dragPositionY = useRef(0);
   
   // Récupérer les informations du contrat
   useEffect(() => {
@@ -156,6 +359,16 @@ const ContractEditorPage = () => {
   
   const handleElementClick = (index) => {
     setSelectedElementIndex(index);
+    
+    // Ajouter un effet visuel de pulsation lors de la sélection
+    const element = document.getElementById(`contract-element-${index}`);
+    if (element) {
+      element.classList.add('element-pulse');
+      // Retirer la classe après l'animation
+      setTimeout(() => {
+        element.classList.remove('element-pulse');
+      }, 800);
+    }
   };
   
   const applyFormatting = (format) => {
@@ -339,7 +552,226 @@ const ContractEditorPage = () => {
     }
   };
   
-  // Rendre un élément du contrat en fonction de son type
+  // Modifions la fonction handleDragStart pour inclure des animations plus expressives
+  const handleDragStart = (e, index) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Sélectionner l'élément au début du drag
+    handleElementClick(index);
+    
+    // Stockons l'élément et l'index
+    const element = document.getElementById(`contract-element-${index}`);
+    if (!element) return;
+    
+    // Effet visuel au début du drag
+    element.animate([
+      { transform: 'scale(1)', opacity: 1 },
+      { transform: 'scale(1.05)', opacity: 0.9 },
+      { transform: 'scale(1.03)', opacity: 0.95 }
+    ], {
+      duration: 300,
+      easing: 'cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+      fill: 'forwards'
+    });
+    
+    setDraggingIndex(index);
+    
+    // Ajouter une classe pour l'effet visuel
+    setTimeout(() => {
+      element.classList.add('dragging-active');
+    }, 50);
+    
+    // Ajouter une classe sur le body pour changer le curseur
+    document.body.classList.add('dragging-cursor');
+    
+    // Position initiale pour mobile
+    const isTouchEvent = e.type.includes('touch');
+    const startY = isTouchEvent ? e.touches[0].clientY : e.clientY;
+    
+    // Fonction pour gérer le déplacement
+    const handleMove = (moveEvent) => {
+      moveEvent.preventDefault();
+      
+      // Vérifier si c'est un événement tactile et empêcher le scroll
+      if (moveEvent.touches) {
+        moveEvent.stopPropagation();
+      }
+      
+      const currentY = moveEvent.clientY || (moveEvent.touches && moveEvent.touches[0].clientY);
+      
+      // Nettoyer les anciens indicateurs
+      document.querySelectorAll('.drop-target-top, .drop-target-bottom, .element-pushed-up, .element-pushed-down').forEach(el => {
+        el.classList.remove('drop-target-top', 'drop-target-bottom', 'element-pushed-up', 'element-pushed-down');
+      });
+      
+      // Trouver tous les paragraphes
+      const paragraphs = Array.from(document.querySelectorAll('[id^="contract-element-"]'));
+      
+      // Trouver l'élément le plus proche du curseur/doigt
+      let closestElement = null;
+      let closestDistance = Infinity;
+      let isBelow = false;
+      
+      paragraphs.forEach(paragraph => {
+        if (paragraph.id === `contract-element-${index}`) return;
+        
+        const rect = paragraph.getBoundingClientRect();
+        const paragraphMiddle = rect.top + rect.height / 2;
+        const distance = Math.abs(currentY - paragraphMiddle);
+        
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closestElement = paragraph;
+          isBelow = currentY > paragraphMiddle;
+        }
+      });
+      
+      // Ajouter l'indicateur visuel et animer les paragraphes autour
+      if (closestElement) {
+        // Effet d'apparition avec animation
+        if (isBelow) {
+          closestElement.classList.add('drop-target-bottom');
+        } else {
+          closestElement.classList.add('drop-target-top');
+        }
+        
+        // Index du paragraphe le plus proche
+        const closestIndex = parseInt(closestElement.id.replace('contract-element-', ''), 10);
+        
+        // Animation "push" pour les éléments voisins avec effet de cascade
+        paragraphs.forEach(p => {
+          const pIndex = parseInt(p.id.replace('contract-element-', ''), 10);
+          if (p.id === `contract-element-${index}`) return;
+          
+          // Détermine si l'élément doit être poussé et calcule le délai pour l'effet cascade
+          if (isBelow) {
+            if (pIndex > closestIndex && pIndex <= closestIndex + 3) {
+              // Calcul du délai pour effet cascade (plus loin = plus tard)
+              const delay = (pIndex - closestIndex) * 40;  // 40ms de délai entre chaque élément
+              setTimeout(() => {
+                p.classList.add('element-pushed-down');
+              }, delay);
+            }
+          } else {
+            if (pIndex < closestIndex && pIndex >= closestIndex - 3) {
+              // Calcul du délai pour effet cascade inverse
+              const delay = (closestIndex - pIndex) * 40;
+              setTimeout(() => {
+                p.classList.add('element-pushed-up');
+              }, delay);
+            }
+          }
+        });
+      }
+    };
+    
+    // Attacher les écouteurs d'événements en fonction du type d'événement
+    if (isTouchEvent) {
+      document.addEventListener('touchmove', handleMove, { passive: false });
+      document.addEventListener('touchend', handleEnd);
+      document.addEventListener('touchcancel', handleEnd);
+    } else {
+      document.addEventListener('mousemove', handleMove);
+      document.addEventListener('mouseup', handleEnd);
+    }
+    
+    // Fonction pour gérer la fin du glisser-déposer
+    function handleEnd(endEvent) {
+      // Retirer les écouteurs d'événements
+      document.removeEventListener('mousemove', handleMove);
+      document.removeEventListener('touchmove', handleMove);
+      document.removeEventListener('mouseup', handleEnd);
+      document.removeEventListener('touchend', handleEnd);
+      document.removeEventListener('touchcancel', handleEnd);
+      
+      // Retirer l'effet visuel de l'élément qu'on déplace
+      element.classList.remove('dragging-active');
+      
+      // Animation de retour à la normale
+      element.animate([
+        { transform: 'scale(1.03) translateY(-8px)', opacity: 0.95 },
+        { transform: 'scale(1)', opacity: 1 }
+      ], {
+        duration: 300,
+        easing: 'cubic-bezier(0.215, 0.61, 0.355, 1)',
+        fill: 'forwards'
+      });
+      
+      // Retirer la classe du curseur
+      document.body.classList.remove('dragging-cursor');
+      
+      // Trouver l'élément cible
+      const targetTop = document.querySelector('.drop-target-top');
+      const targetBottom = document.querySelector('.drop-target-bottom');
+      
+      // Si on a une cible
+      if (targetTop || targetBottom) {
+        // Extraire l'index de l'élément cible
+        const targetElement = targetTop || targetBottom;
+        const targetId = targetElement.id;
+        const targetIndex = parseInt(targetId.replace('contract-element-', ''), 10);
+        
+        // Déterminer la position (avant ou après)
+        let newIndex;
+        if (targetTop) {
+          newIndex = targetIndex;
+        } else {
+          newIndex = targetIndex + 1;
+        }
+        
+        // Ajuster si on déplace vers le bas
+        if (index < newIndex) {
+          newIndex--;
+        }
+        
+        // Seulement si l'index a changé
+        if (newIndex !== index && newIndex >= 0) {
+          // Créer une nouvelle liste avec l'élément déplacé
+          const newElements = [...contractElements];
+          const [movedItem] = newElements.splice(index, 1);
+          newElements.splice(newIndex, 0, movedItem);
+          
+          // Ajouter un effet de direction pour l'animation
+          const direction = index < newIndex ? 'right' : 'left';
+          
+          // Mettre à jour l'état
+          setContractElements(newElements);
+          setSelectedElementIndex(newIndex);
+          
+          // Marquer que les éléments ont été modifiés
+          setEditedElements({
+            ...editedElements,
+            _structure: Date.now() // Marquer que la structure a changé
+          });
+          
+          // Ajouter une animation de succès après le déplacement
+          setTimeout(() => {
+            const movedElement = document.getElementById(`contract-element-${newIndex}`);
+            if (movedElement) {
+              movedElement.classList.add('drop-success');
+              movedElement.classList.add(`slide-in-${direction}`);
+              
+              // Retirer les classes d'animation après qu'elles soient terminées
+              setTimeout(() => {
+                movedElement.classList.remove('drop-success', `slide-in-${direction}`);
+              }, 800);
+            }
+          }, 50);
+        }
+      }
+      
+      // Nettoyer les indicateurs visuels et les effets d'animation
+      document.querySelectorAll('.drop-target-top, .drop-target-bottom, .element-pushed-up, .element-pushed-down').forEach(el => {
+        el.classList.remove('drop-target-top', 'drop-target-bottom', 'element-pushed-up', 'element-pushed-down');
+      });
+      
+      // Réinitialiser l'index de l'élément glissé
+      setDraggingIndex(null);
+    }
+  };
+  
+  // Mise à jour de la fonction renderContractElement pour inclure le drag and drop
   const renderContractElement = (element, index) => {
     if (element.type === 'spacer') {
       return <div key={`spacer-${index}`} style={{ height: element.height }} className="w-full"></div>;
@@ -360,12 +792,22 @@ const ContractEditorPage = () => {
       if (fontSize === 'small') fontSizeClass = 'text-xs';
       else if (fontSize === 'large') fontSizeClass = 'text-base';
       
-      // Rendre un élément éditable avec une apparence similaire au PDF
+      // Styles pour le glisser-déposer
+      const isDraggable = element.style !== 'ContractTitle';
+      const isBeingDragged = draggingIndex === index;
+      
+      // Rendre un élément éditable avec une apparence similaire au PDF et support du drag and drop
       return (
         <div 
-          key={`paragraph-${index}`}
-          className={`relative group ${className} ${fontSizeClass} ${isSelected ? 'bg-blue-50 dark:bg-blue-900/30 border-l-4 border-blue-500 pl-2' : ''} hover:bg-gray-50 dark:hover:bg-neutral-800/50 transition-colors py-1 rounded`}
+          id={`contract-element-${index}`}
+          className={`group relative contract-element-container py-2 pl-6 pr-4 border-l-4 
+            ${isSelected ? 'border-l-blue-500 bg-blue-50/30 dark:bg-blue-900/10 element-selected' : 'border-l-transparent'} 
+            ${isBeingDragged ? 'opacity-50' : ''} 
+            ${commentCount > 0 ? 'has-comments' : ''} 
+            hover:bg-gray-50/50 dark:hover:bg-neutral-800/30 transition-colors duration-200`}
           onClick={() => handleElementClick(index)}
+          data-paragraph-index={index}
+          key={index}
         >
           <div 
             className={`w-full min-h-[1.5em] ${hasComments ? 'pr-7' : ''}`}
@@ -397,8 +839,21 @@ const ContractEditorPage = () => {
             </button>
           )}
           
+          {/* Poignée de glisser-déposer (plus discrète) */}
+          {isDraggable && (
+            <div 
+              className="drag-handle"
+              onMouseDown={(e) => handleDragStart(e, index)}
+              onTouchStart={(e) => handleDragStart(e, index)}
+              onClick={(e) => e.stopPropagation()}
+              title="Glisser pour déplacer"
+            >
+              <GripVertical size={14} className="text-gray-400" />
+            </div>
+          )}
+          
           {/* Barre d'outils contextuelle sur hover */}
-          {isSelected && (
+          {isSelected && !isBeingDragged && (
             <div className="absolute -right-1 -top-8 hidden group-hover:flex bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-lg shadow-sm">
               <button 
                 title="Déplacer vers le haut"
@@ -678,7 +1133,11 @@ const ContractEditorPage = () => {
   }
   
   return (
-    <div className={`min-h-screen bg-gray-50 dark:bg-neutral-900 flex flex-col ${isFullscreen ? 'overflow-hidden' : ''}`} ref={editorRef}>
+    <div 
+      className={`min-h-screen bg-gray-50 dark:bg-neutral-900 flex flex-col ${isFullscreen ? 'overflow-hidden' : ''} contract-editor-page relative`} 
+      ref={editorRef}
+    >
+      <style>{dragStyles}</style>
       {/* En-tête */}
       <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3">
