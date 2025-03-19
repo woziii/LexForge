@@ -1,4 +1,4 @@
-import { cn } from "../../lib/utils";
+// import { cn } from "../../lib/utils";
 import { IconLayoutNavbarCollapse } from "@tabler/icons-react";
 import {
   AnimatePresence,
@@ -10,6 +10,16 @@ import {
 } from "motion/react";
 import { Link } from "react-router-dom";
 import { useRef, useState, useEffect } from "react";
+
+/**
+ * Combine et applique conditionnellement les classes Tailwind CSS
+ */
+function cn(...inputs) {
+  return inputs
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+}
 
 export const FloatingDock = ({
   items,
