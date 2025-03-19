@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { getContractById, getContractElements, updateContract, generatePdf } from '../services/api';
 import EditorFloatingDock from '../components/ui/editor-floating-dock';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 
 // Améliorons encore les styles CSS pour des animations plus dynamiques
 const dragStyles = `
@@ -752,7 +752,7 @@ const ContractEditorPage = () => {
               movedElement.classList.add('drop-success');
               movedElement.classList.add(`slide-in-${direction}`);
               
-              // Retirer les classes d'animation après qu'elles soient terminées
+              // Retirer les classes d'animation après quelles soient terminées
               setTimeout(() => {
                 movedElement.classList.remove('drop-success', `slide-in-${direction}`);
               }, 800);

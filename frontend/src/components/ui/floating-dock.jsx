@@ -3,12 +3,11 @@ import { cn } from "./utils";
 import { IconLayoutNavbarCollapse } from "@tabler/icons-react";
 import {
   AnimatePresence,
-  MotionValue,
   motion,
   useMotionValue,
   useSpring,
   useTransform,
-} from "motion/react";
+} from "framer-motion";
 import { Link } from "react-router-dom";
 import { useRef, useState, useEffect } from "react";
 
