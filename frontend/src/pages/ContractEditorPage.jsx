@@ -7,7 +7,101 @@ import {
 } from 'lucide-react';
 import { getContractById, getContractElements, updateContract, generatePdf } from '../services/api';
 import EditorFloatingDock from '../components/ui/editor-floating-dock';
-import { motion } from 'framer-motion';
+
+// Styles pour le document avec police similaire au PDF
+const pdfStyles = `
+  /* Fonts pour correspondre aux polices du PDF */
+  @import url('https://fonts.googleapis.com/css2?family=Bitter:wght@400;700&display=swap');
+  
+  .pdf-viewer {
+    font-family: 'Bitter', serif; /* Équivalent proche de Vera */
+    color: #000;
+    line-height: 1.5;
+    font-size: 10pt;
+    text-align: justify;
+    max-width: 210mm; /* Largeur A4 */
+    padding: 15mm; /* Marge identique au PDF */
+    background-color: white;
+    margin: 0 auto;
+  }
+  
+  .pdf-title {
+    font-family: 'Bitter', serif; /* Équivalent proche de VeraBd */
+    font-weight: 700;
+    font-size: 14pt;
+    text-align: center;
+    margin-bottom: 10pt;
+  }
+  
+  .pdf-subtitle {
+    font-family: 'Bitter', serif;
+    font-weight: 700;
+    font-size: 12pt;
+    text-align: center;
+    margin-bottom: 8pt;
+  }
+  
+  .pdf-article {
+    font-family: 'Bitter', serif;
+    font-weight: 700;
+    font-size: 11pt;
+    margin-bottom: 6pt;
+  }
+  
+  .pdf-subarticle {
+    font-family: 'Bitter', serif;
+    font-weight: 700;
+    font-size: 10pt;
+    margin-bottom: 5pt;
+  }
+  
+  .pdf-text {
+    font-family: 'Bitter', serif;
+    font-size: 10pt;
+    text-align: justify;
+    margin-bottom: 5pt;
+  }
+
+  /* Styles pour les espacements */
+  .pdf-viewer p {
+    margin-bottom: 5pt;
+  }
+  
+  /* Styles pour simuler l'espacement des paragraphes dans un PDF */
+  .pdf-viewer .contract-element-container {
+    margin-bottom: 2mm;
+  }
+  
+  /* Remplacer les bordures bleues par des effets plus subtils lors de la sélection */
+  .pdf-viewer .contract-element-container.element-selected {
+    background-color: rgba(59, 130, 246, 0.05) !important;
+    border-left-color: #1e40af !important;
+  }
+
+  /* Définir une apparence de fond de document PDF */
+  .pdf-container {
+    background-color: #f9f9f9;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 210mm; /* Largeur A4 */
+    margin: 0 auto;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  
+  /* Styles pour les éléments interactifs tout en gardant l'apparence PDF */
+  .pdf-viewer div[contenteditable="true"] {
+    min-height: 1.5em;
+    outline: none;
+    border-radius: 0;
+  }
+  
+  .pdf-viewer div[contenteditable="true"]:focus {
+    background-color: rgba(59, 130, 246, 0.05);
+    box-shadow: none;
+    border-color: transparent;
+  }
+`;
 
 // Améliorons encore les styles CSS pour des animations plus dynamiques
 const dragStyles = `
@@ -219,7 +313,7 @@ const ContractEditorPage = () => {
   const [error, setError] = useState(null);
   const [savedMessage, setSavedMessage] = useState(false);
   const [title, setTitle] = useState('');
-  const [activeTab, setActiveTab] = useState('editor'); // 'editor' ou 'settings'
+  const [activeTab, setActiveTab] = useState('editor');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedElementIndex, setSelectedElementIndex] = useState(null);
   const [selectedSection, setSelectedSection] = useState(null);
@@ -481,20 +575,6 @@ const ContractEditorPage = () => {
     setFontSize(size);
   };
   
-  const addComment = (index, text) => {
-    // Créer un nouveau commentaire
-    const newComment = {
-      id: Date.now(), // Utiliser un timestamp comme ID temporaire
-      elementIndex: index,
-      text: text,
-      date: new Date().toISOString(),
-      user: "Utilisateur"
-    };
-    
-    // Ajouter le commentaire à la liste
-    setComments(prevComments => [...prevComments, newComment]);
-  };
-  
   // eslint-disable-next-line no-unused-vars
   const updateComment = (commentId, newText) => {
     // Mettre à jour un commentaire existant
@@ -528,21 +608,19 @@ const ContractEditorPage = () => {
   
   // Prépare la classe et les propriétés de style pour un élément en fonction de son style
   const getElementStyle = (styleType) => {
-    const baseClass = 'text-gray-800 ';
-    
     switch (styleType) {
       case 'ContractTitle':
-        return `${baseClass} text-xl font-bold text-center mb-4`;
+        return 'pdf-title';
       case 'ContractSubtitle':
-        return `${baseClass} text-lg font-semibold text-center mb-3`;
+        return 'pdf-subtitle';
       case 'ContractArticle':
-        return `${baseClass} text-base font-bold mb-2`;
+        return 'pdf-article';
       case 'ContractSubArticle':
-        return `${baseClass} text-base font-semibold mb-2`;
+        return 'pdf-subarticle';
       case 'ContractText':
-        return `${baseClass} text-sm mb-2`;
+        return 'pdf-text';
       default:
-        return `${baseClass} text-sm mb-2`;
+        return 'pdf-text';
     }
   };
   
@@ -765,14 +843,14 @@ const ContractEditorPage = () => {
     }
   };
   
-  // Mise à jour de la fonction renderContractElement pour inclure le drag and drop
+  // Mise à jour de la fonction renderContractElement pour reproduire l'apparence PDF
   const renderContractElement = (element, index) => {
     if (element.type === 'spacer') {
       return <div key={`spacer-${index}`} style={{ height: element.height }} className="w-full"></div>;
     }
     
     if (element.type === 'paragraph') {
-      const className = getElementStyle(element.style);
+      const elementStyle = getElementStyle(element.style);
       const text = editedElements[index] !== undefined ? editedElements[index] : element.text;
       const isSelected = selectedElementIndex === index;
       
@@ -780,11 +858,6 @@ const ContractEditorPage = () => {
       const elementComments = comments.filter(comment => comment.elementIndex === index);
       const hasComments = elementComments.length > 0;
       const commentCount = elementComments.length;
-      
-      // Classe CSS pour la taille de police
-      let fontSizeClass = '';
-      if (fontSize === 'small') fontSizeClass = 'text-xs';
-      else if (fontSize === 'large') fontSizeClass = 'text-base';
       
       // Styles pour le glisser-déposer
       const isDraggable = element.style !== 'ContractTitle';
@@ -795,10 +868,10 @@ const ContractEditorPage = () => {
         <div 
           id={`contract-element-${index}`}
           className={`group relative contract-element-container py-2 pl-6 pr-4 border-l-4 
-            ${isSelected ? 'border-l-blue-500 bg-blue-50/30 element-selected' : 'border-l-transparent'} 
+            ${isSelected ? 'border-l-blue-500 bg-blue-50/10 element-selected' : 'border-l-transparent'} 
             ${isBeingDragged ? 'opacity-50' : ''} 
             ${commentCount > 0 ? 'has-comments' : ''} 
-            hover:bg-gray-50/50 transition-colors duration-200`}
+            hover:bg-gray-50/30 transition-colors duration-200 ${elementStyle}`}
           onClick={() => handleElementClick(index)}
           data-paragraph-index={index}
           key={index}
@@ -809,6 +882,7 @@ const ContractEditorPage = () => {
             suppressContentEditableWarning={true}
             onBlur={(e) => handleElementChange(index, e.currentTarget.innerHTML)}
             dangerouslySetInnerHTML={{ __html: text }}
+            style={{ outline: 'none' }}
           ></div>
           
           {/* Indicateur de commentaires amélioré avec l'icône cercle */}
@@ -1132,6 +1206,7 @@ const ContractEditorPage = () => {
       ref={editorRef}
     >
       <style>{dragStyles}</style>
+      <style>{pdfStyles}</style>
       {/* En-tête */}
       <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3">
@@ -1282,9 +1357,9 @@ const ContractEditorPage = () => {
         {/* Contenu principal */}
         <div className="flex-1 overflow-y-auto p-4">
           {activeTab === 'editor' ? (
-            <div className={`bg-white rounded-lg shadow-sm border border-gray-200 max-w-4xl mx-auto ${fontSize === 'small' ? 'text-sm' : fontSize === 'large' ? 'text-lg' : 'text-base'}`}>
+            <div className="pdf-container">
               {/* En-tête minimaliste avec options essentielles uniquement */}
-              <div className="border-b border-gray-200 px-4 py-2 flex justify-end items-center">
+              <div className="border-b border-gray-200 px-4 py-2 flex justify-end items-center bg-white">
                 <div className="flex items-center space-x-2">
                   <select 
                     className="text-sm border border-gray-300 rounded-md py-1 pl-2 pr-6 bg-white"
@@ -1307,13 +1382,13 @@ const ContractEditorPage = () => {
               </div>
               
               {/* Zone d'édition du contrat */}
-              <div className="p-4 sm:p-8">
+              <div className={`pdf-viewer ${fontSize === 'small' ? 'text-[9pt]' : fontSize === 'large' ? 'text-[11pt]' : 'text-[10pt]'}`}>
                 {elementsLoading ? (
                   <div className="flex justify-center items-center h-64">
                     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
                   </div>
                 ) : (
-                  <div className="space-y-6">
+                  <div className="space-y-2">
                     {contractElements.map((element, index) => renderContractElement(element, index))}
                   </div>
                 )}
@@ -1388,7 +1463,7 @@ const ContractEditorPage = () => {
         
         {/* Panneau de commentaires - version améliorée */}
         {showCommentPanel && activeTab === 'editor' && (
-          <aside className="w-0 md:w-80 flex-shrink-0 border-l border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 transition-all duration-300 ease-in-out overflow-hidden">
+          <aside className="w-0 md:w-80 flex-shrink-0 border-l border-gray-200 bg-white transition-all duration-300 ease-in-out overflow-hidden">
             {renderCommentPanel()}
           </aside>
         )}
@@ -1396,7 +1471,7 @@ const ContractEditorPage = () => {
         {/* Panneau de commentaires mobile */}
         {showCommentPanel && activeTab === 'editor' && (
           <div className="md:hidden fixed inset-0 bg-black bg-opacity-30 z-50 flex justify-end">
-            <div className="w-full max-w-xs bg-white dark:bg-neutral-800 h-full animate-slideIn">
+            <div className="w-full max-w-xs bg-white h-full animate-slideIn">
               {renderCommentPanel()}
             </div>
           </div>
