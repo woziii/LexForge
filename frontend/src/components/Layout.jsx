@@ -9,6 +9,7 @@ import {
   Menu,
   X
 } from 'lucide-react';
+import NotificationBell from './ui/NotificationBell';
 
 const Layout = () => {
   const location = useLocation();
@@ -74,6 +75,7 @@ const Layout = () => {
               <InfoIcon size={18} className="mr-1" strokeWidth={2} />
               <span>À propos</span>
             </Link>
+            <NotificationBell />
             <button 
               className="text-gray-500 hover:text-gray-700 flex items-center focus:outline-none"
               aria-label="Profil utilisateur"
@@ -120,13 +122,18 @@ const Layout = () => {
                 <span className="font-medium">À propos</span>
               </Link>
               <div className="border-t border-gray-100 pt-2 mt-1">
-                <button 
-                  className="flex items-center py-2.5 px-3 w-full text-left rounded-lg text-gray-600 hover:bg-gray-50 hover:text-gray-800"
-                  aria-label="Profil utilisateur"
-                >
-                  <UserCircle size={20} className="mr-3" strokeWidth={2} />
-                  <span className="font-medium">Profil</span>
-                </button>
+                <div className="flex items-center justify-between">
+                  <button 
+                    className="flex items-center py-2.5 px-3 text-left rounded-lg text-gray-600 hover:bg-gray-50 hover:text-gray-800"
+                    aria-label="Profil utilisateur"
+                  >
+                    <UserCircle size={20} className="mr-3" strokeWidth={2} />
+                    <span className="font-medium">Profil</span>
+                  </button>
+                  <div className="py-2.5 px-3">
+                    <NotificationBell />
+                  </div>
+                </div>
               </div>
             </div>
           </div>

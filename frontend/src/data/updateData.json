@@ -1,0 +1,65 @@
+{
+  "messages": [
+    {
+      "id": 1,
+      "text": "Grande nouvelle ! Découvre notre nouvel éditeur de contrats, entièrement repensé pour toi ! 🎉",
+      "image": "auto",
+      "read": false
+    },
+    {
+      "id": 2,
+      "text": "L'interface est maintenant plus intuitive et s'adapte automatiquement à tes besoins.",
+      "image": "auto",
+      "read": false
+    },
+    {
+      "id": 3,
+      "text": "Nous avons ajouté de nouvelles fonctionnalités pour t'aider à créer des contrats plus rapidement !",
+      "image": "auto",
+      "read": false
+    },
+    {
+      "id": 4,
+      "text": "Le savais-tu ? Tu peux maintenant utiliser LexForge sur ton ordinateur, mais aussi sur ton iPad !",
+      "image": "auto",
+      "read": false
+    },
+    {
+      "id": 5,
+      "text": "À toi de jouer ! Essaie le nouvel éditeur dès maintenant et dis-nous ce que tu en penses ! 🚀",
+      "image": "auto",
+      "read": false
+    }
+  ],
+  "lastUpdated": "2024-04-08T12:00:00Z",
+  "prompts": {
+    "style": {
+      "tone": "amical et enthousiaste",
+      "personality": "Saul est un assistant juridique bienveillant et pédagogue",
+      "language": "tutoiement, style conversationnel"
+    },
+    "expressions": {
+      "happy": {
+        "keywords": ["nouveau", "nouveauté", "ajouté", "fonctionnalité", "amélioré", "bienvenue", "🎉"],
+        "image": "/assets/images/saul/saul_sourir.png"
+      },
+      "pensive": {
+        "keywords": ["mise à jour", "changement", "modification", "important", "attention", "savais-tu"],
+        "image": "/assets/images/saul/saul_pensif.png"
+      },
+      "motivated": {
+        "keywords": ["découvre", "essaye", "lance-toi", "teste", "explore", "à toi de jouer", "🚀"],
+        "image": "/assets/images/saul/saul_motivé.png"
+      },
+      "default": {
+        "image": "/assets/images/saul/saul_ok.png"
+      }
+    },
+    "guidelines": {
+      "messageLength": "court et concis (max 2 lignes)",
+      "content": "présentation générale des nouveautés, pas de détails techniques",
+      "structure": "annonce → explication → invitation à l'action",
+      "emoji": "utiliser avec modération, uniquement pour les annonces importantes"
+    }
+  }
+} 
