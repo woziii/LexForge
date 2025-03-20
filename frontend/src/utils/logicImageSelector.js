@@ -19,19 +19,19 @@ export const selectSaulImage = (text) => {
   const motivatedKeywords = ['découvre', 'essaye', 'lance-toi', 'teste', 'explore', 'à toi de jouer', 'c\'est à toi', '🚀'];
   
   // Image par défaut (Saul ok)
-  let imagePath = '/assets/images/saul/saul_ok.jpg';
+  let imagePath = 'https://lexforge.vercel.app/assets/images/saul/saul_ok.jpg';
   
   // Vérifier si le texte contient des mots-clés pour Saul souriant
   if (happyKeywords.some(keyword => lowerText.includes(keyword))) {
-    imagePath = '/assets/images/saul/saul_sourire.jpg';
+    imagePath = 'https://lexforge.vercel.app/assets/images/saul/saul_sourire.jpg';
   }
   // Vérifier si le texte contient des mots-clés pour Saul pensif
   else if (pensiveKeywords.some(keyword => lowerText.includes(keyword))) {
-    imagePath = '/assets/images/saul/saul_pensif.jpg';
+    imagePath = 'https://lexforge.vercel.app/assets/images/saul/saul_pensif.jpg';
   }
   // Vérifier si le texte contient des mots-clés pour Saul motivé
   else if (motivatedKeywords.some(keyword => lowerText.includes(keyword))) {
-    imagePath = '/assets/images/saul/saul_motive.jpg';
+    imagePath = 'https://lexforge.vercel.app/assets/images/saul/saul_motive.jpg';
   }
   
   return imagePath;
@@ -46,11 +46,16 @@ export const selectSaulImage = (text) => {
  * @returns {string} - Le chemin de l'image à afficher
  */
 export const getMessageImage = (message) => {
-  if (!message) return '/assets/images/saul/saul_ok.jpg';
+  if (!message) return 'https://lexforge.vercel.app/assets/images/saul/saul_ok.jpg';
   
   // Si une image spécifique est définie (autre que 'auto'), l'utiliser
   if (message.image && message.image !== 'auto') {
-    return message.image;
+    // Si l'image commence déjà par http, on la retourne telle quelle
+    if (message.image.startsWith('http')) {
+      return message.image;
+    }
+    // Sinon, on construit l'URL complète
+    return `https://lexforge.vercel.app${message.image}`;
   }
   
   // Sinon, sélectionner l'image en fonction du texte
