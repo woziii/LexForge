@@ -3,10 +3,6 @@
  * Les directives comme @tailwind et @layer sont traitées par le préprocesseur
  */
 
-/* Tailwind Directives */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
 /* Amélioration de l'expérience tactile sur mobile */
 @media (max-width: 768px) {
