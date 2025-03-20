@@ -19,6 +19,7 @@ const PopupDialog = ({ messages, onClose }) => {
   const dialogRef = useRef(null);
   
   const currentMessage = messages[currentMessageIndex];
+  // L'image est maintenant importée dynamiquement via require()
   const messagePath = getMessageImage(currentMessage);
   
   // Effet pour gérer le clic en dehors du dialogue
@@ -95,7 +96,7 @@ const PopupDialog = ({ messages, onClose }) => {
             {/* Image de Saul avec nom en style RPG */}
             <div className="flex flex-col items-center flex-shrink-0 mr-4 w-20">
               <img 
-                src={messagePath}
+                src={messagePath} 
                 alt="Saul" 
                 className="w-20 h-20 object-contain mb-1" 
               />

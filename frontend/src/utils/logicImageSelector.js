@@ -18,29 +18,35 @@ export const selectSaulImage = (text) => {
   // Mots-clés pour Saul motivé (appels à l'action)
   const motivatedKeywords = ['découvre', 'essaye', 'lance-toi', 'teste', 'explore', 'à toi de jouer', 'c\'est à toi', '🚀'];
   
-  // Import des images (chemin relatif à partir de src)
-  const saulOkImage = require('../assets/images/saul/saul_ok.jpg');
-  const saulSourireImage = require('../assets/images/saul/saul_sourire.jpg');
-  const saulPensifImage = require('../assets/images/saul/saul_pensif.jpg');
-  const saulMotiveImage = require('../assets/images/saul/saul_motive.jpg');
+  // Noms des fichiers d'images
+  const saulOkImage = 'saul_ok.jpg';
+  const saulSourireImage = 'saul_sourire.jpg';
+  const saulPensifImage = 'saul_pensif.jpg';
+  const saulMotiveImage = 'saul_motive.jpg';
   
   // Image par défaut (Saul ok)
-  let imagePath = saulOkImage;
+  let imageName = saulOkImage;
   
   // Vérifier si le texte contient des mots-clés pour Saul souriant
   if (happyKeywords.some(keyword => lowerText.includes(keyword))) {
-    imagePath = saulSourireImage;
+    imageName = saulSourireImage;
   }
   // Vérifier si le texte contient des mots-clés pour Saul pensif
   else if (pensiveKeywords.some(keyword => lowerText.includes(keyword))) {
-    imagePath = saulPensifImage;
+    imageName = saulPensifImage;
   }
   // Vérifier si le texte contient des mots-clés pour Saul motivé
   else if (motivatedKeywords.some(keyword => lowerText.includes(keyword))) {
-    imagePath = saulMotiveImage;
+    imageName = saulMotiveImage;
   }
   
-  return imagePath;
+  // Utiliser require pour charger l'image dynamiquement
+  try {
+    return require(`../assets/images/saul/${imageName}`);
+  } catch (error) {
+    console.error(`Erreur lors du chargement de l'image: ${imageName}`, error);
+    return require('../assets/images/saul/saul_ok.jpg');
+  }
 };
 
 /**
@@ -52,18 +58,28 @@ export const selectSaulImage = (text) => {
  * @returns {string} - Le chemin de l'image à afficher
  */
 export const getMessageImage = (message) => {
-  // Import de l'image par défaut
-  const defaultImage = require('../assets/images/saul/saul_ok.jpg');
-  
-  if (!message) return defaultImage;
+  if (!message) {
+    return require('../assets/images/saul/saul_ok.jpg');
+  }
   
   // Si une image spécifique est définie (autre que 'auto'), l'utiliser
   if (message.image && message.image !== 'auto') {
     try {
+      // Si c'est juste un nom de fichier sans chemin
+      if (!message.image.includes('/')) {
+        return require(`../assets/images/saul/${message.image}`);
+      }
+      
+      // Si c'est un chemin relatif qui commence par ../
+      if (message.image.startsWith('../')) {
+        return require(message.image);
+      }
+      
+      // Sinon, on essaie de construire le chemin complet
       return require(`..${message.image}`);
     } catch (error) {
-      console.error(`Impossible de charger l'image: ${message.image}`);
-      return defaultImage;
+      console.error(`Erreur lors du chargement de l'image: ${message.image}`, error);
+      return require('../assets/images/saul/saul_ok.jpg');
     }
   }
   
