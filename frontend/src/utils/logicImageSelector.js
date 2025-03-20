@@ -18,20 +18,26 @@ export const selectSaulImage = (text) => {
   // Mots-clés pour Saul motivé (appels à l'action)
   const motivatedKeywords = ['découvre', 'essaye', 'lance-toi', 'teste', 'explore', 'à toi de jouer', 'c\'est à toi', '🚀'];
   
+  // Import des images (chemin relatif à partir de src)
+  const saulOkImage = require('../assets/images/saul/saul_ok.jpg');
+  const saulSourireImage = require('../assets/images/saul/saul_sourire.jpg');
+  const saulPensifImage = require('../assets/images/saul/saul_pensif.jpg');
+  const saulMotiveImage = require('../assets/images/saul/saul_motive.jpg');
+  
   // Image par défaut (Saul ok)
-  let imagePath = 'https://lexforge.vercel.app/assets/images/saul/saul_ok.jpg';
+  let imagePath = saulOkImage;
   
   // Vérifier si le texte contient des mots-clés pour Saul souriant
   if (happyKeywords.some(keyword => lowerText.includes(keyword))) {
-    imagePath = 'https://lexforge.vercel.app/assets/images/saul/saul_sourire.jpg';
+    imagePath = saulSourireImage;
   }
   // Vérifier si le texte contient des mots-clés pour Saul pensif
   else if (pensiveKeywords.some(keyword => lowerText.includes(keyword))) {
-    imagePath = 'https://lexforge.vercel.app/assets/images/saul/saul_pensif.jpg';
+    imagePath = saulPensifImage;
   }
   // Vérifier si le texte contient des mots-clés pour Saul motivé
   else if (motivatedKeywords.some(keyword => lowerText.includes(keyword))) {
-    imagePath = 'https://lexforge.vercel.app/assets/images/saul/saul_motive.jpg';
+    imagePath = saulMotiveImage;
   }
   
   return imagePath;
@@ -46,16 +52,19 @@ export const selectSaulImage = (text) => {
  * @returns {string} - Le chemin de l'image à afficher
  */
 export const getMessageImage = (message) => {
-  if (!message) return 'https://lexforge.vercel.app/assets/images/saul/saul_ok.jpg';
+  // Import de l'image par défaut
+  const defaultImage = require('../assets/images/saul/saul_ok.jpg');
+  
+  if (!message) return defaultImage;
   
   // Si une image spécifique est définie (autre que 'auto'), l'utiliser
   if (message.image && message.image !== 'auto') {
-    // Si l'image commence déjà par http, on la retourne telle quelle
-    if (message.image.startsWith('http')) {
-      return message.image;
+    try {
+      return require(`..${message.image}`);
+    } catch (error) {
+      console.error(`Impossible de charger l'image: ${message.image}`);
+      return defaultImage;
     }
-    // Sinon, on construit l'URL complète
-    return `https://lexforge.vercel.app${message.image}`;
   }
   
   // Sinon, sélectionner l'image en fonction du texte
