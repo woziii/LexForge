@@ -41,18 +41,18 @@
     "expressions": {
       "happy": {
         "keywords": ["nouveau", "nouveauté", "ajouté", "fonctionnalité", "amélioré", "bienvenue", "🎉"],
-        "image": "/assets/images/saul/saul_sourir.png"
+        "image": "/assets/images/saul/saul_sourire.jpg"
       },
       "pensive": {
         "keywords": ["mise à jour", "changement", "modification", "important", "attention", "savais-tu"],
-        "image": "/assets/images/saul/saul_pensif.png"
+        "image": "/assets/images/saul/saul_pensif.jpg"
       },
       "motivated": {
         "keywords": ["découvre", "essaye", "lance-toi", "teste", "explore", "à toi de jouer", "🚀"],
-        "image": "/assets/images/saul/saul_motivé.png"
+        "image": "/assets/images/saul/saul_motive.jpg"
       },
       "default": {
-        "image": "/assets/images/saul/saul_ok.png"
+        "image": "/assets/images/saul/saul_ok.jpg"
       }
     },
     "guidelines": {

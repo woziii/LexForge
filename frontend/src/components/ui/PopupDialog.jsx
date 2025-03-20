@@ -16,10 +16,16 @@ const PopupDialog = ({ messages, onClose }) => {
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const [displayedText, setDisplayedText] = useState('');
   const [isTypingComplete, setIsTypingComplete] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const dialogRef = useRef(null);
   
   const currentMessage = messages[currentMessageIndex];
   const messagePath = getMessageImage(currentMessage);
+  
+  // Réinitialiser l'état d'erreur d'image à chaque changement de message
+  useEffect(() => {
+    setImageError(false);
+  }, [currentMessageIndex]);
   
   // Effet pour gérer le clic en dehors du dialogue
   useEffect(() => {
@@ -80,6 +86,19 @@ const PopupDialog = ({ messages, onClose }) => {
     }
   };
   
+  // Gestion des erreurs de chargement d'image
+  const handleImageError = () => {
+    console.error(`Erreur de chargement de l'image: ${messagePath}`);
+    setImageError(true);
+  };
+  
+  // Chemin absolu de l'image en cas d'erreur
+  const getAbsoluteImagePath = () => {
+    const baseFileName = messagePath.split('/').pop();
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/assets/images/saul/${baseFileName}`;
+  };
+  
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm">
       <div 
@@ -94,11 +113,21 @@ const PopupDialog = ({ messages, onClose }) => {
           <div className="flex items-start">
             {/* Image de Saul avec nom en style RPG */}
             <div className="flex flex-col items-center flex-shrink-0 mr-4 w-20">
-              <img 
-                src={messagePath}
-                alt="Saul" 
-                className="w-20 h-20 object-contain mb-1" 
-              />
+              {!imageError ? (
+                <img 
+                  src={messagePath}
+                  alt="Saul" 
+                  className="w-20 h-20 object-contain mb-1" 
+                  onError={handleImageError}
+                />
+              ) : (
+                <img 
+                  src={getAbsoluteImagePath()}
+                  alt="Saul" 
+                  className="w-20 h-20 object-contain mb-1"
+                  onError={() => console.error("Impossible de charger l'image même avec le chemin absolu")}
+                />
+              )}
               {/* Nom sous l'image */}
               <div className="px-2 py-0.5 bg-blue-600 text-white text-xs font-semibold rounded-sm w-full text-center">
                 SAUL
