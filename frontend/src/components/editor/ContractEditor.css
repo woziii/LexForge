@@ -1,0 +1,585 @@
+/* 
+ * ContractEditor.css
+ * Styles pour l'éditeur de contrats optimisé pour desktop, iPad et iPhone
+ * Adapté pour reproduire fidèlement le rendu des PDFs générés par ReportLab
+ */
+
+/* Importer les polices pour correspondre au PDF */
+@import url('https://fonts.googleapis.com/css2?family=Bitter:wght@400;700&display=swap');
+
+/* Styles principaux du conteneur */
+.contract-editor {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background-color: #f9f9f9;
+  position: relative;
+  overflow: hidden;
+}
+
+.contract-editor.fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  background-color: #f9f9f9;
+}
+
+/* Barre d'outils principale */
+.editor-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background-color: white;
+  border-bottom: 1px solid #e5e7eb;
+  z-index: 10;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.editor-toolbar-left,
+.editor-toolbar-right {
+  display: flex;
+  align-items: center;
+}
+
+.toolbar-button {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  margin-right: 0.5rem;
+  background: transparent;
+  color: #374151;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toolbar-button:hover {
+  background-color: #f3f4f6;
+  color: #1e40af;
+}
+
+.toolbar-button svg {
+  margin-right: 0.25rem;
+}
+
+/* Masquer le texte des boutons sur petit écran */
+@media (max-width: 768px) {
+  .button-text {
+    display: none;
+  }
+  
+  .toolbar-button {
+    margin-right: 0.25rem;
+    padding: 0.5rem;
+  }
+}
+
+/* Conteneur principal */
+.editor-container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Navigation des sections */
+.section-navigator {
+  width: 240px;
+  background-color: white;
+  border-right: 1px solid #e5e7eb;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+/* Styles de navigation mobile */
+.section-navigator-mobile-hidden {
+  display: none;
+}
+
+.section-navigator-mobile-visible {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 80%;
+  max-width: 320px;
+  height: 100%;
+  z-index: 1000;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+  animation: slideInLeft 0.3s forwards;
+}
+
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+/* Contenu principal */
+.editor-content-container {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch; /* Pour iOS */
+  padding: 1rem;
+  scroll-behavior: smooth;
+  height: 100%;
+}
+
+/* Document */
+.editor-document {
+  max-width: 210mm; /* Largeur A4 */
+  background-color: white;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  margin: 0 auto;
+  border-radius: 2px;
+  overflow: hidden;
+  padding: 15mm; /* Marge identique au PDF */
+  min-height: calc(100% - 2rem);
+}
+
+/* Panneau de commentaires */
+.comments-panel {
+  width: 320px;
+  background-color: white;
+  border-left: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .comments-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 90%;
+    max-width: 320px;
+    height: 100%;
+    z-index: 1000;
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
+    animation: slideInRight 0.3s forwards;
+  }
+  
+  @keyframes slideInRight {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+  }
+}
+
+/* États de chargement et d'erreur */
+.editor-loading,
+.editor-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #6b7280;
+}
+
+.spinner {
+  border: 3px solid rgba(0, 0, 0, 0.1);
+  border-top: 3px solid #3b82f6;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Styles pour les éléments du document */
+.contract-element {
+  position: relative;
+  margin-bottom: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  border-left: 3px solid transparent;
+  transition: all 0.2s;
+}
+
+.contract-element:hover {
+  background-color: rgba(243, 244, 246, 0.5);
+}
+
+.element-selected {
+  border-left-color: #3b82f6;
+  background-color: rgba(243, 244, 246, 0.5);
+}
+
+.has-comments {
+  position: relative;
+}
+
+/* Styles pour les différents types d'éléments */
+.pdf-title {
+  font-family: 'Bitter', serif;
+  font-weight: 700;
+  font-size: 14pt;
+  text-align: center;
+  margin-bottom: 10pt;
+}
+
+.pdf-subtitle {
+  font-family: 'Bitter', serif;
+  font-weight: 700;
+  font-size: 12pt;
+  text-align: center;
+  margin-bottom: 8pt;
+}
+
+.pdf-article {
+  font-family: 'Bitter', serif;
+  font-weight: 700;
+  font-size: 11pt;
+  margin-bottom: 6pt;
+}
+
+.pdf-subarticle {
+  font-family: 'Bitter', serif;
+  font-weight: 700;
+  font-size: 10pt;
+  margin-bottom: 5pt;
+}
+
+.pdf-text {
+  font-family: 'Bitter', serif;
+  font-size: 10pt;
+  text-align: justify;
+  margin-bottom: 5pt;
+}
+
+/* Tailles de texte */
+.contract-editor.small .editor-document {
+  font-size: 9pt;
+}
+
+.contract-editor.large .editor-document {
+  font-size: 11pt;
+}
+
+/* Styles pour une meilleure édition */
+.element-content {
+  outline: none;
+  padding: 0.25rem;
+  min-height: 1em;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.element-content:focus {
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+/* Indicateur de commentaires */
+.comment-indicator {
+  position: absolute;
+  right: 0.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.comment-count {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: #3b82f6;
+  color: white;
+  font-size: 0.65rem;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Barre d'outils flottante */
+.floating-toolbar {
+  position: fixed;
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  display: flex;
+  z-index: 1000;
+  padding: 0.25rem;
+}
+
+.floating-toolbar button {
+  padding: 0.5rem;
+  background: transparent;
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  color: #374151;
+}
+
+.floating-toolbar button:hover {
+  background-color: #f3f4f6;
+}
+
+/* Menu contextuel */
+.editor-context-menu {
+  position: fixed;
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  padding: 0.5rem;
+  min-width: 160px;
+  display: flex;
+  flex-direction: column;
+}
+
+.editor-context-menu button {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem;
+  background: transparent;
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  color: #374151;
+  text-align: left;
+}
+
+.editor-context-menu button:hover {
+  background-color: #f3f4f6;
+}
+
+/* Notification de sauvegarde */
+.save-notification {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeInOut 3s forwards;
+}
+
+.save-notification svg {
+  margin-right: 0.5rem;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateY(-20px); }
+  10% { opacity: 1; transform: translateY(0); }
+  80% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-20px); }
+}
+
+/* Notification temporaire */
+.editor-notification {
+  position: fixed;
+  bottom: 3rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 2rem;
+  font-size: 0.875rem;
+  z-index: 1050;
+  opacity: 0;
+  transition: all 0.3s;
+}
+
+.editor-notification.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Highlight des sections */
+.section-highlight {
+  animation: highlight 1s ease-in-out;
+}
+
+@keyframes highlight {
+  0% { background-color: rgba(59, 130, 246, 0); }
+  50% { background-color: rgba(59, 130, 246, 0.2); }
+  100% { background-color: rgba(59, 130, 246, 0); }
+}
+
+/* Highlight des commentaires */
+.comment-highlight {
+  animation: comment-highlight 1s ease-in-out;
+}
+
+@keyframes comment-highlight {
+  0% { background-color: rgba(245, 158, 11, 0); }
+  50% { background-color: rgba(245, 158, 11, 0.2); }
+  100% { background-color: rgba(245, 158, 11, 0); }
+}
+
+/* Sélecteur de taille de police */
+.font-size-selector {
+  position: relative;
+  margin-right: 0.5rem;
+}
+
+.font-size-button {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  background: transparent;
+  color: #374151;
+  border: none;
+  cursor: pointer;
+}
+
+.font-size-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  padding: 0.25rem;
+  min-width: 120px;
+  z-index: 100;
+}
+
+.font-size-selector:hover .font-size-dropdown {
+  display: flex;
+  flex-direction: column;
+}
+
+.font-size-option {
+  padding: 0.5rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  border-radius: 0.25rem;
+}
+
+.font-size-option:hover {
+  background-color: #f3f4f6;
+}
+
+.font-size-option.active {
+  background-color: #e0f2fe;
+  color: #1e40af;
+}
+
+/* Optimisations pour le touch sur mobile et iPad */
+@media (hover: none) and (pointer: coarse) {
+  /* Agrandir les zones tactiles */
+  .floating-toolbar button,
+  .toolbar-button,
+  .editor-context-menu button,
+  .comment-indicator {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0.75rem;
+  }
+  
+  /* Ajouter plus d'espace autour des éléments éditables */
+  .contract-element {
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  /* Ajuster l'espacement pour les éléments avec commentaires sur mobile */
+  .has-comments .element-content {
+    padding-right: 2.5rem;
+  }
+  
+  /* Améliorer la visibilité lors de la sélection de texte */
+  .element-content:focus {
+    background-color: rgba(59, 130, 246, 0.1);
+  }
+  
+  /* Rendre le menu de taille de police plus facilement accessible */
+  .font-size-selector:active .font-size-dropdown {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .font-size-option {
+    padding: 0.75rem;
+  }
+}
+
+/* Optimisations spécifiques pour iPad */
+@media (min-width: 768px) and (max-width: 1024px) and (pointer: coarse) {
+  .editor-document {
+    padding: 10mm; /* Réduire légèrement les marges */
+  }
+  
+  /* Améliorer l'expérience de sélection avec Apple Pencil */
+  .element-content {
+    cursor: text;
+  }
+  
+  /* Floating dock adapté à l'iPad */
+  .editor-floating-dock {
+    bottom: 1.5rem;
+  }
+}
+
+/* Optimisations spécifiques pour iPhone */
+@media (max-width: 428px) {
+  .editor-document {
+    padding: 5mm; /* Réduire les marges au minimum */
+  }
+  
+  /* Taille de police légèrement plus grande pour la lisibilité sur petit écran */
+  .pdf-text {
+    font-size: 11pt;
+  }
+  
+  .editor-toolbar {
+    padding: 0.25rem 0.5rem;
+  }
+  
+  /* Augmenter la hauteur minimale des éléments éditables */
+  .element-content {
+    min-height: 1.5em;
+  }
+}
+
+/* Améliorations pour le clavier virtuel sur iOS */
+@supports (-webkit-touch-callout: none) {
+  .editor-content-container {
+    padding-bottom: 50vh; /* Ajouter de l'espace pour éviter que le clavier ne cache le texte */
+  }
+  
+  /* S'adapter au mode paysage */
+  @media (orientation: landscape) {
+    .editor-toolbar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 10;
+    }
+    
+    .editor-container {
+      margin-top: 3.5rem;
+    }
+  }
+}

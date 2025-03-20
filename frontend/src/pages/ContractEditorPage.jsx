@@ -2,332 +2,122 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
   ChevronLeft, Save, Download, Settings, CheckCircle, AlertCircle, 
-  ArrowUp, ArrowDown, Maximize, Minimize, MessageCircle, X, GripVertical,
-  ChevronUp, ChevronRight
+  MessageCircle, X, Type, List, ChevronUp, Keyboard, Bold, Italic, Underline,
+  AlignLeft, AlignCenter, AlignRight
 } from 'lucide-react';
 import { getContractById, getContractElements, updateContract, generatePdf } from '../services/api';
 import EditorFloatingDock from '../components/ui/editor-floating-dock';
+import EditorSectionNavigator from '../components/editor/EditorSectionNavigator';
+import EditorCommentPanel from '../components/editor/EditorCommentPanel';
 
-// Styles pour le document avec police similaire au PDF
-const pdfStyles = `
-  /* Fonts pour correspondre aux polices du PDF */
-  @import url('https://fonts.googleapis.com/css2?family=Bitter:wght@400;700&display=swap');
-  
-  .pdf-viewer {
-    font-family: 'Bitter', serif; /* Équivalent proche de Vera */
-    color: #000;
-    line-height: 1.5;
-    font-size: 10pt;
-    text-align: justify;
-    max-width: 210mm; /* Largeur A4 */
-    padding: 15mm; /* Marge identique au PDF */
-    background-color: white;
-    margin: 0 auto;
-  }
-  
-  .pdf-title {
-    font-family: 'Bitter', serif; /* Équivalent proche de VeraBd */
-    font-weight: 700;
-    font-size: 14pt;
-    text-align: center;
-    margin-bottom: 10pt;
-  }
-  
-  .pdf-subtitle {
-    font-family: 'Bitter', serif;
-    font-weight: 700;
-    font-size: 12pt;
-    text-align: center;
-    margin-bottom: 8pt;
-  }
-  
-  .pdf-article {
-    font-family: 'Bitter', serif;
-    font-weight: 700;
-    font-size: 11pt;
-    margin-bottom: 6pt;
-  }
-  
-  .pdf-subarticle {
-    font-family: 'Bitter', serif;
-    font-weight: 700;
-    font-size: 10pt;
-    margin-bottom: 5pt;
-  }
-  
-  .pdf-text {
-    font-family: 'Bitter', serif;
-    font-size: 10pt;
-    text-align: justify;
-    margin-bottom: 5pt;
-  }
-
-  /* Styles pour les espacements */
-  .pdf-viewer p {
-    margin-bottom: 5pt;
-  }
-  
-  /* Styles pour simuler l'espacement des paragraphes dans un PDF */
-  .pdf-viewer .contract-element-container {
-    margin-bottom: 2mm;
-  }
-  
-  /* Remplacer les bordures bleues par des effets plus subtils lors de la sélection */
-  .pdf-viewer .contract-element-container.element-selected {
-    background-color: rgba(59, 130, 246, 0.05) !important;
-    border-left-color: #1e40af !important;
-  }
-
-  /* Définir une apparence de fond de document PDF */
-  .pdf-container {
-    background-color: #f9f9f9;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-    width: 100%;
-    max-width: 210mm; /* Largeur A4 */
-    margin: 0 auto;
-    border-radius: 2px;
-    overflow: hidden;
-  }
-  
-  /* Styles pour les éléments interactifs tout en gardant l'apparence PDF */
-  .pdf-viewer div[contenteditable="true"] {
-    min-height: 1.5em;
-    outline: none;
-    border-radius: 0;
-  }
-  
-  .pdf-viewer div[contenteditable="true"]:focus {
-    background-color: rgba(59, 130, 246, 0.05);
-    box-shadow: none;
-    border-color: transparent;
-  }
-`;
-
-// Améliorons encore les styles CSS pour des animations plus dynamiques
-const dragStyles = `
-  .drop-target-top {
-    border-top: 2px solid #3b82f6 !important;
-    padding-top: 2px !important;
-    position: relative;
-    transform: translateY(-4px);
-    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    z-index: 5;
-  }
-  .drop-target-top::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: -2px;
-    height: 2px;
-    width: 100%;
-    background-color: #3b82f6;
-    z-index: 10;
-    animation: pulse-horizontal 1.5s infinite;
-  }
-  .drop-target-bottom {
-    border-bottom: 2px solid #3b82f6 !important;
-    padding-bottom: 2px !important;
-    position: relative;
-    transform: translateY(4px);
-    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    z-index: 5;
-  }
-  .drop-target-bottom::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    bottom: -2px;
-    height: 2px;
-    width: 100%;
-    background-color: #3b82f6;
-    z-index: 10;
-    animation: pulse-horizontal 1.5s infinite;
-  }
-  @keyframes pulse-horizontal {
-    0% { opacity: 0.6; height: 2px; }
-    50% { opacity: 1; height: 3px; }
-    100% { opacity: 0.6; height: 2px; }
-  }
-  .dragging-active {
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
-    opacity: 0.95;
-    border: 1.5px dashed #3b82f6;
-    background-color: rgba(59, 130, 246, 0.08);
-    z-index: 50;
-    position: relative;
-    transform: scale(1.03) translateY(-8px) rotate(-0.5deg);
-    transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    animation: float 3s infinite ease-in-out;
-  }
-  @keyframes float {
-    0% { transform: scale(1.03) translateY(-8px) rotate(-0.5deg); }
-    50% { transform: scale(1.03) translateY(-12px) rotate(0.5deg); }
-    100% { transform: scale(1.03) translateY(-8px) rotate(-0.5deg); }
-  }
-  .drag-handle {
-    cursor: grab;
-    border-radius: 50%;
-    opacity: 0;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    position: absolute;
-    left: 2px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 18px;
-    height: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    background-color: rgba(0, 0, 0, 0.03);
-  }
-  .contract-element-container:hover .drag-handle {
-    opacity: 0.5;
-    transform: translateY(-50%) scale(1.1);
-  }
-  .contract-element-container.element-selected .drag-handle {
-    opacity: 0.8;
-    transform: translateY(-50%) scale(1.2);
-  }
-  .drag-handle:hover {
-    opacity: 1 !important;
-    background-color: rgba(59, 130, 246, 0.2);
-    transform: translateY(-50%) scale(1.3) !important;
-    box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
-  }
-  .drag-handle:active {
-    cursor: grabbing;
-    background-color: rgba(59, 130, 246, 0.3);
-    transform: translateY(-50%) scale(1.1) !important;
-  }
-  .dragging-cursor {
-    cursor: grabbing !important;
-  }
-  .contract-element-container {
-    transition: all 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
-    position: relative;
-    will-change: transform, opacity, margin, box-shadow;
-  }
-  .contract-element-container.element-selected {
-    transform: scale(1.01);
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
-    z-index: 10;
-  }
-  /* Animation pour les autres paragraphes pendant le glisser-déposer avec rebond */
-  .contract-element-container.element-pushed-down {
-    transform: translateY(14px);
-    margin-top: 6px;
-    opacity: 0.8;
-    transition: all 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-  .contract-element-container.element-pushed-up {
-    transform: translateY(-14px);
-    margin-bottom: 6px;
-    opacity: 0.8;
-    transition: all 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-  /* Effet de pulsation lors de la sélection */
-  @keyframes pulse-selection {
-    0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
-    70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
-  }
-  .element-pulse {
-    animation: pulse-selection 0.8s ease-out;
-  }
-  /* Effet de succès après le déplacement avec bounce */
-  @keyframes drop-success {
-    0% { transform: scale(1); background-color: rgba(59, 130, 246, 0); }
-    40% { transform: scale(1.03); background-color: rgba(59, 130, 246, 0.2); }
-    60% { transform: scale(0.98); background-color: rgba(59, 130, 246, 0.15); }
-    80% { transform: scale(1.01); background-color: rgba(59, 130, 246, 0.05); }
-    100% { transform: scale(1); background-color: transparent; }
-  }
-  .drop-success {
-    animation: drop-success 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  }
-  /* Effet de glissement quand l'élément est déplacé */
-  @keyframes slide-in-right {
-    0% { transform: translateX(-30px); opacity: 0; }
-    100% { transform: translateX(0); opacity: 1; }
-  }
-  @keyframes slide-in-left {
-    0% { transform: translateX(30px); opacity: 0; }
-    100% { transform: translateX(0); opacity: 1; }
-  }
-  .slide-in-right {
-    animation: slide-in-right 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
-  }
-  .slide-in-left {
-    animation: slide-in-left 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
-  }
-  /* Styles mobiles spécifiques */
-  @media (max-width: 768px) {
-    .drag-handle {
-      width: 22px;
-      height: 22px;
-      opacity: 0;
-      left: 0;
-      background-color: rgba(0, 0, 0, 0.05);
-    }
-    .contract-element-container.element-selected .drag-handle {
-      opacity: 0.6;
-    }
-    .contract-element-container {
-      padding-left: 22px !important;
-    }
-    .contract-element-container.element-selected {
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.06);
-    }
-    .dragging-active {
-      transform: scale(1.02) translateY(-4px);
-      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-      animation: float-mobile 3s infinite ease-in-out;
-    }
-    @keyframes float-mobile {
-      0% { transform: scale(1.02) translateY(-4px) rotate(-0.2deg); }
-      50% { transform: scale(1.02) translateY(-6px) rotate(0.2deg); }
-      100% { transform: scale(1.02) translateY(-4px) rotate(-0.2deg); }
-    }
-    .element-pushed-down {
-      transform: translateY(8px);
-      margin-top: 3px;
-    }
-    .element-pushed-up {
-      transform: translateY(-8px);
-      margin-bottom: 3px;
-    }
-  }
-`;
-
+/**
+ * Page d'édition de contrat améliorée
+ * Optimisée pour desktop, iPad et iPhone avec fonctionnalités avancées
+ */
 const ContractEditorPage = () => {
   const { contractId } = useParams();
   const navigate = useNavigate();
-  const editorRef = useRef(null);
   
+  // Références
+  const editorRef = useRef(null);
+  const editorContainerRef = useRef(null);
+  const elementRefs = useRef({});
+  
+  // États principaux
   const [contract, setContract] = useState(null);
   const [contractElements, setContractElements] = useState([]);
   const [editedElements, setEditedElements] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [elementsLoading, setElementsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [savedMessage, setSavedMessage] = useState(false);
   const [title, setTitle] = useState('');
-  const [activeTab, setActiveTab] = useState('editor');
+  
+  // États de l'interface
+  const [fontSize, setFontSize] = useState('normal');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedElementIndex, setSelectedElementIndex] = useState(null);
-  const [selectedSection, setSelectedSection] = useState(null);
-  const [fontSize, setFontSize] = useState('normal');
-  const [showCommentPanel, setShowCommentPanel] = useState(false);
+  const [activeSectionId, setActiveSectionId] = useState(null);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [showSections, setShowSections] = useState(false);
   const [comments, setComments] = useState([]);
-  const [showMobileSections, setShowMobileSections] = useState(false);
-  const [isPdfGenerating, setIsPdfGenerating] = useState(false);
+  const [savedNotification, setSavedNotification] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [draggingIndex, setDraggingIndex] = useState(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragOverIndex, setDragOverIndex] = useState(null);
-  const dragIndexRef = useRef(null);
-  const dragPositionY = useRef(0);
+  
+  // États pour la sélection de texte
+  const [toolbarPosition, setToolbarPosition] = useState({ visible: false, x: 0, y: 0 });
+  
+  // Détection d'appareils
+  const [isMobile, setIsMobile] = useState(false);
+  const [isTablet, setIsTablet] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
+  
+  // Effectuer la détection d'appareil
+  useEffect(() => {
+    const detectDevices = () => {
+      const width = window.innerWidth;
+      const isMobileDevice = width <= 768 || /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const isTabletDevice = (width > 768 && width <= 1024) || 
+                           (/iPad/i.test(navigator.userAgent) || 
+                           (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1 && !window.MSStream));
+      const isIOSDevice = /iPad|iPhone|iPod/i.test(navigator.userAgent) || 
+                       (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      
+      setIsMobile(isMobileDevice);
+      setIsTablet(isTabletDevice);
+      setIsIOS(isIOSDevice);
+    };
+    
+    detectDevices();
+    window.addEventListener('resize', detectDevices);
+    
+    return () => {
+      window.removeEventListener('resize', detectDevices);
+    };
+  }, []);
+  
+  // Détecter et gérer les événements du clavier sur iOS
+  useEffect(() => {
+    if (!isIOS) return;
+    
+    const handleVisualViewportResize = () => {
+      if (window.visualViewport) {
+        const viewportHeight = window.visualViewport.height;
+        const windowHeight = window.innerHeight;
+        
+        // Si la hauteur du viewport est significativement inférieure à celle de la fenêtre, le clavier est probablement visible
+        if (viewportHeight < windowHeight * 0.8) {
+          setKeyboardVisible(true);
+          
+          // Faire défiler pour garder l'élément actif visible
+          const activeElement = document.activeElement;
+          if (activeElement && ['INPUT', 'TEXTAREA', '[contenteditable]'].some(
+            selector => activeElement.matches(selector) || activeElement.closest(selector)
+          )) {
+            setTimeout(() => {
+              activeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+          }
+        } else {
+          setKeyboardVisible(false);
+        }
+      }
+    };
+    
+    window.addEventListener('resize', handleVisualViewportResize);
+    
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleVisualViewportResize);
+    }
+    
+    return () => {
+      window.removeEventListener('resize', handleVisualViewportResize);
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleVisualViewportResize);
+      }
+    };
+  }, [isIOS]);
   
   // Récupérer les informations du contrat
   useEffect(() => {
@@ -378,6 +168,80 @@ const ContractEditorPage = () => {
     fetchContractElements();
   }, [contract, contractId]);
   
+  // Observer les sections visibles pour mettre à jour la navigation
+  useEffect(() => {
+    if (!editorContainerRef.current) return;
+    
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const sectionId = entry.target.getAttribute('data-section-id');
+            if (sectionId) {
+              setActiveSectionId(sectionId);
+            }
+          }
+        });
+      },
+      { threshold: 0.3, root: editorContainerRef.current }
+    );
+    
+    // Observer toutes les sections
+    document.querySelectorAll('[data-section-id]').forEach(section => {
+      observer.observe(section);
+    });
+    
+    return () => observer.disconnect();
+  }, [contractElements, elementsLoading]);
+  
+  // Surveiller les changements de sélection pour afficher la barre d'outils flottante
+  useEffect(() => {
+    const handleSelectionChange = () => {
+      const selection = window.getSelection();
+      
+      if (!selection.rangeCount) {
+        setToolbarPosition({ visible: false, x: 0, y: 0 });
+        return;
+      }
+      
+      const range = selection.getRangeAt(0);
+      
+      // Ne rien faire si la sélection est vide
+      if (range.collapsed) {
+        setToolbarPosition({ visible: false, x: 0, y: 0 });
+        return;
+      }
+      
+      // Trouver l'élément éditable parent
+      let editableParent = range.commonAncestorContainer;
+      while (editableParent && !editableParent.hasAttribute?.('data-element-index')) {
+        editableParent = editableParent.parentNode;
+      }
+      
+      if (editableParent) {
+        const index = parseInt(editableParent.getAttribute('data-element-index'));
+        setSelectedElementIndex(index);
+        
+        // Sur iPhone et iPad, ne pas afficher la barre flottante (on utilise le dock)
+        // if (isMobile || isTablet) return;
+        
+        // Positionner la barre d'outils au-dessus de la sélection
+        const rect = range.getBoundingClientRect();
+        setToolbarPosition({
+          visible: true,
+          x: rect.left + rect.width / 2,
+          y: rect.top - 10,
+        });
+      }
+    };
+    
+    document.addEventListener('selectionchange', handleSelectionChange);
+    
+    return () => {
+      document.removeEventListener('selectionchange', handleSelectionChange);
+    };
+  }, [isMobile, isTablet]);
+  
   const handleTitleChange = (e) => {
     setTitle(e.target.value);
   };
@@ -391,8 +255,8 @@ const ContractEditorPage = () => {
         comments: comments
       });
       
-      setSavedMessage(true);
-      setTimeout(() => setSavedMessage(false), 3000);
+      setSavedNotification(true);
+      setTimeout(() => setSavedNotification(false), 3000);
     } catch (error) {
       console.error('Error saving contract:', error);
       setError('Impossible de sauvegarder le contrat. Veuillez réessayer plus tard.');
@@ -401,7 +265,6 @@ const ContractEditorPage = () => {
   
   const handleDownloadPdf = async () => {
     try {
-      setIsPdfGenerating(true);
       const response = await generatePdf(contractId);
       
       // Créer un lien de téléchargement
@@ -418,8 +281,6 @@ const ContractEditorPage = () => {
     } catch (error) {
       console.error('Erreur lors de la génération du PDF', error);
       setError("Impossible de générer le PDF du contrat.");
-    } finally {
-      setIsPdfGenerating(false);
     }
   };
   
@@ -449,20 +310,44 @@ const ContractEditorPage = () => {
     }
   };
   
-  const handleElementClick = (index) => {
-    setSelectedElementIndex(index);
+  const handleElementClick = (index, e) => {
+    // Éviter de traiter les clics sur les handles ou les boutons
+    if (e && (
+      e.target.closest('.drag-handle') || 
+      e.target.closest('button') ||
+      e.target.tagName === 'BUTTON'
+    )) {
+      return;
+    }
     
-    // Ajouter un effet visuel de pulsation lors de la sélection
-    const element = document.getElementById(`contract-element-${index}`);
-    if (element) {
-      element.classList.add('element-pulse');
-      // Retirer la classe après l'animation
+    setSelectedElementIndex(index);
+  };
+  
+  // Gérer la navigation vers une section
+  const handleNavigateToSection = (sectionId) => {
+    const sectionElement = document.querySelector(`[data-section-id="${sectionId}"]`);
+    if (sectionElement && editorContainerRef.current) {
+      editorContainerRef.current.scrollTo({
+        top: sectionElement.offsetTop - 80,
+        behavior: 'smooth'
+      });
+      
+      // Mettre en évidence la section temporairement
+      sectionElement.classList.add('section-highlight');
       setTimeout(() => {
-        element.classList.remove('element-pulse');
-      }, 800);
+        sectionElement.classList.remove('section-highlight');
+      }, 2000);
+      
+      // Fermer le panneau des sections sur mobile
+      if (isMobile) {
+        setShowSections(false);
+      }
     }
   };
   
+  /**
+   * Applique le formatage au texte sélectionné
+   */
   const applyFormatting = (format) => {
     if (selectedElementIndex === null) return;
     
@@ -481,9 +366,9 @@ const ContractEditorPage = () => {
         const selectedText = selection.toString();
         
         // Appliquer le formatage uniquement au texte sélectionné
-      switch (format) {
-        case 'bold':
-            // Vérifier si le texte est déjà en gras (entouré de balises <strong>)
+        switch (format) {
+          case 'bold':
+            // Vérifier si le texte est déjà en gras
             if (text.includes(`<strong>${selectedText}</strong>`)) {
               // Enlever le formatage gras
               newText = text.replace(`<strong>${selectedText}</strong>`, selectedText);
@@ -491,8 +376,8 @@ const ContractEditorPage = () => {
               // Ajouter le formatage gras
               newText = text.replace(selectedText, `<strong>${selectedText}</strong>`);
             }
-          break;
-        case 'italic':
+            break;
+          case 'italic':
             // Vérifier si le texte est déjà en italique
             if (text.includes(`<em>${selectedText}</em>`)) {
               // Enlever le formatage italique
@@ -501,8 +386,8 @@ const ContractEditorPage = () => {
               // Ajouter le formatage italique
               newText = text.replace(selectedText, `<em>${selectedText}</em>`);
             }
-          break;
-        case 'underline':
+            break;
+          case 'underline':
             // Vérifier si le texte est déjà souligné
             if (text.includes(`<u>${selectedText}</u>`)) {
               // Enlever le soulignement
@@ -511,46 +396,40 @@ const ContractEditorPage = () => {
               // Ajouter le soulignement
               newText = text.replace(selectedText, `<u>${selectedText}</u>`);
             }
-          break;
-        case 'alignLeft':
-            // Vérifier si le texte est déjà aligné à gauche
-            if (text.includes('<p style="text-align: left;">')) {
-              // Enlever l'alignement à gauche
-              newText = text.replace('<p style="text-align: left;">', '<p>');
+            break;
+          case 'highlight':
+            // Vérifier si le texte est déjà surligné
+            if (text.includes(`<mark>${selectedText}</mark>`)) {
+              // Enlever le surlignage
+              newText = text.replace(`<mark>${selectedText}</mark>`, selectedText);
             } else {
-              // Ajouter l'alignement à gauche
-              newText = '<p style="text-align: left;">' + text + '</p>';
+              // Ajouter le surlignage
+              newText = text.replace(selectedText, `<mark>${selectedText}</mark>`);
             }
-          break;
-        case 'alignCenter':
-            // Vérifier si le texte est déjà centré
-            if (text.includes('<p style="text-align: center;">')) {
-              // Enlever le centrage
-              newText = text.replace('<p style="text-align: center;">', '<p>');
-            } else {
-              // Ajouter le centrage
-              newText = '<p style="text-align: center;">' + text + '</p>';
-            }
-          break;
-        case 'alignRight':
-            // Vérifier si le texte est déjà aligné à droite
-            if (text.includes('<p style="text-align: right;">')) {
-              // Enlever l'alignement à droite
-              newText = text.replace('<p style="text-align: right;">', '<p>');
-            } else {
-              // Ajouter l'alignement à droite
-              newText = '<p style="text-align: right;">' + text + '</p>';
-            }
-          break;
-        default:
-          break;
+            break;
+          case 'alignLeft':
+            // Ajouter l'alignement à gauche
+            newText = `<div style="text-align: left;">${text}</div>`;
+            break;
+          case 'alignCenter':
+            // Ajouter le centrage
+            newText = `<div style="text-align: center;">${text}</div>`;
+            break;
+          case 'alignRight':
+            // Ajouter l'alignement à droite
+            newText = `<div style="text-align: right;">${text}</div>`;
+            break;
+          default:
+            break;
         }
-      } else {
-        // Si aucun texte n'est sélectionné, ne rien faire
-        return;
       }
       
       handleElementChange(selectedElementIndex, newText);
+      
+      // Masquer la barre d'outils après un court délai
+      setTimeout(() => {
+        setToolbarPosition({ visible: false, x: 0, y: 0 });
+      }, 300);
     }
   };
   
@@ -570,12 +449,12 @@ const ContractEditorPage = () => {
     setContractElements(newElements);
     setSelectedElementIndex(newIndex);
   };
-
+  
   const changeFontSize = (size) => {
     setFontSize(size);
+    setShowSettings(false);
   };
   
-  // eslint-disable-next-line no-unused-vars
   const updateComment = (commentId, newText) => {
     // Mettre à jour un commentaire existant
     setComments(prevComments => 
@@ -591,22 +470,103 @@ const ContractEditorPage = () => {
     const updatedComments = comments.filter(comment => comment.id !== commentId);
     setComments(updatedComments);
   };
-
-  // Identifier les sections du contrat
+  
+  const handleAddComment = () => {
+    if (selectedElementIndex === null) return;
+    
+    const selection = window.getSelection();
+    const selectedText = selection.toString();
+    
+    // Créer un nouveau commentaire
+    const newComment = {
+      id: Date.now().toString(),
+      elementIndex: selectedElementIndex,
+      text: "",
+      date: new Date().toISOString(),
+      user: "Utilisateur",
+      selectedText: selectedText,
+      isEditing: true
+    };
+    
+    setComments([...comments, newComment]);
+    setShowComments(true);
+  };
+  
+  // Toggle de l'affichage des commentaires
+  const toggleComments = () => {
+    setShowComments(!showComments);
+    // Fermer les sections si on ouvre les commentaires sur mobile
+    if (isMobile && !showComments) {
+      setShowSections(false);
+    }
+  };
+  
+  // Toggle de l'affichage des sections
+  const toggleSections = () => {
+    setShowSections(!showSections);
+    // Fermer les commentaires si on ouvre les sections sur mobile
+    if (isMobile && !showSections) {
+      setShowComments(false);
+    }
+  };
+  
+  // Toggle du clavier virtuel
+  const toggleKeyboard = () => {
+    if (isIOS || isMobile) {
+      // Sur iOS, nous devons simuler le focus/blur pour ouvrir/fermer le clavier
+      const activeElement = document.activeElement;
+      
+      if (keyboardVisible) {
+        // Fermer le clavier en retirant le focus
+        if (activeElement && activeElement.blur) {
+          activeElement.blur();
+        }
+      } else {
+        // Chercher l'élément actuellement sélectionné ou le premier élément éditable
+        const elementToFocus = document.querySelector(`[data-element-index="${selectedElementIndex}"] [contenteditable="true"]`) || 
+                             document.querySelector('[contenteditable="true"]');
+        
+        if (elementToFocus) {
+          elementToFocus.focus();
+          
+          // Positionner le curseur à la fin du texte
+          const range = document.createRange();
+          const selection = window.getSelection();
+          
+          range.selectNodeContents(elementToFocus);
+          range.collapse(false); // false pour la fin du texte
+          
+          selection.removeAllRanges();
+          selection.addRange(range);
+        }
+      }
+      
+      setKeyboardVisible(!keyboardVisible);
+    }
+  };
+  
+  // Obtenir les sections pour la navigation
   const getSections = () => {
     const sections = [];
     contractElements.forEach((element, index) => {
       if (element.type === 'paragraph' && element.style === 'ContractArticle') {
+        const text = editedElements[index] || element.text;
         sections.push({
+          id: `section-${index}`,
           index,
-          text: element.text
+          text: text
         });
       }
     });
     return sections;
   };
   
-  // Prépare la classe et les propriétés de style pour un élément en fonction de son style
+  // Vérifier si un élément a des commentaires
+  const getElementComments = (index) => {
+    return comments.filter(comment => comment.elementIndex === index);
+  };
+  
+  // Déterminer la classe de style pour un élément
   const getElementStyle = (styleType) => {
     switch (styleType) {
       case 'ContractTitle':
@@ -624,226 +584,228 @@ const ContractEditorPage = () => {
     }
   };
   
-  // Modifions la fonction handleDragStart pour inclure des animations plus expressives
-  const handleDragStart = (e, index) => {
-    e.preventDefault();
-    e.stopPropagation();
+  // Mise en page optimisée pour le rendu PDF
+  const pdfStyles = `
+    /* Fonts pour correspondre aux polices du PDF */
+    @import url('https://fonts.googleapis.com/css2?family=Bitter:wght@400;700&display=swap');
     
-    // Sélectionner l'élément au début du drag
-    handleElementClick(index);
-    
-    // Stockons l'élément et l'index
-    const element = document.getElementById(`contract-element-${index}`);
-    if (!element) return;
-    
-    // Effet visuel au début du drag
-    element.animate([
-      { transform: 'scale(1)', opacity: 1 },
-      { transform: 'scale(1.05)', opacity: 0.9 },
-      { transform: 'scale(1.03)', opacity: 0.95 }
-    ], {
-      duration: 300,
-      easing: 'cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-      fill: 'forwards'
-    });
-    
-    setDraggingIndex(index);
-    
-    // Ajouter une classe pour l'effet visuel
-    setTimeout(() => {
-      element.classList.add('dragging-active');
-    }, 50);
-    
-    // Ajouter une classe sur le body pour changer le curseur
-    document.body.classList.add('dragging-cursor');
-    
-    // Position initiale pour mobile
-    const isTouchEvent = e.type.includes('touch');
-    const startY = isTouchEvent ? e.touches[0].clientY : e.clientY;
-    
-    // Fonction pour gérer le déplacement
-    const handleMove = (moveEvent) => {
-      moveEvent.preventDefault();
-      
-      // Vérifier si c'est un événement tactile et empêcher le scroll
-      if (moveEvent.touches) {
-        moveEvent.stopPropagation();
-      }
-      
-      const currentY = moveEvent.clientY || (moveEvent.touches && moveEvent.touches[0].clientY);
-      
-      // Nettoyer les anciens indicateurs
-      document.querySelectorAll('.drop-target-top, .drop-target-bottom, .element-pushed-up, .element-pushed-down').forEach(el => {
-        el.classList.remove('drop-target-top', 'drop-target-bottom', 'element-pushed-up', 'element-pushed-down');
-      });
-      
-      // Trouver tous les paragraphes
-      const paragraphs = Array.from(document.querySelectorAll('[id^="contract-element-"]'));
-      
-      // Trouver l'élément le plus proche du curseur/doigt
-      let closestElement = null;
-      let closestDistance = Infinity;
-      let isBelow = false;
-      
-      paragraphs.forEach(paragraph => {
-        if (paragraph.id === `contract-element-${index}`) return;
-        
-        const rect = paragraph.getBoundingClientRect();
-        const paragraphMiddle = rect.top + rect.height / 2;
-        const distance = Math.abs(currentY - paragraphMiddle);
-        
-        if (distance < closestDistance) {
-          closestDistance = distance;
-          closestElement = paragraph;
-          isBelow = currentY > paragraphMiddle;
-        }
-      });
-      
-      // Ajouter l'indicateur visuel et animer les paragraphes autour
-      if (closestElement) {
-        // Effet d'apparition avec animation
-        if (isBelow) {
-          closestElement.classList.add('drop-target-bottom');
-        } else {
-          closestElement.classList.add('drop-target-top');
-        }
-        
-        // Index du paragraphe le plus proche
-        const closestIndex = parseInt(closestElement.id.replace('contract-element-', ''), 10);
-        
-        // Animation "push" pour les éléments voisins avec effet de cascade
-        paragraphs.forEach(p => {
-          const pIndex = parseInt(p.id.replace('contract-element-', ''), 10);
-          if (p.id === `contract-element-${index}`) return;
-          
-          // Détermine si l'élément doit être poussé et calcule le délai pour l'effet cascade
-          if (isBelow) {
-            if (pIndex > closestIndex && pIndex <= closestIndex + 3) {
-              // Calcul du délai pour effet cascade (plus loin = plus tard)
-              const delay = (pIndex - closestIndex) * 40;  // 40ms de délai entre chaque élément
-              setTimeout(() => {
-                p.classList.add('element-pushed-down');
-              }, delay);
-            }
-          } else {
-            if (pIndex < closestIndex && pIndex >= closestIndex - 3) {
-              // Calcul du délai pour effet cascade inverse
-              const delay = (closestIndex - pIndex) * 40;
-              setTimeout(() => {
-                p.classList.add('element-pushed-up');
-              }, delay);
-            }
-          }
-        });
-      }
-    };
-    
-    // Attacher les écouteurs d'événements en fonction du type d'événement
-    if (isTouchEvent) {
-      document.addEventListener('touchmove', handleMove, { passive: false });
-      document.addEventListener('touchend', handleEnd);
-      document.addEventListener('touchcancel', handleEnd);
-    } else {
-      document.addEventListener('mousemove', handleMove);
-      document.addEventListener('mouseup', handleEnd);
+    .pdf-viewer {
+      font-family: 'Bitter', serif;
+      color: #000;
+      line-height: 1.5;
+      font-size: 10pt;
+      text-align: justify;
+      max-width: 210mm; /* Largeur A4 */
+      padding: 15mm; /* Marge identique au PDF */
+      background-color: white;
+      margin: 0 auto;
     }
     
-    // Fonction pour gérer la fin du glisser-déposer
-    function handleEnd(endEvent) {
-      // Retirer les écouteurs d'événements
-      document.removeEventListener('mousemove', handleMove);
-      document.removeEventListener('touchmove', handleMove);
-      document.removeEventListener('mouseup', handleEnd);
-      document.removeEventListener('touchend', handleEnd);
-      document.removeEventListener('touchcancel', handleEnd);
-      
-      // Retirer l'effet visuel de l'élément qu'on déplace
-      element.classList.remove('dragging-active');
-      
-      // Animation de retour à la normale
-      element.animate([
-        { transform: 'scale(1.03) translateY(-8px)', opacity: 0.95 },
-        { transform: 'scale(1)', opacity: 1 }
-      ], {
-        duration: 300,
-        easing: 'cubic-bezier(0.215, 0.61, 0.355, 1)',
-        fill: 'forwards'
-      });
-      
-      // Retirer la classe du curseur
-      document.body.classList.remove('dragging-cursor');
-      
-      // Trouver l'élément cible
-      const targetTop = document.querySelector('.drop-target-top');
-      const targetBottom = document.querySelector('.drop-target-bottom');
-      
-      // Si on a une cible
-      if (targetTop || targetBottom) {
-        // Extraire l'index de l'élément cible
-        const targetElement = targetTop || targetBottom;
-        const targetId = targetElement.id;
-        const targetIndex = parseInt(targetId.replace('contract-element-', ''), 10);
-        
-        // Déterminer la position (avant ou après)
-        let newIndex;
-        if (targetTop) {
-          newIndex = targetIndex;
-        } else {
-          newIndex = targetIndex + 1;
-        }
-        
-        // Ajuster si on déplace vers le bas
-        if (index < newIndex) {
-          newIndex--;
-        }
-        
-        // Seulement si l'index a changé
-        if (newIndex !== index && newIndex >= 0) {
-          // Créer une nouvelle liste avec l'élément déplacé
-          const newElements = [...contractElements];
-          const [movedItem] = newElements.splice(index, 1);
-          newElements.splice(newIndex, 0, movedItem);
-          
-          // Ajouter un effet de direction pour l'animation
-          const direction = index < newIndex ? 'right' : 'left';
-          
-          // Mettre à jour l'état
-          setContractElements(newElements);
-          setSelectedElementIndex(newIndex);
-          
-          // Marquer que les éléments ont été modifiés
-          setEditedElements({
-            ...editedElements,
-            _structure: Date.now() // Marquer que la structure a changé
-          });
-          
-          // Ajouter une animation de succès après le déplacement
-          setTimeout(() => {
-            const movedElement = document.getElementById(`contract-element-${newIndex}`);
-            if (movedElement) {
-              movedElement.classList.add('drop-success');
-              movedElement.classList.add(`slide-in-${direction}`);
-              
-              // Retirer les classes d'animation après quelles soient terminées
-              setTimeout(() => {
-                movedElement.classList.remove('drop-success', `slide-in-${direction}`);
-              }, 800);
-            }
-          }, 50);
-        }
+    .pdf-title {
+      font-family: 'Bitter', serif;
+      font-weight: 700;
+      font-size: 14pt;
+      text-align: center;
+      margin-bottom: 10pt;
+    }
+    
+    .pdf-subtitle {
+      font-family: 'Bitter', serif;
+      font-weight: 700;
+      font-size: 12pt;
+      text-align: center;
+      margin-bottom: 8pt;
+    }
+    
+    .pdf-article {
+      font-family: 'Bitter', serif;
+      font-weight: 700;
+      font-size: 11pt;
+      margin-bottom: 6pt;
+    }
+    
+    .pdf-subarticle {
+      font-family: 'Bitter', serif;
+      font-weight: 700;
+      font-size: 10pt;
+      margin-bottom: 5pt;
+    }
+    
+    .pdf-text {
+      font-family: 'Bitter', serif;
+      font-size: 10pt;
+      text-align: justify;
+      margin-bottom: 5pt;
+    }
+    
+    /* Styles de surlignage */
+    mark {
+      background-color: #FFEB3B;
+      color: #000;
+      padding: 0.1em 0.2em;
+      border-radius: 2px;
+    }
+    
+    /* Tailles de texte */
+    .font-size-small .pdf-viewer {
+      font-size: 9pt;
+    }
+    
+    .font-size-small .pdf-title {
+      font-size: 13pt;
+    }
+    
+    .font-size-small .pdf-article {
+      font-size: 10pt;
+    }
+    
+    .font-size-large .pdf-viewer {
+      font-size: 11pt;
+    }
+    
+    .font-size-large .pdf-title {
+      font-size: 15pt;
+    }
+    
+    .font-size-large .pdf-article {
+      font-size: 12pt;
+    }
+    
+    /* Effets visuels */
+    .contract-element-container {
+      position: relative;
+      margin-bottom: 0.5rem;
+      padding: 0.25rem 0.5rem;
+      border-left: 3px solid transparent;
+      transition: all 0.2s;
+    }
+    
+    .contract-element-container:hover {
+      background-color: rgba(243, 244, 246, 0.5);
+    }
+    
+    .element-selected {
+      border-left-color: #3b82f6;
+      background-color: rgba(243, 244, 246, 0.5);
+    }
+    
+    .section-highlight {
+      animation: section-pulse 2s ease;
+    }
+    
+    @keyframes section-pulse {
+      0% { background-color: rgba(59, 130, 246, 0); }
+      30% { background-color: rgba(59, 130, 246, 0.2); }
+      100% { background-color: rgba(59, 130, 246, 0); }
+    }
+    
+    /* Optimisations pour le touch */
+    @media (hover: none) and (pointer: coarse) {
+      .contract-element-container {
+        padding: 0.5rem 0.75rem;
+        margin-bottom: 0.75rem;
+      }
+    }
+    
+    /* Optimisations pour iOS avec clavier visible */
+    @supports (-webkit-touch-callout: none) {
+      .keyboard-visible .pdf-viewer {
+        padding-bottom: 40vh; /* Espace supplémentaire en bas pour éviter que le clavier ne cache le texte */
+      }
+    }
+    
+    /* Barre d'outils de sélection */
+    .selection-toolbar {
+      position: fixed;
+      display: flex;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      padding: 4px;
+      z-index: 1000;
+      transform: translate(-50%, -100%);
+    }
+    
+    /* Version mobile de la barre d'outils de sélection */
+    @media (max-width: 768px) {
+      .selection-toolbar {
+        padding: 3px;
+        max-width: 95vw;
+        overflow-x: auto;
+        overflow-y: hidden;
+        white-space: nowrap;
+        scrollbar-width: none; /* Firefox */
       }
       
-      // Nettoyer les indicateurs visuels et les effets d'animation
-      document.querySelectorAll('.drop-target-top, .drop-target-bottom, .element-pushed-up, .element-pushed-down').forEach(el => {
-        el.classList.remove('drop-target-top', 'drop-target-bottom', 'element-pushed-up', 'element-pushed-down');
-      });
-      
-      // Réinitialiser l'index de l'élément glissé
-      setDraggingIndex(null);
+      .selection-toolbar::-webkit-scrollbar {
+        display: none; /* Chrome, Safari, Edge */
+      }
     }
-  };
+    
+    .selection-toolbar button {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      background: transparent;
+      border-radius: 4px;
+      margin: 0 1px;
+    }
+    
+    /* Boutons plus petits sur mobile */
+    @media (max-width: 768px) {
+      .selection-toolbar button {
+        width: 24px;
+        height: 24px;
+        margin: 0;
+      }
+    }
+    
+    .selection-toolbar button:hover {
+      background-color: #f3f4f6;
+    }
+    
+    /* Transitions pour les panneaux mobiles */
+    .mobile-panel-enter {
+      transform: translateX(-100%);
+    }
+    
+    .mobile-panel-enter-active {
+      transform: translateX(0);
+      transition: transform 300ms ease-in-out;
+    }
+    
+    .mobile-panel-exit {
+      transform: translateX(0);
+    }
+    
+    .mobile-panel-exit-active {
+      transform: translateX(-100%);
+      transition: transform 300ms ease-in-out;
+    }
+    
+    .mobile-panel-right-enter {
+      transform: translateX(100%);
+    }
+    
+    .mobile-panel-right-enter-active {
+      transform: translateX(0);
+      transition: transform 300ms ease-in-out;
+    }
+    
+    .mobile-panel-right-exit {
+      transform: translateX(0);
+    }
+    
+    .mobile-panel-right-exit-active {
+      transform: translateX(100%);
+      transition: transform 300ms ease-in-out;
+    }
+  `;
   
-  // Mise à jour de la fonction renderContractElement pour reproduire l'apparence PDF
+  // Rendu des éléments du contrat
   const renderContractElement = (element, index) => {
     if (element.type === 'spacer') {
       return <div key={`spacer-${index}`} style={{ height: element.height }} className="w-full"></div>;
@@ -854,26 +816,25 @@ const ContractEditorPage = () => {
       const text = editedElements[index] !== undefined ? editedElements[index] : element.text;
       const isSelected = selectedElementIndex === index;
       
-      // Vérifier si l'élément a des commentaires et combien
-      const elementComments = comments.filter(comment => comment.elementIndex === index);
+      // Vérifier si l'élément a des commentaires
+      const elementComments = getElementComments(index);
       const hasComments = elementComments.length > 0;
-      const commentCount = elementComments.length;
       
-      // Styles pour le glisser-déposer
-      const isDraggable = element.style !== 'ContractTitle';
-      const isBeingDragged = draggingIndex === index;
+      // Déterminer si c'est une section de titre
+      const isSection = element.style === 'ContractArticle';
+      const sectionId = isSection ? `section-${index}` : null;
       
-      // Rendre un élément éditable avec une apparence similaire au PDF et support du drag and drop
       return (
         <div 
           id={`contract-element-${index}`}
+          ref={el => { elementRefs.current[index] = el; }}
           className={`group relative contract-element-container py-2 pl-6 pr-4 border-l-4 
             ${isSelected ? 'border-l-blue-500 bg-blue-50/10 element-selected' : 'border-l-transparent'} 
-            ${isBeingDragged ? 'opacity-50' : ''} 
-            ${commentCount > 0 ? 'has-comments' : ''} 
+            ${hasComments ? 'has-comments' : ''} 
             hover:bg-gray-50/30 transition-colors duration-200 ${elementStyle}`}
-          onClick={() => handleElementClick(index)}
-          data-paragraph-index={index}
+          onClick={(e) => handleElementClick(index, e)}
+          data-element-index={index}
+          data-section-id={sectionId}
           key={index}
         >
           <div 
@@ -885,57 +846,47 @@ const ContractEditorPage = () => {
             style={{ outline: 'none' }}
           ></div>
           
-          {/* Indicateur de commentaires amélioré avec l'icône cercle */}
+          {/* Indicateur de commentaires */}
           {hasComments && (
             <button 
               className="absolute right-0 top-0 flex items-center justify-center h-full px-1 group-hover:bg-gray-100 rounded-r"
               onClick={(e) => {
                 e.stopPropagation();
-                setShowCommentPanel(true);
-                // Faire défiler jusqu'au commentaire dans le panneau si possible
+                setShowComments(true);
               }}
-              title={`${commentCount} commentaire${commentCount > 1 ? 's' : ''}`}
+              title={`${elementComments.length} commentaire${elementComments.length > 1 ? 's' : ''}`}
             >
               <div className="relative">
                 <MessageCircle size={16} className="text-yellow-500" />
-                {commentCount > 1 && (
+                {elementComments.length > 1 && (
                   <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full">
-                    {commentCount}
+                    {elementComments.length}
                   </span>
                 )}
-            </div>
+              </div>
             </button>
           )}
           
-          {/* Poignée de glisser-déposer (plus discrète) */}
-          {isDraggable && (
-            <div 
-              className="drag-handle"
-              onMouseDown={(e) => handleDragStart(e, index)}
-              onTouchStart={(e) => handleDragStart(e, index)}
-              onClick={(e) => e.stopPropagation()}
-              title="Glisser pour déplacer"
-            >
-              <GripVertical size={14} className="text-gray-400" />
-            </div>
-          )}
-          
           {/* Barre d'outils contextuelle sur hover */}
-          {isSelected && !isBeingDragged && (
+          {isSelected && (
             <div className="absolute -right-1 -top-8 hidden group-hover:flex bg-white border border-gray-200 rounded-lg shadow-sm">
               <button 
                 title="Déplacer vers le haut"
                 className="p-1.5 text-gray-500 hover:text-blue-600"
                 onClick={(e) => { e.stopPropagation(); moveElement(index, 'up'); }}
               >
-                <ArrowUp size={14} />
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m18 15-6-6-6 6"/>
+                </svg>
               </button>
               <button 
                 title="Déplacer vers le bas"
                 className="p-1.5 text-gray-500 hover:text-blue-600"
                 onClick={(e) => { e.stopPropagation(); moveElement(index, 'down'); }}
               >
-                <ArrowDown size={14} />
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m6 9 6 6 6-6"/>
+                </svg>
               </button>
               <button 
                 title="Ajouter un commentaire"
@@ -956,222 +907,7 @@ const ContractEditorPage = () => {
     return null;
   };
   
-  // Améliorer le rendu des commentaires pour un meilleur visuel
-  const renderCommentPanel = () => {
-    // Trier les commentaires par section pour un affichage plus organisé
-    const commentsBySection = {};
-    
-    comments.forEach(comment => {
-      if (!commentsBySection[comment.elementIndex]) {
-        commentsBySection[comment.elementIndex] = [];
-      }
-      commentsBySection[comment.elementIndex].push(comment);
-    });
-    
-    return (
-      <div className="bg-white h-full overflow-y-auto">
-        <div className="sticky top-0 z-10 flex justify-between items-center p-4 bg-white border-b border-gray-200">
-          <h3 className="font-medium text-gray-800">Commentaires ({comments.length})</h3>
-          <button 
-            onClick={() => setShowCommentPanel(false)}
-            className="p-1.5 rounded-full hover:bg-gray-100 text-gray-500"
-            aria-label="Fermer les commentaires"
-          >
-            <X size={16} />
-          </button>
-        </div>
-        
-        {comments.length === 0 ? (
-          <div className="text-gray-500 text-sm p-8 text-center flex flex-col items-center">
-            <MessageCircle size={24} className="mb-2 opacity-50" />
-            <p>Aucun commentaire</p>
-            <p className="text-xs mt-1">Sélectionnez du texte et utilisez l'outil de commentaire</p>
-          </div>
-        ) : (
-          <div className="p-4">
-            {Object.keys(commentsBySection).map(sectionIndex => (
-              <div key={sectionIndex} className="mb-6">
-                <div 
-                  className="text-xs font-medium text-blue-600 mb-2 flex items-center cursor-pointer"
-                  onClick={() => handleElementClick(parseInt(sectionIndex))}
-                >
-                  <span className="mr-1">Section {parseInt(sectionIndex) + 1}</span>
-                  <ChevronRight size={14} />
-                </div>
-                
-                <div className="space-y-3">
-                  {commentsBySection[sectionIndex].map(comment => (
-                    <div 
-                      key={comment.id} 
-                      className="bg-gray-50 rounded-lg p-3 border border-gray-100 hover:border-blue-200 transition-colors"
-                    >
-                      {comment.isEditing ? (
-                        <div>
-                          {comment.selectedText && (
-                            <div className="bg-yellow-50 p-2 rounded-t border border-yellow-200 text-gray-700 text-sm font-medium mb-0 overflow-hidden">
-                              <span className="block text-xs text-yellow-600 font-medium mb-1">Texte sélectionné :</span>
-                              "{comment.selectedText}"
-                            </div>
-                          )}
-                          
-                          <textarea
-                            className={`w-full px-3 py-2 text-sm border border-gray-300 ${comment.selectedText ? 'rounded-b border-t-0' : 'rounded'} bg-white focus:outline-none focus:ring-1 focus:ring-blue-500`}
-                            value={comment.text}
-                            onChange={(e) => {
-                              const updatedComments = comments.map(c => 
-                                c.id === comment.id ? {...c, text: e.target.value} : c
-                              );
-                              setComments(updatedComments);
-                            }}
-                            placeholder="Ajoutez votre commentaire ici..."
-                            rows={3}
-                            autoFocus
-                          />
-                          
-                          <div className="flex justify-end space-x-2 mt-2">
-                            <button
-                              className="px-2 py-1 text-xs rounded border border-gray-300 text-gray-700 hover:bg-gray-100"
-                              onClick={() => {
-                                // Si c'est un nouveau commentaire sans texte, on le supprime lors de l'annulation
-                                if (!comment.text.trim()) {
-                                  setComments(comments.filter(c => c.id !== comment.id));
-                                } else {
-                                  const updatedComments = comments.map(c => 
-                                    c.id === comment.id ? {...c, isEditing: false} : c
-                                  );
-                                  setComments(updatedComments);
-                                }
-                              }}
-                            >
-                              Annuler
-                            </button>
-                            
-                            <button
-                              className="px-2 py-1 text-xs rounded bg-blue-600 text-white hover:bg-blue-700"
-                              onClick={() => {
-                                // Si le commentaire est vide, on le supprime
-                                if (!comment.text.trim()) {
-                                  setComments(comments.filter(c => c.id !== comment.id));
-                                } else {
-                                  const updatedComments = comments.map(c => 
-                                    c.id === comment.id ? {...c, isEditing: false, date: new Date().toISOString()} : c
-                                  );
-                                  setComments(updatedComments);
-                                }
-                              }}
-                            >
-                              Enregistrer
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div>
-                <div className="flex justify-between items-start">
-                            <span className="text-xs text-gray-500">
-                              {new Date(comment.date).toLocaleString('fr-FR', {
-                                day: 'numeric',
-                                month: 'short',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
-                            </span>
-                            
-                            <div className="flex space-x-1">
-                              <button
-                                onClick={() => {
-                                  const updatedComments = comments.map(c => 
-                                    c.id === comment.id ? {...c, isEditing: true} : c
-                                  );
-                                  setComments(updatedComments);
-                                }}
-                                className="p-1 text-gray-400 hover:text-gray-600"
-                                title="Modifier"
-                              >
-                                <span className="sr-only">Modifier</span>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                  <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
-                                </svg>
-                              </button>
-                              
-                  <button 
-                    onClick={() => deleteComment(comment.id)}
-                                className="p-1 text-gray-400 hover:text-red-500"
-                                title="Supprimer"
-                  >
-                                <span className="sr-only">Supprimer</span>
-                    <X size={14} />
-                  </button>
-                </div>
-                          </div>
-                          
-                          {comment.selectedText && (
-                            <div className="bg-yellow-50 p-2 rounded-t border border-yellow-200 text-gray-700 text-sm font-medium mb-0 overflow-hidden">
-                              <span className="block text-xs text-yellow-600 font-medium mb-1">Texte sélectionné :</span>
-                              "{comment.selectedText}"
-                            </div>
-                          )}
-                          
-                          <div className={`bg-white p-2 rounded-b border border-gray-200 text-gray-700 text-sm mb-1 ${comment.selectedText ? 'border-t-0 mt-0' : 'rounded-t'}`}>
-                            <p className="whitespace-pre-wrap">
-                              {comment.text}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  };
-  
-  const toggleMobileMenu = () => {
-    setShowMobileMenu(!showMobileMenu);
-  };
-  
-  // Modifier la fonction handleAddComment pour créer un format plus clair
-  const handleAddComment = () => {
-    // Vérifier si un élément est sélectionné
-    if (selectedElementIndex !== null) {
-      // Créer un nouveau commentaire
-      const selection = window.getSelection();
-      const selectedText = selection && selection.toString() 
-        ? selection.toString() 
-        : '';
-      
-      // Créer un nouveau commentaire avec une meilleure séparation visuelle
-      const newComment = {
-        id: Date.now().toString(),
-        elementIndex: selectedElementIndex,
-        text: "", // Le texte sera ajouté par l'utilisateur
-        date: new Date().toISOString(),
-        user: "Utilisateur",
-        selectedText: selectedText,
-        isEditing: true
-      };
-      
-      // Ajouter le commentaire et afficher le panneau
-      setComments([...comments, newComment]);
-      setShowCommentPanel(true);
-      
-      // Animation subtile pour indiquer que le commentaire a été ajouté
-      setSelectedElementIndex(selectedElementIndex);
-    } else {
-      // Informer l'utilisateur qu'il doit sélectionner un élément
-      setError("Veuillez sélectionner un élément du contrat pour ajouter un commentaire.");
-      setTimeout(() => setError(null), 3000);
-    }
-  };
-  
-  // Fonction pour afficher/masquer les commentaires
-  const toggleComments = () => {
-    setShowCommentPanel(!showCommentPanel);
-  };
-  
+  // Page de chargement
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-gray-50">
@@ -1180,6 +916,7 @@ const ContractEditorPage = () => {
     );
   }
   
+  // Page d'erreur
   if (error) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
@@ -1200,13 +937,16 @@ const ContractEditorPage = () => {
     );
   }
   
+  // Déterminer la taille de la police sur le body
+  const fontSizeClass = `font-size-${fontSize}`;
+  
   return (
     <div 
-      className={`min-h-screen bg-gray-50 flex flex-col ${isFullscreen ? 'overflow-hidden' : ''} contract-editor-page relative`} 
       ref={editorRef}
+      className={`min-h-screen bg-gray-50 flex flex-col ${isFullscreen ? 'overflow-hidden' : ''} contract-editor-page relative ${fontSizeClass} ${keyboardVisible ? 'keyboard-visible' : ''}`} 
     >
-      <style>{dragStyles}</style>
       <style>{pdfStyles}</style>
+      
       {/* En-tête */}
       <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3">
@@ -1235,7 +975,6 @@ const ContractEditorPage = () => {
               <button
                 onClick={handleSave}
                 className="hidden sm:flex items-center text-xs sm:text-sm bg-blue-600 hover:bg-blue-700 text-white py-1.5 px-2 sm:px-3 rounded-lg shadow-sm transition-colors"
-                disabled={isLoading}
               >
                 <Save size={16} className="mr-1" />
                 <span className="hidden sm:inline">Enregistrer</span>
@@ -1244,61 +983,140 @@ const ContractEditorPage = () => {
               <button
                 onClick={handleDownloadPdf}
                 className="hidden sm:flex items-center text-xs sm:text-sm bg-gray-700 hover:bg-gray-800 text-white py-1.5 px-2 sm:px-3 rounded-lg shadow-sm transition-colors"
-                disabled={isLoading || isPdfGenerating}
               >
                 <Download size={16} className="mr-1" />
                 <span className="hidden sm:inline">PDF</span>
               </button>
               
+              {/* Menu de réglages */}
+              <div className="relative">
+                <button 
+                  className="flex items-center text-xs sm:text-sm border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 py-1.5 px-2 sm:px-3 rounded-lg shadow-sm transition-colors"
+                  onClick={() => setShowSettings(!showSettings)}
+                >
+                  <Type size={16} className="mr-1" />
+                  <span className="hidden sm:inline">Police</span>
+                </button>
+                
+                {showSettings && (
+                  <div className="absolute right-0 top-full mt-1 z-50 w-48 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
+                    <div className="p-2">
+                      <div className="mb-2 text-sm font-medium text-gray-700">Taille du texte</div>
+                      <div className="space-y-1">
+                        <button 
+                          className={`w-full text-left px-3 py-2 text-sm rounded ${fontSize === 'small' ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-50'}`}
+                          onClick={() => changeFontSize('small')}
+                        >
+                          Petit
+                        </button>
+                        <button 
+                          className={`w-full text-left px-3 py-2 text-sm rounded ${fontSize === 'normal' ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-50'}`}
+                          onClick={() => changeFontSize('normal')}
+                        >
+                          Normal
+                        </button>
+                        <button 
+                          className={`w-full text-left px-3 py-2 text-sm rounded ${fontSize === 'large' ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-50'}`}
+                          onClick={() => changeFontSize('large')}
+                        >
+                          Grand
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
               <button
-                onClick={() => setActiveTab(activeTab === 'editor' ? 'settings' : 'editor')}
+                onClick={toggleFullscreen}
                 className="hidden sm:flex items-center text-xs sm:text-sm border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 py-1.5 px-2 sm:px-3 rounded-lg shadow-sm transition-colors"
               >
-                <Settings size={16} className="mr-1" />
-                <span className="hidden sm:inline">{activeTab === 'editor' ? 'Réglages' : 'Éditeur'}</span>
+                {isFullscreen ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
+                    <path d="M8 3v3a2 2 0 0 1-2 2H3"></path><path d="M21 8h-3a2 2 0 0 1-2-2V3"></path><path d="M3 16h3a2 2 0 0 1 2 2v3"></path><path d="M16 21v-3a2 2 0 0 1 2-2h3"></path>
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
+                    <path d="M8 3H5a2 2 0 0 0-2 2v3"></path><path d="M21 8V5a2 2 0 0 0-2-2h-3"></path><path d="M3 16v3a2 2 0 0 0 2 2h3"></path><path d="M16 21h3a2 2 0 0 0 2-2v-3"></path>
+                  </svg>
+                )}
+                <span className="hidden sm:inline">{isFullscreen ? 'Réduire' : 'Plein écran'}</span>
               </button>
-
+              
+              {/* Boutons pour afficher les commentaires et les sections (bureau) */}
+              <button
+                onClick={toggleComments}
+                className="hidden sm:flex items-center text-xs sm:text-sm border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 py-1.5 px-2 sm:px-3 rounded-lg shadow-sm transition-colors"
+              >
+                <MessageCircle size={16} className={`mr-1 ${showComments ? 'text-yellow-500' : ''}`} />
+                <span className="hidden sm:inline">Commentaires</span>
+              </button>
+              
+              <button
+                onClick={toggleSections}
+                className="hidden sm:flex items-center text-xs sm:text-sm border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 py-1.5 px-2 sm:px-3 rounded-lg shadow-sm transition-colors"
+              >
+                <List size={16} className={`mr-1 ${showSections ? 'text-blue-500' : ''}`} />
+                <span className="hidden sm:inline">Sections</span>
+              </button>
+              
               {/* Menu mobile */}
               <button
-                onClick={toggleMobileMenu}
+                onClick={() => setShowMobileMenu(!showMobileMenu)}
                 className="sm:hidden flex items-center text-gray-600 hover:text-gray-900 p-1.5 rounded-lg hover:bg-gray-100"
               >
-                {showMobileMenu ? <X size={20} /> : <Settings size={20} />}
+                {showMobileMenu ? <X size={20} /> : <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="4" y1="8" x2="20" y2="8"></line>
+                  <line x1="4" y1="16" x2="20" y2="16"></line>
+                </svg>}
               </button>
             </div>
           </div>
-
-          {/* Barre d'actions mobile */}
+          
+          {/* Menu mobile déplié */}
           {showMobileMenu && (
-            <div className="sm:hidden py-2 mt-2 border-t border-gray-100 flex justify-between">
+            <div className="sm:hidden mt-3 border-t border-gray-100 pt-3 space-y-2">
               <button
-                onClick={handleSave}
-                className="flex items-center text-xs bg-blue-600 hover:bg-blue-700 text-white py-1.5 px-3 rounded-lg shadow-sm transition-colors"
+                onClick={() => { handleSave(); setShowMobileMenu(false); }}
+                className="w-full flex items-center text-sm bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 px-3 rounded-lg transition-colors"
               >
-                <Save size={14} className="mr-1" />
+                <Save size={16} className="mr-2" />
                 Enregistrer
               </button>
-              
               <button
-                onClick={handleDownloadPdf}
-                className="flex items-center text-xs bg-gray-700 hover:bg-gray-800 text-white py-1.5 px-3 rounded-lg shadow-sm transition-colors"
+                onClick={() => { handleDownloadPdf(); setShowMobileMenu(false); }}
+                className="w-full flex items-center text-sm bg-gray-50 hover:bg-gray-100 text-gray-800 py-2 px-3 rounded-lg transition-colors"
               >
-                <Download size={14} className="mr-1" />
-                PDF
+                <Download size={16} className="mr-2" />
+                Télécharger en PDF
               </button>
-              
               <button
-                onClick={() => setActiveTab(activeTab === 'editor' ? 'settings' : 'editor')}
-                className="flex items-center text-xs border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 py-1.5 px-3 rounded-lg shadow-sm transition-colors"
+                onClick={() => { toggleSections(); setShowMobileMenu(false); }}
+                className={`w-full flex items-center text-sm ${showSections ? 'bg-blue-50 text-blue-700' : 'bg-gray-50 text-gray-800'} hover:bg-gray-100 py-2 px-3 rounded-lg transition-colors`}
               >
-                <Settings size={14} className="mr-1" />
-                {activeTab === 'editor' ? 'Réglages' : 'Éditeur'}
+                <List size={16} className="mr-2" />
+                {showSections ? 'Masquer les sections' : 'Afficher les sections'}
+              </button>
+              <button
+                onClick={() => { toggleComments(); setShowMobileMenu(false); }}
+                className={`w-full flex items-center text-sm ${showComments ? 'bg-yellow-50 text-yellow-700' : 'bg-gray-50 text-gray-800'} hover:bg-gray-100 py-2 px-3 rounded-lg transition-colors`}
+              >
+                <MessageCircle size={16} className="mr-2" />
+                {showComments ? 'Masquer les commentaires' : 'Afficher les commentaires'}
+              </button>
+              <button
+                onClick={() => { toggleKeyboard(); setShowMobileMenu(false); }}
+                className="w-full flex items-center text-sm bg-gray-50 hover:bg-gray-100 text-gray-800 py-2 px-3 rounded-lg transition-colors"
+              >
+                <Keyboard size={16} className="mr-2" />
+                {keyboardVisible ? 'Masquer le clavier' : 'Afficher le clavier'}
               </button>
             </div>
           )}
           
-          {savedMessage && (
-            <div className="absolute top-full right-0 mt-2 mr-4 px-3 py-2 bg-green-50 text-green-700 text-sm rounded-md shadow-sm border border-green-100 flex items-center">
+          {/* Notification de sauvegarde */}
+          {savedNotification && (
+            <div className="absolute top-full right-4 mt-2 px-3 py-2 bg-green-50 text-green-700 text-sm rounded-md shadow-sm border border-green-100 flex items-center z-30">
               <CheckCircle size={16} className="mr-2" />
               Modifications enregistrées
             </div>
@@ -1306,191 +1124,116 @@ const ContractEditorPage = () => {
         </div>
       </header>
       
-      {/* Corps de l'application */}
-      <main className="flex-1 flex">
-        {/* Sidebar - Masquée sur mobile sauf si on clique sur le bouton dédié */}
-        <aside className={`bg-white border-r border-gray-200 ${
-          activeTab === 'editor' ? 'w-64 flex-shrink-0' : 'hidden'
-        } ${
-          !showMobileSections ? 'hidden md:block' : 'fixed inset-0 z-40 md:relative md:z-0 pt-20'
-        }`}>
-          <div className="p-4 h-full overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-medium text-gray-900">Sections</h2>
-              <button 
-                className="md:hidden p-1.5 text-gray-500 hover:text-gray-700 bg-gray-100 rounded-md"
-                onClick={() => setShowMobileSections(false)}
-              >
-                <X size={16} />
-              </button>
-            </div>
-            
-            {/* Liste des sections */}
-            <nav className="space-y-1">
-              {getSections().map((section, index) => (
-                <button
-                  key={index}
-                  onClick={() => setSelectedSection(section.index)}
-                  className={`w-full px-3 py-2 text-left text-sm rounded-lg flex items-center justify-between ${
-                    selectedSection === section.index 
-                      ? 'bg-blue-50 text-blue-600' 
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  <span>{section.text.substring(0, 40)}...</span>
-                  {selectedSection === section.index && <ChevronRight size={16} />}
-                </button>
-              ))}
-            </nav>
+      {/* Contenu principal */}
+      <main className="flex-1 flex overflow-hidden">
+        {/* Navigateur de sections - Optimisé pour mobile */}
+        {showSections && (
+          <div className={`${isMobile || isTablet ? 'fixed inset-0 z-40 mobile-panel' : 'w-64 flex-shrink-0'}`}>
+            <EditorSectionNavigator 
+              sections={getSections()}
+              activeSectionId={activeSectionId}
+              onNavigate={handleNavigateToSection}
+              onClose={() => setShowSections(false)}
+            />
           </div>
-        </aside>
-        
-        {/* Bouton pour afficher les sections sur mobile */}
-        <button
-          className="md:hidden fixed bottom-4 left-4 z-30 bg-white shadow-lg rounded-full p-3 text-blue-600 border border-gray-200"
-          onClick={() => setShowMobileSections(true)}
-          style={{ display: showMobileSections ? 'none' : activeTab === 'editor' ? 'block' : 'none' }}
-        >
-          <ChevronUp size={20} />
-        </button>
-        
-        {/* Contenu principal */}
-        <div className="flex-1 overflow-y-auto p-4">
-          {activeTab === 'editor' ? (
-            <div className="pdf-container">
-              {/* En-tête minimaliste avec options essentielles uniquement */}
-              <div className="border-b border-gray-200 px-4 py-2 flex justify-end items-center bg-white">
-                <div className="flex items-center space-x-2">
-                  <select 
-                    className="text-sm border border-gray-300 rounded-md py-1 pl-2 pr-6 bg-white"
-                    onChange={(e) => changeFontSize(e.target.value)}
-                    value={fontSize}
-                  >
-                    <option value="small">Petit</option>
-                    <option value="normal">Normal</option>
-                    <option value="large">Grand</option>
-                  </select>
-                  
-                  <button
-                    onClick={toggleFullscreen}
-                    className="p-1.5 rounded-md hover:bg-gray-100 text-gray-700"
-                    title={isFullscreen ? 'Quitter le plein écran' : 'Plein écran'}
-                  >
-                    {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
-                  </button>
-                </div>
-              </div>
-              
-              {/* Zone d'édition du contrat */}
-              <div className={`pdf-viewer ${fontSize === 'small' ? 'text-[9pt]' : fontSize === 'large' ? 'text-[11pt]' : 'text-[10pt]'}`}>
-                {elementsLoading ? (
-                  <div className="flex justify-center items-center h-64">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {contractElements.map((element, index) => renderContractElement(element, index))}
-                  </div>
-                )}
-              </div>
-              
-              {/* Ajouter le EditorFloatingDock pour les contrôles flottants */}
-              <EditorFloatingDock 
-                onFormat={applyFormatting}
-                onSave={handleSave}
-                onAddComment={handleAddComment}
-                onToggleComments={toggleComments}
-                showComments={showCommentPanel}
-              />
-            </div>
-          ) : (
-            // Afficher les paramètres ici
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 max-w-4xl mx-auto p-6">
-              <h2 className="text-xl font-medium text-gray-900 mb-6">Paramètres du document</h2>
-              
-              {/* Paramètres à implémenter ici */}
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-base font-medium text-gray-800 mb-3">Apparence</h3>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Taille du texte</label>
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => changeFontSize('small')}
-                          className={`px-3 py-1.5 rounded-md text-sm ${fontSize === 'small' ? 'bg-blue-100 text-blue-700 border border-blue-200' : 'bg-gray-100 text-gray-800 border border-gray-200'}`}
-                        >
-                          Petit
-                        </button>
-                        <button
-                          onClick={() => changeFontSize('normal')}
-                          className={`px-3 py-1.5 rounded-md text-sm ${fontSize === 'normal' ? 'bg-blue-100 text-blue-700 border border-blue-200' : 'bg-gray-100 text-gray-800 border border-gray-200'}`}
-                        >
-                          Normal
-                        </button>
-                        <button
-                          onClick={() => changeFontSize('large')}
-                          className={`px-3 py-1.5 rounded-md text-sm ${fontSize === 'large' ? 'bg-blue-100 text-blue-700 border border-blue-200' : 'bg-gray-100 text-gray-800 border border-gray-200'}`}
-                        >
-                          Grand
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div>
-                  <h3 className="text-base font-medium text-gray-800 mb-3">Métadonnées</h3>
-                  <div className="space-y-3">
-                    <div>
-                      <label htmlFor="document-title" className="block text-sm font-medium text-gray-700 mb-1">
-                        Titre du document
-                      </label>
-                      <input
-                        type="text"
-                        id="document-title"
-                        value={title}
-                        onChange={handleTitleChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-        
-        {/* Panneau de commentaires - version améliorée */}
-        {showCommentPanel && activeTab === 'editor' && (
-          <aside className="w-0 md:w-80 flex-shrink-0 border-l border-gray-200 bg-white transition-all duration-300 ease-in-out overflow-hidden">
-            {renderCommentPanel()}
-          </aside>
         )}
         
-        {/* Panneau de commentaires mobile */}
-        {showCommentPanel && activeTab === 'editor' && (
-          <div className="md:hidden fixed inset-0 bg-black bg-opacity-30 z-50 flex justify-end">
-            <div className="w-full max-w-xs bg-white h-full animate-slideIn">
-              {renderCommentPanel()}
+        {/* Contenu principal */}
+        <div 
+          className="flex-1 overflow-y-auto p-4"
+          ref={editorContainerRef}
+        >
+          <div className={`pdf-container max-w-4xl mx-auto`}>
+            {/* Zone d'édition du contrat */}
+            <div className="pdf-viewer shadow-md rounded-lg overflow-hidden">
+              {elementsLoading ? (
+                <div className="flex justify-center items-center h-64">
+                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {contractElements.map((element, index) => renderContractElement(element, index))}
+                </div>
+              )}
             </div>
+          </div>
+        </div>
+        
+        {/* Panneau de commentaires - Optimisé pour mobile */}
+        {showComments && (
+          <div className={`${isMobile || isTablet ? 'fixed inset-0 z-40 mobile-panel-right' : 'w-80 flex-shrink-0'}`}>
+            <EditorCommentPanel 
+              comments={comments}
+              selectedElementIndex={selectedElementIndex}
+              onDeleteComment={deleteComment}
+              onUpdateComment={updateComment}
+              onClose={() => setShowComments(false)}
+            />
           </div>
         )}
       </main>
       
-      {/* Message d'erreur */}
-      {error && (
-        <div className="fixed bottom-4 right-4 px-4 py-3 bg-red-50 text-red-700 rounded-md shadow-lg border border-red-100 flex items-center">
-          <AlertCircle size={20} className="mr-2 flex-shrink-0" />
-          <p>{error}</p>
-          <button 
-            className="ml-3 p-1 text-red-500 hover:text-red-700"
-            onClick={() => setError(null)}
-          >
-            <X size={18} />
+      {/* Bouton pour retourner en haut sur mobile */}
+      <button
+        onClick={() => editorContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
+        className="fixed right-4 bottom-20 z-30 bg-white shadow-lg rounded-full p-2 border border-gray-200 text-gray-600 hover:bg-gray-50 sm:hidden"
+        aria-label="Retour en haut"
+      >
+        <ChevronUp size={20} />
+      </button>
+      
+      {/* Barre d'outils de sélection flottante pour tous les appareils */}
+      {toolbarPosition.visible && (
+        <div 
+          className="selection-toolbar"
+          style={{
+            left: `${toolbarPosition.x}px`,
+            top: `${toolbarPosition.y}px`,
+            zIndex: 40, // S'assurer qu'il est au-dessus des autres éléments
+            transform: 'translate(-50%, -100%)'
+          }}
+        >
+          <button onClick={() => applyFormatting('bold')} title="Gras">
+            <Bold size={isMobile ? 12 : 14} />
+          </button>
+          <button onClick={() => applyFormatting('italic')} title="Italique">
+            <Italic size={isMobile ? 12 : 14} />
+          </button>
+          <button onClick={() => applyFormatting('underline')} title="Souligné">
+            <Underline size={isMobile ? 12 : 14} />
+          </button>
+          <button onClick={() => applyFormatting('highlight')} title="Surligner">
+            <svg xmlns="http://www.w3.org/2000/svg" width={isMobile ? 12 : 14} height={isMobile ? 12 : 14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-500">
+              <path d="m9 11-6 6v3h9l3-3"></path>
+              <path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"></path>
+            </svg>
+          </button>
+          <button onClick={() => applyFormatting('alignLeft')} title="Aligner à gauche">
+            <AlignLeft size={isMobile ? 12 : 14} />
+          </button>
+          <button onClick={() => applyFormatting('alignCenter')} title="Centrer">
+            <AlignCenter size={isMobile ? 12 : 14} />
+          </button>
+          <button onClick={() => applyFormatting('alignRight')} title="Aligner à droite">
+            <AlignRight size={isMobile ? 12 : 14} />
+          </button>
+          <button onClick={handleAddComment} title="Ajouter un commentaire">
+            <MessageCircle size={isMobile ? 12 : 14} className="text-yellow-500" />
           </button>
         </div>
       )}
+      
+      {/* Dock flottant pour les outils d'édition */}
+      <EditorFloatingDock 
+        onFormat={applyFormatting}
+        onSave={handleSave}
+        onAddComment={handleAddComment}
+        onToggleComments={toggleComments}
+        onToggleSections={toggleSections}
+        onToggleKeyboard={toggleKeyboard}
+        showComments={showComments}
+        showSections={showSections}
+      />
     </div>
   );
 };
