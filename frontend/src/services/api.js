@@ -119,7 +119,7 @@ export const deleteContract = async (contractId) => {
   }
 };
 
-export const exportContract = async (contractId) => {
+export const exportContract = async (contractId, filename = null) => {
   try {
     const response = await api.get(`/contracts/export/${contractId}`, {
       responseType: 'blob',
@@ -129,7 +129,15 @@ export const exportContract = async (contractId) => {
     const url = window.URL.createObjectURL(new Blob([response.data]));
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `lexforge_contract_${contractId}.json`);
+    
+    // Utiliser le nom de fichier personnalisé s'il est fourni, sinon utiliser le nom par défaut
+    const downloadFilename = filename || `lexforge_contract_${contractId}`;
+    // S'assurer que le nom se termine par .json
+    const finalFilename = downloadFilename.endsWith('.json') 
+      ? downloadFilename 
+      : `${downloadFilename}.json`;
+      
+    link.setAttribute('download', finalFilename);
     document.body.appendChild(link);
     link.click();
     link.remove();

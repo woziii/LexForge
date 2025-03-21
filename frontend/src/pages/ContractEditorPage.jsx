@@ -10,6 +10,7 @@ import EditorFloatingDock from '../components/ui/editor-floating-dock';
 import EditorSectionNavigator from '../components/editor/EditorSectionNavigator';
 import EditorCommentPanel from '../components/editor/EditorCommentPanel';
 import useDeviceDetect from '../hooks/useDeviceDetect';
+import ExportModal from '../components/ExportModal';
 
 /**
  * Page d'édition de contrat améliorée
@@ -243,35 +244,42 @@ const ContractEditorPage = () => {
     }
   };
   
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  
   const handleShareContract = async () => {
     if (!contractId) return;
     
+    // Ouvrir le modal d'exportation au lieu de la boîte de dialogue de confirmation
+    setIsExportModalOpen(true);
+  };
+  
+  const handleExport = async (customFilename) => {
     try {
-      // Afficher une boîte de dialogue de confirmation
-      if (window.confirm("Voulez-vous exporter ce contrat ? Le fichier sera téléchargé au format JSON.")) {
-        // Afficher une notification de chargement
-        setNotification({
-          type: 'info',
-          message: 'Préparation du contrat pour l\'export...'
-        });
-        
-        // Sauvegarder d'abord pour s'assurer que toutes les modifications sont prises en compte
-        await handleSave();
-        
-        // Exporter le contrat
-        await exportContract(contractId);
-        
-        // Afficher une notification de succès
-        setNotification({
-          type: 'success',
-          message: 'Contrat exporté avec succès'
-        });
-        
-        // Masquer la notification après 3 secondes
-        setTimeout(() => {
-          setNotification(null);
-        }, 3000);
-      }
+      // Afficher une notification de chargement
+      setNotification({
+        type: 'info',
+        message: 'Préparation du contrat pour l\'export...'
+      });
+      
+      // Sauvegarder d'abord pour s'assurer que toutes les modifications sont prises en compte
+      await handleSave();
+      
+      // Exporter le contrat avec le nom de fichier personnalisé
+      await exportContract(contractId, customFilename);
+      
+      // Fermer le modal
+      setIsExportModalOpen(false);
+      
+      // Afficher une notification de succès
+      setNotification({
+        type: 'success',
+        message: 'Contrat exporté avec succès'
+      });
+      
+      // Masquer la notification après 3 secondes
+      setTimeout(() => {
+        setNotification(null);
+      }, 3000);
     } catch (error) {
       console.error('Error exporting contract:', error);
       
@@ -1288,6 +1296,15 @@ const ContractEditorPage = () => {
         onToggleKeyboard={toggleKeyboard}
         showComments={showComments}
         showSections={showSections}
+      />
+      
+      {/* Modal d'exportation */}
+      <ExportModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        onExport={handleExport}
+        contractTitle={title}
+        contractId={contractId}
       />
     </div>
   );

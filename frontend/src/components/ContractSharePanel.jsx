@@ -1,28 +1,39 @@
 import React, { useState, useRef } from 'react';
-import { FileDown, UploadCloud, Check, AlertCircle, ArrowRight } from 'lucide-react';
+import { FileDown, UploadCloud, Check, AlertCircle, ArrowRight, Loader } from 'lucide-react';
 import { exportContract, importContract } from '../services/api';
+import ExportModal from './ExportModal';
 
 /**
- * Composant de partage et d'importation de contrats
+ * Composant de partage de contrat qui permet d'exporter et d'importer des contrats.
  * Peut être utilisé dans différentes parties de l'application
  */
-const ContractSharePanel = ({ contractId = null, onImportSuccess = null, variant = 'full' }) => {
+const ContractSharePanel = ({ contractId = null, onImportSuccess = null, variant = 'full', contractTitle = '' }) => {
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [importFile, setImportFile] = useState(null);
   const [notification, setNotification] = useState(null);
   const fileInputRef = useRef(null);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
   // Référence pour la zone de glisser-déposer
   const dropZoneRef = useRef(null);
 
+  // Fonction pour ouvrir le modal d'exportation
+  const handleExportClick = () => {
+    if (!contractId) return;
+    setIsExportModalOpen(true);
+  };
+
   // Fonction pour déclencher l'exportation d'un contrat
-  const handleExport = async () => {
+  const handleExport = async (customFilename) => {
     if (!contractId) return;
     
     try {
       setIsExporting(true);
-      await exportContract(contractId);
+      await exportContract(contractId, customFilename);
+      
+      // Fermer le modal
+      setIsExportModalOpen(false);
       
       // Afficher une notification de succès
       setNotification({
@@ -53,13 +64,12 @@ const ContractSharePanel = ({ contractId = null, onImportSuccess = null, variant
     
     try {
       setIsImporting(true);
-      const response = await importContract(importFile);
+      
+      const result = await importContract(importFile);
       
       // Réinitialiser le fichier sélectionné
       setImportFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+      fileInputRef.current.value = null;
       
       // Afficher une notification de succès
       setNotification({
@@ -67,9 +77,9 @@ const ContractSharePanel = ({ contractId = null, onImportSuccess = null, variant
         message: 'Contrat importé avec succès'
       });
       
-      // Appeler la fonction de callback si définie
-      if (onImportSuccess && response.id) {
-        onImportSuccess(response.id);
+      // Appeler le callback si fourni
+      if (onImportSuccess && result.contractId) {
+        onImportSuccess(result.contractId);
       }
     } catch (error) {
       console.error('Error importing contract:', error);
@@ -77,61 +87,129 @@ const ContractSharePanel = ({ contractId = null, onImportSuccess = null, variant
       // Afficher une notification d'erreur
       setNotification({
         type: 'error',
-        message: error.response?.data?.error || 'Erreur lors de l\'importation du contrat'
+        message: 'Erreur lors de l\'importation du contrat'
       });
     } finally {
       setIsImporting(false);
     }
   };
-
-  // Fonction pour gérer le changement de fichier
+  
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       setImportFile(file);
     }
   };
-
-  // Fonctions pour le glisser-déposer
+  
   const handleDragOver = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    dropZoneRef.current.classList.add('bg-blue-50', 'border-blue-300');
+    dropZoneRef.current.classList.add('border-blue-500', 'bg-blue-50');
   };
-
+  
   const handleDragLeave = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    dropZoneRef.current.classList.remove('bg-blue-50', 'border-blue-300');
+    dropZoneRef.current.classList.remove('border-blue-500', 'bg-blue-50');
   };
-
+  
   const handleDrop = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    dropZoneRef.current.classList.remove('bg-blue-50', 'border-blue-300');
+    dropZoneRef.current.classList.remove('border-blue-500', 'bg-blue-50');
     
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      const file = files[0];
-      // Vérifier qu'il s'agit bien d'un fichier JSON
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const file = e.dataTransfer.files[0];
       if (file.type === 'application/json' || file.name.endsWith('.json')) {
         setImportFile(file);
       } else {
         setNotification({
           type: 'error',
-          message: 'Veuillez sélectionner un fichier JSON'
+          message: 'Le fichier doit être au format JSON'
         });
       }
     }
   };
-
-  // Rendre une version compacte si variant='compact'
-  if (variant === 'compact') {
+  
+  // Mode import uniquement
+  if (variant === 'import_only') {
     return (
-      <div className="flex flex-col space-y-3 mb-3">
+      <div className="flex flex-col">
+        {notification && (
+          <div className={`p-3 rounded-lg ${
+            notification.type === 'success' ? 'bg-green-100 text-green-800' : 
+            'bg-red-100 text-red-800'
+          } flex items-center mb-4`}>
+            {notification.type === 'success' ? <Check size={18} className="mr-2" /> : 
+            <AlertCircle size={18} className="mr-2" />}
+            <span>{notification.message}</span>
+          </div>
+        )}
+        
+        <div 
+          ref={dropZoneRef}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          className="h-24 border-2 border-dashed border-gray-300 rounded-md hover:border-blue-300 transition-colors flex flex-col items-center justify-center cursor-pointer mb-3"
+          onClick={() => fileInputRef.current.click()}
+        >
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept=".json"
+            className="hidden"
+          />
+          <UploadCloud size={24} className="text-blue-600 mb-2" />
+          <p className="text-sm text-center text-gray-500">
+            {importFile ? importFile.name : "Cliquez ou glissez un fichier ici"}
+          </p>
+        </div>
+        
+        <button
+          onClick={handleImport}
+          disabled={!importFile || isImporting}
+          className={`w-full flex items-center justify-center py-2 px-4 rounded-md shadow-sm text-sm font-medium transition-colors ${
+            !importFile
+              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              : 'bg-green-600 text-white hover:bg-green-700'
+          }`}
+        >
+          {isImporting ? (
+            <div className="flex items-center">
+              <div className="animate-spin h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full"></div>
+              <span>Importation en cours...</span>
+            </div>
+          ) : (
+            <>
+              <ArrowRight size={16} className="mr-2" />
+              <span>{importFile ? 'Importer le contrat' : 'Sélectionner un fichier'}</span>
+            </>
+          )}
+        </button>
+      </div>
+    );
+  }
+
+  // Version mini pour l'utilisation dans la barre latérale
+  if (variant === 'mini') {
+    return (
+      <div className="flex flex-col space-y-4">
+        {notification && (
+          <div className={`p-3 rounded-lg ${
+            notification.type === 'success' ? 'bg-green-100 text-green-800' : 
+            'bg-red-100 text-red-800'
+          } flex items-center mb-4`}>
+            {notification.type === 'success' ? <Check size={18} className="mr-2" /> : 
+             <AlertCircle size={18} className="mr-2" />}
+            <span>{notification.message}</span>
+          </div>
+        )}
+        
         {contractId && (
           <button
-            onClick={handleExport}
+            onClick={handleExportClick}
             disabled={isExporting}
             className="flex items-center justify-center py-2 px-3 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-md transition-colors"
           >
@@ -149,108 +227,14 @@ const ContractSharePanel = ({ contractId = null, onImportSuccess = null, variant
           </button>
         )}
         
-        <div 
-          ref={dropZoneRef}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          className="p-3 border-2 border-dashed border-gray-300 rounded-md hover:border-blue-300 transition-colors cursor-pointer text-center"
-          onClick={() => fileInputRef.current.click()}
-        >
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            accept=".json"
-            className="hidden"
-          />
-          <UploadCloud size={20} className="mx-auto text-blue-600 mb-2" />
-          <p className="text-sm text-center text-gray-500 mb-2">
-            {importFile ? importFile.name : "Glissez un fichier JSON ici ou cliquez pour parcourir"}
-          </p>
-        </div>
-        
-        {importFile && (
-          <button
-            onClick={handleImport}
-            disabled={isImporting}
-            className="w-full flex items-center justify-center py-2 px-3 bg-green-50 hover:bg-green-100 text-green-700 rounded-md transition-colors"
-          >
-            {isImporting ? (
-              <div className="flex items-center">
-                <div className="animate-spin h-4 w-4 mr-2 border-2 border-green-500 border-t-transparent rounded-full"></div>
-                <span>Importation en cours...</span>
-              </div>
-            ) : (
-              <>
-                <ArrowRight size={16} className="mr-2" />
-                <span>Importer ce contrat</span>
-              </>
-            )}
-          </button>
-        )}
-        
-        {notification && (
-          <div className={`p-2 rounded-md ${notification.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'} flex items-center`}>
-            {notification.type === 'success' ? <Check size={16} className="mr-2" /> : <AlertCircle size={16} className="mr-2" />}
-            <span className="text-sm">{notification.message}</span>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  // Mode import uniquement
-  if (variant === 'import_only') {
-    return (
-      <div className="flex flex-col space-y-3 mb-3">
-        <div 
-          ref={dropZoneRef}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          className="p-3 border-2 border-dashed border-gray-300 rounded-md hover:border-blue-300 transition-colors cursor-pointer text-center"
-          onClick={() => fileInputRef.current.click()}
-        >
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            accept=".json"
-            className="hidden"
-          />
-          <UploadCloud size={20} className="mx-auto text-blue-600 mb-2" />
-          <p className="text-sm text-center text-gray-500 mb-2">
-            {importFile ? importFile.name : "Glissez un fichier JSON ici ou cliquez pour parcourir"}
-          </p>
-        </div>
-        
-        {importFile && (
-          <button
-            onClick={handleImport}
-            disabled={isImporting}
-            className="w-full flex items-center justify-center py-2 px-3 bg-green-50 hover:bg-green-100 text-green-700 rounded-md transition-colors"
-          >
-            {isImporting ? (
-              <div className="flex items-center">
-                <div className="animate-spin h-4 w-4 mr-2 border-2 border-green-500 border-t-transparent rounded-full"></div>
-                <span>Importation en cours...</span>
-              </div>
-            ) : (
-              <>
-                <ArrowRight size={16} className="mr-2" />
-                <span>Importer ce contrat</span>
-              </>
-            )}
-          </button>
-        )}
-        
-        {notification && (
-          <div className={`p-2 rounded-md ${notification.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'} flex items-center`}>
-            {notification.type === 'success' ? <Check size={16} className="mr-2" /> : <AlertCircle size={16} className="mr-2" />}
-            <span className="text-sm">{notification.message}</span>
-          </div>
-        )}
+        {/* Modal d'exportation */}
+        <ExportModal
+          isOpen={isExportModalOpen}
+          onClose={() => setIsExportModalOpen(false)}
+          onExport={handleExport}
+          contractTitle={contractTitle}
+          contractId={contractId}
+        />
       </div>
     );
   }
@@ -277,13 +261,11 @@ const ContractSharePanel = ({ contractId = null, onImportSuccess = null, variant
             </p>
             
             <button
-              onClick={handleExport}
-              disabled={!contractId || isExporting}
               className={`w-full flex items-center justify-center py-2 px-4 rounded-md shadow-sm text-sm font-medium transition-colors ${
-                !contractId
-                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
+                !contractId || isExporting ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'
               }`}
+              onClick={handleExportClick}
+              disabled={!contractId || isExporting}
             >
               {isExporting ? (
                 <div className="flex items-center">
@@ -292,7 +274,7 @@ const ContractSharePanel = ({ contractId = null, onImportSuccess = null, variant
                 </div>
               ) : (
                 <>
-                  <FileDown size={16} className="mr-2 text-indigo-600" />
+                  <FileDown size={16} className="mr-2" />
                   <span>{contractId ? 'Exporter ce contrat' : 'Aucun contrat sélectionné'}</span>
                 </>
               )}
@@ -371,6 +353,15 @@ const ContractSharePanel = ({ contractId = null, onImportSuccess = null, variant
           </div>
         </div>
       )}
+      
+      {/* Modal d'exportation */}
+      <ExportModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        onExport={handleExport}
+        contractTitle={contractTitle}
+        contractId={contractId}
+      />
     </div>
   );
 };

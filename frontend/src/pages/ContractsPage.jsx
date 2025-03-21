@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { FileText, Edit, Trash2, Plus, Clock, Calendar, FileUp } from 'lucide-react';
 import { getContracts, deleteContract, exportContract } from '../services/api';
 import ContractSharePanel from '../components/ContractSharePanel';
+import ExportModal from '../components/ExportModal';
 
 const ContractsPage = () => {
   const [contracts, setContracts] = useState([]);
@@ -10,6 +11,8 @@ const ContractsPage = () => {
   const [error, setError] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [contractToDelete, setContractToDelete] = useState(null);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [contractToExport, setContractToExport] = useState(null);
   
   const navigate = useNavigate();
   
@@ -62,12 +65,22 @@ const ContractsPage = () => {
     navigate(`/editor/${contractId}`);
   };
   
-  const handleExport = async (contractId, e) => {
+  const handleExportClick = (contract, e) => {
     e.stopPropagation();
     e.preventDefault();
     
+    // Mémoriser le contrat à exporter et ouvrir le modal
+    setContractToExport(contract);
+    setIsExportModalOpen(true);
+  };
+  
+  const handleExport = async (customFilename) => {
     try {
-      await exportContract(contractId);
+      await exportContract(contractToExport.id, customFilename);
+      
+      // Fermer le modal
+      setIsExportModalOpen(false);
+      
       // Notification temporaire de succès
       const notif = document.createElement('div');
       notif.className = 'fixed bottom-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md z-50';
@@ -218,7 +231,7 @@ const ContractsPage = () => {
                           <Edit className="h-4 w-4 mr-1" />
                         </button>
                         <button
-                          onClick={(e) => handleExport(contract.id, e)}
+                          onClick={(e) => handleExportClick(contract, e)}
                           className="flex items-center text-xs text-indigo-600 hover:text-indigo-800"
                         >
                           <FileUp className="h-4 w-4" />
@@ -279,7 +292,7 @@ const ContractsPage = () => {
                             <Edit className="inline h-5 w-5" />
                           </button>
                           <button
-                            onClick={(e) => handleExport(contract.id, e)}
+                            onClick={(e) => handleExportClick(contract, e)}
                             className="text-indigo-600 hover:text-indigo-800 px-2"
                           >
                             <FileUp className="inline h-5 w-5" />
@@ -345,6 +358,15 @@ const ContractsPage = () => {
           </div>
         </div>
       )}
+      
+      {/* Modal d'exportation */}
+      <ExportModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        onExport={handleExport}
+        contractTitle={contractToExport?.title}
+        contractId={contractToExport?.id}
+      />
     </div>
   );
 };
