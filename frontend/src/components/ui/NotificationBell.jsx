@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Bell } from 'lucide-react';
-import updateData from '../../data/updateData.json';
-import PopupDialog from './PopupDialog';
+import { updateData } from '../../data';
+import NotificationPopup from './NotificationPopup';
 
 /**
  * Composant NotificationBell
@@ -61,7 +61,7 @@ const NotificationBell = () => {
       
       {/* Dialogue popup avec les notifications */}
       {isOpen && (
-        <PopupDialog 
+        <NotificationPopup 
           messages={notifications} 
           onClose={handleClose} 
         />

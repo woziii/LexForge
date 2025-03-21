@@ -1,0 +1,53 @@
+{
+  "messages": [
+    {
+      "id": 1,
+      "text": "Salut ! Bienvenue dans le tutoriel des contrats. Je vais te montrer comment utiliser cette page pour booster ta collaboration avec Lucas MAURICI, ton conseiller juridique perso ! 🚀",
+      "image": "saul_sourire.jpg",
+      "read": false,
+      "highlight": null
+    },
+    {
+      "id": 2,
+      "text": "Pour importer un contrat, utilise cette zone super pratique située en haut de la page. Glisse-dépose ton fichier ou clique pour le sélectionner - facile comme bonjour !",
+      "image": "saul_pensif.jpg",
+      "read": false,
+      "highlight": "contract-import-zone"
+    },
+    {
+      "id": 3,
+      "text": "Grâce à cette fonction d'import, tu peux reprendre instantanément un contrat que Lucas t'a optimisé ! Fini les allers-retours par email, tout est intégré dans l'app ! 😎",
+      "image": "auto",
+      "read": false,
+      "highlight": null
+    },
+    {
+      "id": 4,
+      "text": "Pour envoyer ton contrat à Lucas et bénéficier de son expertise juridique cool et accessible, clique sur l'icône d'exportation dans la colonne « Actions ».",
+      "image": "saul_pensif.jpg",
+      "read": false,
+      "highlight": "contract-export-button"
+    },
+    {
+      "id": 5,
+      "text": "Personnalise le nom de ton fichier avant de l'envoyer - ça aidera Lucas à identifier rapidement ton projet pour te proposer un conseil juridique sur mesure et sans prise de tête !",
+      "image": "saul_sourire.jpg",
+      "read": false,
+      "highlight": "export-filename-input"
+    },
+    {
+      "id": 6,
+      "text": "Cette combinaison d'import/export révolutionne ta relation avec ton conseiller juridique ! Plus besoin de longues explications, Lucas comprend directement ton besoin à partir du contrat ! 🔄✨",
+      "image": "auto",
+      "read": false,
+      "highlight": null
+    },
+    {
+      "id": 7,
+      "text": "N'hésite pas à cliquer sur cette ampoule quand tu veux pour redécouvrir comment LexForge et Lucas MAURICI forment le duo parfait pour tes besoins juridiques ! 💡",
+      "image": "saul_sourire.jpg",
+      "read": false,
+      "highlight": "contracts-tutorial-lightbulb"
+    }
+  ]
+} 

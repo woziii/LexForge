@@ -1,0 +1,46 @@
+{
+  "messages": [
+    {
+      "id": 1,
+      "text": "Bienvenue dans le tutoriel de l'éditeur ! Je vais te montrer comment utiliser les fonctions d'exportation et de sauvegarde pour sécuriser ton travail. 📄",
+      "image": "auto",
+      "read": false,
+      "highlight": null
+    },
+    {
+      "id": 2,
+      "text": "Pour exporter un contrat depuis l'éditeur, clique sur l'icône d'exportation située à côté du bouton d'enregistrement dans la barre d'outils.",
+      "image": "saul_pensif.jpg",
+      "read": false,
+      "highlight": "editor-export-button"
+    },
+    {
+      "id": 3,
+      "text": "L'export du contrat au format JSON te permet de l'envoyer directement à Lucas MAURICI, ton conseiller juridique personnel ! Il pourra t'accompagner et optimiser ton contrat selon tes besoins spécifiques. ✨",
+      "image": "saul_sourire.jpg",
+      "read": false,
+      "highlight": "export-format-options"
+    },
+    {
+      "id": 4,
+      "text": "N'oublie pas d'enregistrer régulièrement ton travail en cliquant sur l'icône de sauvegarde. Télécharger une copie locale est essentiel pour éviter toute perte de données !",
+      "image": "saul_pensif.jpg",
+      "read": false,
+      "highlight": "editor-save-button"
+    },
+    {
+      "id": 5,
+      "text": "Tu peux aussi sauvegarder ton contrat depuis le menu flottant situé en bas de l'écran lorsque tu fais défiler la page.",
+      "image": "auto",
+      "read": false,
+      "highlight": "floating-dock-save-button"
+    },
+    {
+      "id": 6,
+      "text": "N'hésite pas à cliquer sur cette ampoule à tout moment si tu as besoin d'aide ou de rappels sur les fonctionnalités de l'éditeur ! 💡",
+      "image": "saul_sourire.jpg",
+      "read": false,
+      "highlight": "editor-tutorial-lightbulb"
+    }
+  ]
+} 

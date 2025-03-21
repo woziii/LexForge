@@ -39,13 +39,13 @@ const ExportModal = ({ isOpen, onClose, onExport, contractTitle, contractId }) =
 
         <form onSubmit={handleSubmit} className="p-4">
           <div className="mb-4">
-            <label htmlFor="filename" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="export-filename-input" className="block text-sm font-medium text-gray-700 mb-1">
               Nom du fichier
             </label>
             <div className="flex items-center">
               <input
                 type="text"
-                id="filename"
+                id="export-filename-input"
                 value={filename}
                 onChange={(e) => setFilename(e.target.value)}
                 className="flex-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
@@ -55,6 +55,28 @@ const ExportModal = ({ isOpen, onClose, onExport, contractTitle, contractId }) =
             </div>
             <p className="mt-1 text-xs text-gray-500">
               Choisissez un nom significatif pour retrouver facilement votre contrat.
+            </p>
+          </div>
+
+          <div id="export-format-options" className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Format d'exportation</label>
+            <div className="flex space-x-2">
+              <button
+                type="button"
+                className="flex-1 py-2 px-3 bg-indigo-100 text-indigo-700 font-medium rounded-md border border-indigo-200"
+              >
+                JSON
+              </button>
+              <button
+                type="button"
+                className="flex-1 py-2 px-3 bg-gray-100 text-gray-700 font-medium rounded-md border border-gray-200"
+                disabled
+              >
+                PDF (bientôt)
+              </button>
+            </div>
+            <p className="mt-1 text-xs text-indigo-600">
+              En exportant au format JSON, vous pourrez envoyer votre contrat directement à Lucas MAURICI pour un conseil juridique personnalisé et convivial !
             </p>
           </div>
 

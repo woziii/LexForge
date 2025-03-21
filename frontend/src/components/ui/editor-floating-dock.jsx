@@ -330,6 +330,7 @@ const EditorFloatingDock = ({
           className={`${getButtonSize()} rounded-full bg-white hover:bg-gray-50 flex items-center justify-center`}
           onClick={() => handleAction(tool.action)}
           title={tool.title}
+          id={tool.action === 'save' ? 'floating-dock-save-button' : undefined}
         >
           {tool.icon}
         </button>

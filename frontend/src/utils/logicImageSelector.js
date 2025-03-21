@@ -1,16 +1,36 @@
 /**
- * Analyse le texte d'un message et détermine l'image de Saul la plus appropriée.
- * Retourne le chemin de l'image correspondant au contexte du message.
+ * Module de sélection d'images pour les dialogues
  * 
- * @param {string} text - Le texte du message à analyser
- * @returns {string} - Le chemin de l'image correspondante
+ * Ce module permet de déterminer quelle image de Saul afficher en fonction
+ * du contenu textuel d'un message ou d'une configuration explicite.
+ * 
+ * GUIDE DE PERSONNALISATION :
+ * ---------------------------
+ * 1. Pour ajouter une nouvelle image:
+ *    - Importez l'image en haut du fichier
+ *    - Ajoutez-la au mapping d'images dans getMessageImage()
+ *    - Optionnellement, ajoutez des mots-clés associés dans les tableaux ci-dessous
+ * 
+ * 2. Pour modifier les règles de sélection:
+ *    - Modifiez les tableaux de mots-clés ci-dessous
+ *    - Adaptez la logique dans selectSaulImage() si nécessaire
  */
+
 // Importation statique des images
 import saulOkImg from '../assets/images/saul/saul_ok.jpg';
 import saulSourireImg from '../assets/images/saul/saul_sourire.jpg';
 import saulPensifImg from '../assets/images/saul/saul_pensif.jpg';
 import saulMotiveImg from '../assets/images/saul/saul_motive.jpg';
 
+// Pour ajouter une nouvelle image, importez-la ici:
+// import saulNouvelleExpressionImg from '../assets/images/saul/saul_nouvelle_expression.jpg';
+
+/**
+ * Analyse le texte d'un message et détermine l'image de Saul la plus appropriée.
+ * 
+ * @param {string} text - Le texte du message à analyser
+ * @returns {string} - Le chemin de l'image correspondante
+ */
 export const selectSaulImage = (text) => {
   // Convertir le texte en minuscules pour une comparaison insensible à la casse
   const lowerText = text.toLowerCase();
@@ -24,6 +44,9 @@ export const selectSaulImage = (text) => {
   // Mots-clés pour Saul motivé (appels à l'action)
   const motivatedKeywords = ['découvre', 'essaye', 'lance-toi', 'teste', 'explore', 'à toi de jouer', 'c\'est à toi', '🚀'];
   
+  // Pour ajouter un nouveau type d'expression, créez un nouveau tableau de mots-clés:
+  // const newExpressionKeywords = ['mot1', 'mot2', ...];
+  
   // Vérifier si le texte contient des mots-clés pour Saul souriant
   if (happyKeywords.some(keyword => lowerText.includes(keyword))) {
     return saulSourireImg;
@@ -36,6 +59,11 @@ export const selectSaulImage = (text) => {
   else if (motivatedKeywords.some(keyword => lowerText.includes(keyword))) {
     return saulMotiveImg;
   }
+  
+  // Pour ajouter une nouvelle expression, ajoutez une condition similaire:
+  // else if (newExpressionKeywords.some(keyword => lowerText.includes(keyword))) {
+  //   return saulNouvelleExpressionImg;
+  // }
   
   // Image par défaut (Saul ok)
   return saulOkImg;
@@ -56,12 +84,14 @@ export const getMessageImage = (message) => {
   
   // Si une image spécifique est définie (autre que 'auto'), l'utiliser
   if (message.image && message.image !== 'auto') {
-    // Utiliser un mapping d'images pour éviter les imports dynamiques
+    // Mapping d'images pour éviter les imports dynamiques
+    // Pour ajouter une nouvelle image, ajoutez-la à ce mapping
     const imageMap = {
       'saul_ok.jpg': saulOkImg,
       'saul_sourire.jpg': saulSourireImg,
       'saul_pensif.jpg': saulPensifImg,
       'saul_motive.jpg': saulMotiveImg
+      // 'saul_nouvelle_expression.jpg': saulNouvelleExpressionImg
     };
     
     // Si c'est juste un nom de fichier sans chemin

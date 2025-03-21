@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { 
   ChevronLeft, Save, CheckCircle, AlertCircle, 
   MessageCircle, X, Type, List, ChevronUp, Keyboard, Bold, Italic, Underline,
-  AlignLeft, AlignCenter, AlignRight, FileUp, Loader, Check, FileText
+  AlignLeft, AlignCenter, AlignRight, FileUp, Loader, Check, FileText, Lightbulb
 } from 'lucide-react';
 import { getContractById, getContractElements, updateContract, generatePdf, exportContract } from '../services/api';
 import EditorFloatingDock from '../components/ui/editor-floating-dock';
@@ -11,6 +11,7 @@ import EditorSectionNavigator from '../components/editor/EditorSectionNavigator'
 import EditorCommentPanel from '../components/editor/EditorCommentPanel';
 import useDeviceDetect from '../hooks/useDeviceDetect';
 import ExportModal from '../components/ExportModal';
+import { TutorialLightbulb, TutorialPopup } from '../components/ui';
 
 /**
  * Page d'édition de contrat améliorée
@@ -26,29 +27,43 @@ const ContractEditorPage = () => {
   const elementRefs = useRef({});
   
   // États principaux
-  const [contract, setContract] = useState(null);
+  const [contractData, setContractData] = useState(null);
+  const [title, setTitle] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState('idle'); // idle, saving, success, error
+  const [errorMessage, setErrorMessage] = useState(null);
+  
+  // États de l'éditeur
+  const [selectedElementIndex, setSelectedElementIndex] = useState(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [fontSize, setFontSize] = useState('normal'); // small, normal, large
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  
+  // États des commentaires
+  const [commentText, setCommentText] = useState('');
+  const [showComments, setShowComments] = useState(true);
+  
+  // États des sections
+  const [showSections, setShowSections] = useState(true);
+  
+  // États du clavier
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  
+  // États des popups et modals
+  const [isOpen, setIsOpen] = useState(false); // Tutoriel
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false); // Modal d'exportation
+  const [contractToExport, setContractToExport] = useState(null);
+  
+  // États principaux
   const [contractElements, setContractElements] = useState([]);
   const [editedElements, setEditedElements] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [elementsLoading, setElementsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [title, setTitle] = useState('');
-  
-  // États de l'interface
-  const [fontSize, setFontSize] = useState('normal');
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [selectedElementIndex, setSelectedElementIndex] = useState(null);
   const [activeSectionId, setActiveSectionId] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
-  const [showComments, setShowComments] = useState(false);
-  const [showSections, setShowSections] = useState(false);
   const [comments, setComments] = useState([]);
   const [savedNotification, setSavedNotification] = useState(false);
   const [notification, setNotification] = useState(null);
-  const [keyboardVisible, setKeyboardVisible] = useState(false);
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
-  
-  // États pour la sélection de texte
   const [toolbarPosition, setToolbarPosition] = useState({ visible: false, x: 0, y: 0 });
   
   // Utiliser notre hook responsive pour la détection d'écran
@@ -106,12 +121,12 @@ const ContractEditorPage = () => {
       try {
         setIsLoading(true);
         const contractData = await getContractById(contractId);
-        setContract(contractData);
+        setContractData(contractData);
         setTitle(contractData.title);
-        setError(null);
+        setErrorMessage(null);
       } catch (error) {
         console.error('Error fetching contract:', error);
-        setError('Impossible de récupérer le contrat. Veuillez réessayer plus tard.');
+        setErrorMessage('Impossible de récupérer le contrat. Veuillez réessayer plus tard.');
       } finally {
         setIsLoading(false);
       }
@@ -123,7 +138,7 @@ const ContractEditorPage = () => {
   // Récupérer les éléments du contrat pour l'éditeur
   useEffect(() => {
     const fetchContractElements = async () => {
-      if (!contract) return;
+      if (!contractData) return;
       
       try {
         setElementsLoading(true);
@@ -137,17 +152,17 @@ const ContractEditorPage = () => {
           setComments([]);
         }
         
-        setError(null);
+        setErrorMessage(null);
       } catch (error) {
         console.error('Error fetching contract elements:', error);
-        setError('Impossible de récupérer les éléments du contrat. Veuillez réessayer plus tard.');
+        setErrorMessage('Impossible de récupérer les éléments du contrat. Veuillez réessayer plus tard.');
       } finally {
         setElementsLoading(false);
       }
     };
     
     fetchContractElements();
-  }, [contract, contractId]);
+  }, [contractData, contractId]);
   
   // Observer les sections visibles pour mettre à jour la navigation
   useEffect(() => {
@@ -240,11 +255,9 @@ const ContractEditorPage = () => {
       setTimeout(() => setSavedNotification(false), 3000);
     } catch (error) {
       console.error('Error saving contract:', error);
-      setError('Impossible de sauvegarder le contrat. Veuillez réessayer plus tard.');
+      setErrorMessage('Impossible de sauvegarder le contrat. Veuillez réessayer plus tard.');
     }
   };
-  
-  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   
   const handleShareContract = async () => {
     if (!contractId) return;
@@ -308,7 +321,7 @@ const ContractEditorPage = () => {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Erreur lors de la génération du PDF', error);
-      setError("Impossible de générer le PDF du contrat.");
+      setErrorMessage("Impossible de générer le PDF du contrat.");
     }
   };
   
@@ -945,13 +958,13 @@ const ContractEditorPage = () => {
   }
   
   // Page d'erreur
-  if (error) {
+  if (errorMessage) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
         <div className="bg-red-50 border-l-4 border-red-400 p-4">
           <div className="flex">
             <AlertCircle className="text-red-400 mr-2" size={20} />
-            <p className="text-red-700">{error}</p>
+            <p className="text-red-700">{errorMessage}</p>
           </div>
         </div>
         <button 
@@ -1002,10 +1015,11 @@ const ContractEditorPage = () => {
             <div className="flex items-center space-x-2">
               <button
                 onClick={handleSave}
-                className="hidden sm:flex items-center justify-center text-xs sm:text-sm bg-blue-600 hover:bg-blue-700 text-white py-1.5 px-2 sm:px-3 rounded-lg shadow-sm transition-colors"
-                title="Enregistrer"
+                id="editor-save-button"
+                className="hidden sm:flex items-center justify-center text-xs sm:text-sm border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 py-1.5 px-2 sm:px-3 rounded-lg shadow-sm transition-colors"
+                title="Sauvegarder"
               >
-                <Save size={16} className="text-white" />
+                <Save size={16} className="text-green-600" />
               </button>
               
               <button
@@ -1018,11 +1032,17 @@ const ContractEditorPage = () => {
               
               <button
                 onClick={handleShareContract}
+                id="editor-export-button"
                 className="hidden sm:flex items-center justify-center text-xs sm:text-sm border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 py-1.5 px-2 sm:px-3 rounded-lg shadow-sm transition-colors"
                 title="Exporter le contrat"
               >
                 <FileUp size={16} className="text-indigo-600" />
               </button>
+              
+              {/* Tutoriel */}
+              <div className="hidden sm:block">
+                <TutorialLightbulb context="editor" id="editor-tutorial-lightbulb" />
+              </div>
               
               {/* Menu de réglages */}
               <div className="relative">
@@ -1114,6 +1134,7 @@ const ContractEditorPage = () => {
             <div className="sm:hidden mt-3 border-t border-gray-100 pt-3 space-y-2">
               <button
                 onClick={() => { handleSave(); setShowMobileMenu(false); }}
+                id="mobile-save-button"
                 className="w-full flex items-center text-sm bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 px-3 rounded-lg transition-colors"
               >
                 <Save size={16} className="mr-2 text-green-600" />
@@ -1128,6 +1149,7 @@ const ContractEditorPage = () => {
               </button>
               <button
                 onClick={() => { handleShareContract(); setShowMobileMenu(false); }}
+                id="mobile-export-button"
                 className="w-full flex items-center text-sm bg-gray-50 hover:bg-gray-100 text-gray-800 py-2 px-3 rounded-lg transition-colors"
               >
                 <FileUp size={16} className="mr-2 text-indigo-600" />
@@ -1154,6 +1176,16 @@ const ContractEditorPage = () => {
                 <Keyboard size={16} className="mr-2 text-gray-600" />
                 {keyboardVisible ? 'Masquer le clavier' : 'Afficher le clavier'}
               </button>
+              <div className="w-full flex items-center text-sm bg-yellow-50 hover:bg-yellow-100 text-yellow-700 py-2 px-3 rounded-lg transition-colors">
+                <Lightbulb size={16} className="mr-2 text-yellow-600" />
+                <span className="flex-grow">Tutoriel</span>
+                <button
+                  onClick={() => { setShowMobileMenu(false); setIsOpen(true); }}
+                  className="text-yellow-600 font-medium"
+                >
+                  Voir
+                </button>
+              </div>
             </div>
           )}
           
@@ -1306,6 +1338,14 @@ const ContractEditorPage = () => {
         contractTitle={title}
         contractId={contractId}
       />
+      
+      {/* Tutoriel pour mobile */}
+      {isOpen && (
+        <TutorialPopup 
+          context="editor"
+          onClose={() => setIsOpen(false)}
+        />
+      )}
     </div>
   );
 };

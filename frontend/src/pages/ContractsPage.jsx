@@ -4,6 +4,7 @@ import { FileText, Edit, Trash2, Plus, Clock, Calendar, FileUp } from 'lucide-re
 import { getContracts, deleteContract, exportContract } from '../services/api';
 import ContractSharePanel from '../components/ContractSharePanel';
 import ExportModal from '../components/ExportModal';
+import { TutorialLightbulb } from '../components/ui';
 
 const ContractsPage = () => {
   const [contracts, setContracts] = useState([]);
@@ -132,17 +133,20 @@ const ContractsPage = () => {
               <FileText className="text-blue-600 mr-3" size={24} />
               <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Mes Contrats</h1>
             </div>
-            <Link 
-              to="/wizard" 
-              className="inline-flex items-center px-3 sm:px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 w-full sm:w-auto justify-center sm:justify-start"
-            >
-              <Plus className="mr-2 -ml-1" size={16} />
-              Créer un nouveau contrat
-            </Link>
+            <div className="flex items-center space-x-2">
+              <Link 
+                to="/wizard" 
+                className="inline-flex items-center px-3 sm:px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 w-full sm:w-auto justify-center sm:justify-start"
+              >
+                <Plus className="mr-2 -ml-1" size={16} />
+                Créer un nouveau contrat
+              </Link>
+              <TutorialLightbulb context="contracts" id="contracts-tutorial-lightbulb" />
+            </div>
           </div>
           
           <div className="hidden sm:block mb-6">
-            <div className="p-4">
+            <div className="p-4" id="contract-import-zone">
               <h3 className="text-base font-medium text-gray-800 mb-3">Importer un contrat</h3>
               <ContractSharePanel 
                 variant="import_only" 
@@ -152,7 +156,7 @@ const ContractsPage = () => {
           </div>
 
           <div className="sm:hidden mb-4">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4" id="contract-import-zone-mobile">
               <h3 className="text-base font-medium text-gray-800 mb-3">Importer un contrat</h3>
               <ContractSharePanel 
                 variant="import_only" 
@@ -294,6 +298,7 @@ const ContractsPage = () => {
                           <button
                             onClick={(e) => handleExportClick(contract, e)}
                             className="text-indigo-600 hover:text-indigo-800 px-2"
+                            id="contract-export-button"
                           >
                             <FileUp className="inline h-5 w-5" />
                           </button>
