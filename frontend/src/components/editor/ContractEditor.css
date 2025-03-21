@@ -485,7 +485,13 @@
   color: #1e40af;
 }
 
-/* Optimisations pour le touch sur mobile et iPad */
+/* 
+ * Approche responsive unifiée 
+ * Remplace les optimisations spécifiques pour iPhone et iPad
+ * S'adapte automatiquement à la taille de l'écran
+ */
+
+/* Optimisations pour tous les appareils tactiles */
 @media (hover: none) and (pointer: coarse) {
   /* Agrandir les zones tactiles */
   .floating-toolbar button,
@@ -524,25 +530,8 @@
   }
 }
 
-/* Optimisations spécifiques pour iPad */
-@media (min-width: 768px) and (max-width: 1024px) and (pointer: coarse) {
-  .editor-document {
-    padding: 10mm; /* Réduire légèrement les marges */
-  }
-  
-  /* Améliorer l'expérience de sélection avec Apple Pencil */
-  .element-content {
-    cursor: text;
-  }
-  
-  /* Floating dock adapté à l'iPad */
-  .editor-floating-dock {
-    bottom: 1.5rem;
-  }
-}
-
-/* Optimisations spécifiques pour iPhone */
-@media (max-width: 428px) {
+/* Très petits écrans (< 480px) - Équivalent iPhone SE, petit iPhone */
+@media (max-width: 480px) {
   .editor-document {
     padding: 5mm; /* Réduire les marges au minimum */
   }
@@ -559,6 +548,86 @@
   /* Augmenter la hauteur minimale des éléments éditables */
   .element-content {
     min-height: 1.5em;
+  }
+  
+  /* Adapter les menus pour petits écrans */
+  .editor-context-menu {
+    width: 90%;
+    max-width: 280px;
+  }
+  
+  /* Réduire les marges et l'espacement */
+  .contract-element {
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Simplifier les contrôles */
+  .editor-toolbar-left {
+    flex-wrap: wrap;
+  }
+}
+
+/* Écrans moyens (480px - 768px) - Équivalent iPhone standard, Android */
+@media (min-width: 480px) and (max-width: 768px) {
+  .editor-document {
+    padding: 7mm; /* Marges intermédiaires */
+  }
+  
+  .editor-toolbar {
+    padding: 0.375rem 0.625rem;
+  }
+  
+  /* Ajuster les contrôles */
+  .floating-toolbar {
+    padding: 0.375rem;
+  }
+}
+
+/* Grands écrans (768px - 1024px) - Équivalent iPad, petites tablettes */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .editor-document {
+    padding: 10mm; /* Réduire légèrement les marges */
+  }
+  
+  /* Améliorer l'expérience de sélection avec Apple Pencil ou stylet */
+  .element-content {
+    cursor: text;
+  }
+  
+  /* Floating dock adapté */
+  .editor-floating-dock {
+    bottom: 1.5rem;
+  }
+  
+  /* Meilleure expérience de sélection */
+  .element-content:focus {
+    outline: 2px solid rgba(59, 130, 246, 0.4);
+    outline-offset: 2px;
+  }
+}
+
+/* Très grands écrans (> 1024px) - Desktop, grands iPad Pro */
+@media (min-width: 1024px) {
+  .editor-document {
+    padding: 15mm;
+    max-width: 210mm; /* Taille A4 standard */
+    margin: 0 auto;
+  }
+  
+  /* UI plus spacieuse pour desktop */
+  .editor-toolbar {
+    padding: 0.5rem 1rem;
+  }
+  
+  /* Transitions fluides sur desktop */
+  .toolbar-button,
+  .floating-toolbar button {
+    transition: background-color 0.15s ease, transform 0.1s ease;
+  }
+  
+  .toolbar-button:hover,
+  .floating-toolbar button:hover {
+    transform: translateY(-1px);
   }
 }
 

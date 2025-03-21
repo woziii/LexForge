@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FileText, Edit, Trash2, Plus, Clock, Calendar } from 'lucide-react';
-import { getContracts, deleteContract } from '../services/api';
+import { FileText, Edit, Trash2, Plus, Clock, Calendar, FileUp } from 'lucide-react';
+import { getContracts, deleteContract, exportContract } from '../services/api';
+import ContractSharePanel from '../components/ContractSharePanel';
 
 const ContractsPage = () => {
   const [contracts, setContracts] = useState([]);
@@ -53,6 +54,41 @@ const ContractsPage = () => {
     }
   };
   
+  const handleImportSuccess = (contractId) => {
+    // Rafraîchir la liste des contrats après une importation réussie
+    fetchContracts();
+    
+    // Optionnel: rediriger vers l'éditeur du contrat nouvellement importé
+    navigate(`/editor/${contractId}`);
+  };
+  
+  const handleExport = async (contractId, e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    
+    try {
+      await exportContract(contractId);
+      // Notification temporaire de succès
+      const notif = document.createElement('div');
+      notif.className = 'fixed bottom-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md z-50';
+      notif.textContent = 'Contrat exporté avec succès';
+      document.body.appendChild(notif);
+      setTimeout(() => {
+        notif.remove();
+      }, 3000);
+    } catch (error) {
+      console.error('Error exporting contract:', error);
+      // Notification temporaire d'erreur
+      const notif = document.createElement('div');
+      notif.className = 'fixed bottom-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md z-50';
+      notif.textContent = 'Erreur lors de l\'exportation';
+      document.body.appendChild(notif);
+      setTimeout(() => {
+        notif.remove();
+      }, 3000);
+    }
+  };
+  
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleString('fr-FR', {
@@ -92,6 +128,26 @@ const ContractsPage = () => {
             </Link>
           </div>
           
+          <div className="hidden sm:block mb-6">
+            <div className="p-4">
+              <h3 className="text-base font-medium text-gray-800 mb-3">Importer un contrat</h3>
+              <ContractSharePanel 
+                variant="import_only" 
+                onImportSuccess={handleImportSuccess} 
+              />
+            </div>
+          </div>
+
+          <div className="sm:hidden mb-4">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <h3 className="text-base font-medium text-gray-800 mb-3">Importer un contrat</h3>
+              <ContractSharePanel 
+                variant="import_only" 
+                onImportSuccess={handleImportSuccess} 
+              />
+            </div>
+          </div>
+          
           {isLoading ? (
             <div className="flex justify-center items-center h-64">
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -111,16 +167,26 @@ const ContractsPage = () => {
               </div>
               <h3 className="mt-2 text-lg font-medium text-gray-900">Aucun contrat</h3>
               <p className="mt-1 text-sm text-gray-500 text-center">
-                Vous n'avez pas encore créé de contrat. Commencez par en créer un.
+                Vous n'avez pas encore créé de contrat. Créez un nouveau contrat ou importez-en un existant.
               </p>
-              <div className="mt-6">
-                <Link
-                  to="/wizard"
-                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  <Plus className="mr-2 -ml-1" size={16} />
-                  Créer un contrat
-                </Link>
+              <div className="mt-6 w-full max-w-md">
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <Link
+                    to="/wizard"
+                    className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    <Plus className="mr-2 -ml-1" size={16} />
+                    Créer un contrat
+                  </Link>
+                </div>
+                
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Ou importez un contrat existant:</h4>
+                  <ContractSharePanel 
+                    variant="import_only"
+                    onImportSuccess={handleImportSuccess} 
+                  />
+                </div>
               </div>
             </div>
           ) : (
@@ -149,13 +215,19 @@ const ContractsPage = () => {
                           onClick={() => handleEdit(contract.id)}
                           className="flex items-center text-xs text-blue-600 hover:text-blue-900"
                         >
-                          <Edit className="h-4 w-4 mr-1" /> Éditer
+                          <Edit className="h-4 w-4 mr-1" />
+                        </button>
+                        <button
+                          onClick={(e) => handleExport(contract.id, e)}
+                          className="flex items-center text-xs text-indigo-600 hover:text-indigo-800"
+                        >
+                          <FileUp className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => confirmDelete(contract)}
                           className="flex items-center text-xs text-red-600 hover:text-red-900"
                         >
-                          <Trash2 className="h-4 w-4 mr-1" /> Supprimer
+                          <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
                     </div>
@@ -202,15 +274,21 @@ const ContractsPage = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <button
                             onClick={() => handleEdit(contract.id)}
-                            className="text-blue-600 hover:text-blue-900 mr-4"
+                            className="text-blue-600 hover:text-blue-900 px-2"
                           >
-                            <Edit className="inline h-5 w-5 mr-1" /> Éditer
+                            <Edit className="inline h-5 w-5" />
+                          </button>
+                          <button
+                            onClick={(e) => handleExport(contract.id, e)}
+                            className="text-indigo-600 hover:text-indigo-800 px-2"
+                          >
+                            <FileUp className="inline h-5 w-5" />
                           </button>
                           <button
                             onClick={() => confirmDelete(contract)}
-                            className="text-red-600 hover:text-red-900"
+                            className="text-red-600 hover:text-red-900 px-2"
                           >
-                            <Trash2 className="inline h-5 w-5 mr-1" /> Supprimer
+                            <Trash2 className="inline h-5 w-5" />
                           </button>
                         </td>
                       </tr>

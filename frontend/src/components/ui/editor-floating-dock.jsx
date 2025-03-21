@@ -13,10 +13,11 @@ import {
   Highlighter,
   Keyboard
 } from "lucide-react";
+import useDeviceDetect from "../../hooks/useDeviceDetect";
 
 /**
  * Dock flottant pour l'éditeur de contrat
- * Version unifiée et adaptative pour tous les appareils
+ * Version responsive qui s'adapte automatiquement à la taille de l'écran
  */
 const EditorFloatingDock = ({ 
   onFormat, 
@@ -28,39 +29,15 @@ const EditorFloatingDock = ({
   showSections,
   onToggleKeyboard
 }) => {
-  // Détection de périphérique manuelle pour garantir la compatibilité
-  const [isMobile, setIsMobile] = useState(false);
-  const [isSmallMobile, setIsSmallMobile] = useState(false); // Pour les très petits écrans comme iPhone SE
-  const [isTablet, setIsTablet] = useState(false);
-  const [isIOS, setIsIOS] = useState(false);
+  // Utiliser notre hook responsive amélioré
+  const screen = useDeviceDetect();
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [dockPosition, setDockPosition] = useState("bottom-16");
-  const [screenWidth, setScreenWidth] = useState(window.innerWidth);
   
-  // Détecter le type d'appareil et le système d'exploitation
+  // Détection du clavier virtuel (particulièrement important sur iOS)
   useEffect(() => {
-    const detectDevice = () => {
-      const width = window.innerWidth;
-      setScreenWidth(width);
-      const isMobileDevice = width <= 768 || /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      const isSmallMobileDevice = width <= 375; // iPhone SE, petit iPhone
-      const isTabletDevice = (width > 768 && width <= 1024) || 
-                           (/iPad/i.test(navigator.userAgent) || 
-                           (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1 && !window.MSStream));
-      const isIOSDevice = /iPad|iPhone|iPod/i.test(navigator.userAgent) || 
-                       (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-      
-      setIsMobile(isMobileDevice);
-      setIsSmallMobile(isSmallMobileDevice);
-      setIsTablet(isTabletDevice);
-      setIsIOS(isIOSDevice);
-    };
-    
-    detectDevice();
-    window.addEventListener('resize', detectDevice);
-    
-    // Détecter les événements du clavier sur iOS
-    if (isIOS) {
+    // Ne configurer la détection du clavier que sur les appareils mobiles avec iOS
+    if (screen.isIOS && screen.hasTouchScreen) {
       // Utiliser visualViewport pour une meilleure détection du clavier sur iOS
       if (window.visualViewport) {
         const handleVisualViewportResize = () => {
@@ -100,10 +77,10 @@ const EditorFloatingDock = ({
         
         // Solution alternative pour détecter le clavier sur iOS
         const detectIOSKeyboard = () => {
-          if (isIOS && window.innerHeight < window.outerHeight * 0.8) {
+          if (screen.isIOS && window.innerHeight < window.outerHeight * 0.8) {
             setKeyboardVisible(true);
             setDockPosition("bottom-80");
-          } else if (isIOS) {
+          } else if (screen.isIOS) {
             setKeyboardVisible(false);
             setDockPosition("bottom-16");
           }
@@ -118,19 +95,15 @@ const EditorFloatingDock = ({
         };
       }
     }
-    
-    return () => {
-      window.removeEventListener('resize', detectDevice);
-    };
-  }, [isIOS]);
+  }, [screen.isIOS, screen.hasTouchScreen]);
   
-  // Obtenir le positionnement selon l'appareil et l'état du clavier
+  // Obtenir le positionnement selon la taille d'écran et l'état du clavier
   const getDockPosition = () => {
     // Positionnement centré pour tous les appareils
     const basePosition = "fixed left-1/2 transform -translate-x-1/2";
     
     // Ajuster la position en fonction de la présence du clavier
-    if (keyboardVisible && (isMobile || isTablet)) {
+    if (keyboardVisible && (screen.isSmallScreen || screen.isMediumScreen || screen.isLargeScreen)) {
       return `${basePosition} ${dockPosition} z-50`;
     }
     
@@ -138,37 +111,37 @@ const EditorFloatingDock = ({
     return `${basePosition} bottom-16 z-50`;
   };
 
-  // Obtenir la taille des boutons selon le type d'appareil
+  // Obtenir la taille des boutons selon la taille d'écran
   const getButtonSize = () => {
-    if (isSmallMobile) return "h-7 w-7"; // Très petit écran (iPhone SE)
-    if (isMobile) return "h-8 w-8";      // Mobile standard
-    if (isTablet) return "h-9 w-9";      // Tablette
-    return "h-10 w-10";                  // Desktop
+    if (screen.isSmallScreen) return "h-7 w-7";             // Très petit écran (<480px)
+    if (screen.isMediumScreen) return "h-8 w-8";            // Mobile standard (480px-768px)
+    if (screen.isLargeScreen) return "h-9 w-9";             // Tablette (768px-1024px)
+    return "h-10 w-10";                                     // Desktop (>1024px)
   };
 
-  // Obtenir la taille des icônes selon le type d'appareil
+  // Obtenir la taille des icônes selon la taille d'écran
   const getIconSize = () => {
-    if (isSmallMobile) return "h-3.5 w-3.5"; // Très petit écran
-    if (isMobile) return "h-4 w-4";          // Mobile standard
-    if (isTablet) return "h-4.5 w-4.5";      // Tablette
-    return "h-5 w-5";                        // Desktop
+    if (screen.isSmallScreen) return "h-3.5 w-3.5";         // Très petit écran (<480px)
+    if (screen.isMediumScreen) return "h-4 w-4";            // Mobile standard (480px-768px)
+    if (screen.isLargeScreen) return "h-4.5 w-4.5";         // Tablette (768px-1024px)
+    return "h-5 w-5";                                       // Desktop (>1024px)
   };
 
   // Outils de l'éditeur
   const basicEditorTools = [
     {
       title: "Gras",
-      icon: <Bold className={`${getIconSize()} text-neutral-600`} />,
+      icon: <Bold className={`${getIconSize()} text-blue-600`} />,
       action: 'bold'
     },
     {
       title: "Italique",
-      icon: <Italic className={`${getIconSize()} text-neutral-600`} />,
+      icon: <Italic className={`${getIconSize()} text-green-600`} />,
       action: 'italic'
     },
     {
       title: "Souligné",
-      icon: <Underline className={`${getIconSize()} text-neutral-600`} />,
+      icon: <Underline className={`${getIconSize()} text-indigo-600`} />,
       action: 'underline'
     },
     {
@@ -181,17 +154,17 @@ const EditorFloatingDock = ({
   const alignmentTools = [
     {
       title: "Aligner à gauche",
-      icon: <AlignLeft className={`${getIconSize()} text-neutral-600`} />,
+      icon: <AlignLeft className={`${getIconSize()} text-gray-600`} />,
       action: 'alignLeft'
     },
     {
       title: "Centrer",
-      icon: <AlignCenter className={`${getIconSize()} text-neutral-600`} />,
+      icon: <AlignCenter className={`${getIconSize()} text-gray-600`} />,
       action: 'alignCenter'
     },
     {
       title: "Aligner à droite",
-      icon: <AlignRight className={`${getIconSize()} text-neutral-600`} />,
+      icon: <AlignRight className={`${getIconSize()} text-gray-600`} />,
       action: 'alignRight'
     }
   ];
@@ -199,26 +172,26 @@ const EditorFloatingDock = ({
   const specialTools = [
     {
       title: "Ajouter un commentaire",
-      icon: <MessageCircle className={`${getIconSize()} text-yellow-500`} />,
+      icon: <MessageCircle className={`${getIconSize()} text-yellow-600`} />,
       action: 'comment'
     },
     {
       title: showComments ? "Masquer commentaires" : "Voir commentaires",
-      icon: <MessagesSquare className={`${getIconSize()} ${showComments ? 'text-blue-500' : 'text-blue-400'}`} />,
+      icon: <MessagesSquare className={`${getIconSize()} ${showComments ? 'text-blue-600' : 'text-blue-400'}`} />,
       action: 'toggleComments'
     },
     {
       title: showSections ? "Masquer sections" : "Voir sections",
-      icon: <List className={`${getIconSize()} ${showSections ? 'text-blue-500' : 'text-neutral-600'}`} />,
+      icon: <List className={`${getIconSize()} ${showSections ? 'text-purple-600' : 'text-purple-400'}`} />,
       action: 'toggleSections'
     },
     {
       title: keyboardVisible ? "Masquer clavier" : "Afficher clavier",
       icon: keyboardVisible ? 
-        <Keyboard className={`${getIconSize()} text-neutral-600 opacity-50`} /> : 
-        <Keyboard className={`${getIconSize()} text-neutral-600`} />,
+        <Keyboard className={`${getIconSize()} text-gray-600 opacity-50`} /> : 
+        <Keyboard className={`${getIconSize()} text-gray-600`} />,
       action: 'toggleKeyboard',
-      mobileOnly: true
+      touchOnly: true // Disponible uniquement sur les appareils tactiles
     },
     {
       title: "Enregistrer",
@@ -227,48 +200,55 @@ const EditorFloatingDock = ({
     }
   ];
   
-  // Créer une liste d'outils adaptée à l'appareil
-  const getToolsForDevice = () => {
+  // Créer une liste d'outils adaptée à la taille d'écran
+  const getToolsForScreenSize = () => {
     let tools = [...basicEditorTools];
     
-    // Sur très petit écran, limiter davantage le nombre d'outils mais inclure le surlignage
-    if (isSmallMobile) {
+    // Sur très petit écran (<480px), limiter davantage le nombre d'outils
+    if (screen.isSmallScreen) {
       // Inclure les outils essentiels
       tools = [
         basicEditorTools[0], // Gras
         basicEditorTools[1], // Italique
         basicEditorTools[2], // Souligné
-        basicEditorTools[3], // Surligner (ajouté pour tous les appareils)
+        basicEditorTools[3], // Surligner
         specialTools[0],     // Commentaire
-        specialTools[3],     // Contrôle du clavier (ajouté pour tous les appareils)
+        screen.hasTouchScreen ? specialTools[3] : null, // Contrôle du clavier (uniquement si écran tactile)
         specialTools[4],     // Enregistrer
-      ];
+      ].filter(Boolean); // Supprimer les éléments null
     }
-    // Sur petit écran, limiter le nombre d'outils
-    else if (isMobile && !isTablet) {
-      // Ne pas inclure les alignements sur mobile standard mais garder le surlignage
+    // Sur écran moyen (480px-768px), limiter le nombre d'outils
+    else if (screen.isMediumScreen) {
+      // Ne pas inclure les alignements
       tools = [
-        ...basicEditorTools, // Inclut maintenant le surlignage
-        specialTools[0],     // Commentaire
-        specialTools[1],     // Toggle commentaires
-        specialTools[2],     // Toggle sections
-        specialTools[3],     // Toggle clavier
-        specialTools[4],     // Enregistrer
+        ...basicEditorTools,
+        specialTools[0], // Commentaire
+        specialTools[1], // Toggle commentaires
+        screen.hasTouchScreen ? specialTools[3] : null, // Contrôle du clavier (uniquement si écran tactile)
+        specialTools[4], // Enregistrer
+      ].filter(Boolean); // Supprimer les éléments null
+    } 
+    // Sur grand écran (768px-1024px), inclure presque tous les outils
+    else if (screen.isLargeScreen) {
+      tools = [
+        ...basicEditorTools,
+        ...alignmentTools,
+        ...specialTools.filter(tool => !tool.touchOnly || screen.hasTouchScreen)
       ];
     }
-    // Sur tablette et desktop, inclure tous les outils
+    // Sur très grand écran (>1024px), inclure tous les outils
     else {
       tools = [
         ...basicEditorTools,
         ...alignmentTools,
-        ...specialTools.filter(tool => !tool.mobileOnly || (tool.mobileOnly && (isMobile || isTablet)))
+        ...specialTools.filter(tool => !tool.touchOnly || screen.hasTouchScreen)
       ];
     }
     
     return tools;
   };
   
-  // Gérer les actions sur le dock
+  // Gérer les actions des différents outils
   const handleAction = (action) => {
     switch (action) {
       case 'bold':
@@ -278,49 +258,76 @@ const EditorFloatingDock = ({
       case 'alignLeft':
       case 'alignCenter':
       case 'alignRight':
-        onFormat(action);
+        if (onFormat) onFormat(action);
         break;
       case 'comment':
-        onAddComment();
+        if (onAddComment) onAddComment();
         break;
       case 'toggleComments':
-        onToggleComments();
+        if (onToggleComments) onToggleComments();
         break;
       case 'toggleSections':
-        onToggleSections();
+        if (onToggleSections) onToggleSections();
         break;
       case 'toggleKeyboard':
-        onToggleKeyboard();
-        setKeyboardVisible(!keyboardVisible);
+        if (onToggleKeyboard) onToggleKeyboard();
         break;
       case 'save':
-        onSave();
+        if (onSave) onSave();
         break;
       default:
         break;
     }
   };
-
-  // Ajuster la taille et le style du dock en fonction de l'appareil
+  
+  // Obtenir le style du dock en fonction de la taille d'écran
   const getDockStyle = () => {
-    if (isSmallMobile) {
-      // Style compact pour les très petits écrans
-      return "shadow-lg border border-gray-200 bg-white/95 backdrop-blur-sm rounded-full p-0.5 flex items-center space-x-0.5";
+    let baseStyle = {
+      backgroundColor: "white",
+      borderRadius: "9999px",
+      boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: "0.5rem"
+    };
+    
+    // Responsively adjust spacing
+    if (screen.isSmallScreen) {
+      return {
+        ...baseStyle,
+        padding: "0.25rem",
+        gap: "0.25rem"
+      };
+    } else if (screen.isMediumScreen) {
+      return {
+        ...baseStyle,
+        padding: "0.375rem",
+        gap: "0.375rem"
+      };
+    } else if (screen.isLargeScreen) {
+      return {
+        ...baseStyle,
+        padding: "0.5rem",
+        gap: "0.5rem"
+      };
+    } else {
+      return {
+        ...baseStyle,
+        padding: "0.625rem",
+        gap: "0.625rem"
+      };
     }
-    if (isMobile) {
-      // Style standard pour mobile
-      return "shadow-lg border border-gray-200 bg-white/95 backdrop-blur-sm rounded-full p-1 flex items-center space-x-0.5";
-    }
-    // Style pour tablette et desktop
-    return "shadow-lg border border-gray-200 bg-white/90 backdrop-blur-sm rounded-full p-1 flex items-center space-x-1";
   };
-
+  
+  const tools = getToolsForScreenSize();
+  
   return (
-    <div className={`${getDockPosition()} ${getDockStyle()}`}>
-      {getToolsForDevice().map((tool, index) => (
+    <div className={getDockPosition()} style={getDockStyle()}>
+      {tools.map((tool, index) => (
         <button
           key={index}
-          className={`${getButtonSize()} flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors`}
+          className={`${getButtonSize()} rounded-full bg-white hover:bg-gray-50 flex items-center justify-center`}
           onClick={() => handleAction(tool.action)}
           title={tool.title}
         >
