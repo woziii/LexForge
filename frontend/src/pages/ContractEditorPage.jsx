@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
-  ChevronLeft, Save, Settings, CheckCircle, AlertCircle, 
+  ChevronLeft, Save, CheckCircle, AlertCircle, 
   MessageCircle, X, Type, List, ChevronUp, Keyboard, Bold, Italic, Underline,
   AlignLeft, AlignCenter, AlignRight, FileUp, Loader, Check, FileText
 } from 'lucide-react';
