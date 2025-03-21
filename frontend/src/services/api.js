@@ -119,6 +119,49 @@ export const deleteContract = async (contractId) => {
   }
 };
 
+export const exportContract = async (contractId) => {
+  try {
+    const response = await api.get(`/contracts/export/${contractId}`, {
+      responseType: 'blob',
+    });
+    
+    // Créer un URL pour le blob et déclencher le téléchargement
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `lexforge_contract_${contractId}.json`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Error exporting contract:', error);
+    throw error;
+  }
+};
+
+export const importContract = async (file) => {
+  try {
+    // Créer un FormData pour envoyer le fichier
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    // Configuration spécifique pour envoyer un fichier
+    const config = {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    };
+    
+    const response = await api.post('/contracts/import', formData, config);
+    return response.data;
+  } catch (error) {
+    console.error('Error importing contract:', error);
+    throw error;
+  }
+};
+
 // Corriger l'avertissement ESLint en créant une variable pour l'export par défaut
 const apiService = {
   analyzeProject,
@@ -129,7 +172,9 @@ const apiService = {
   getContractById,
   getContractElements,
   updateContract,
-  deleteContract
+  deleteContract,
+  exportContract,
+  importContract
 };
 
 export default apiService;

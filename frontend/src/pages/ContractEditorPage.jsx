@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
-  ChevronLeft, Save, Download, Settings, CheckCircle, AlertCircle, 
+  ChevronLeft, Save, CheckCircle, AlertCircle, 
   MessageCircle, X, Type, List, ChevronUp, Keyboard, Bold, Italic, Underline,
-  AlignLeft, AlignCenter, AlignRight
+  AlignLeft, AlignCenter, AlignRight, FileUp, Loader, Check, FileText
 } from 'lucide-react';
-import { getContractById, getContractElements, updateContract, generatePdf } from '../services/api';
+import { getContractById, getContractElements, updateContract, generatePdf, exportContract } from '../services/api';
 import EditorFloatingDock from '../components/ui/editor-floating-dock';
 import EditorSectionNavigator from '../components/editor/EditorSectionNavigator';
 import EditorCommentPanel from '../components/editor/EditorCommentPanel';
+import useDeviceDetect from '../hooks/useDeviceDetect';
 
 /**
  * Page d'édition de contrat améliorée
@@ -42,40 +43,19 @@ const ContractEditorPage = () => {
   const [showSections, setShowSections] = useState(false);
   const [comments, setComments] = useState([]);
   const [savedNotification, setSavedNotification] = useState(false);
+  const [notification, setNotification] = useState(null);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   
   // États pour la sélection de texte
   const [toolbarPosition, setToolbarPosition] = useState({ visible: false, x: 0, y: 0 });
   
-  // Détection d'appareils
-  const [isMobile, setIsMobile] = useState(false);
-  const [isTablet, setIsTablet] = useState(false);
-  const [isIOS, setIsIOS] = useState(false);
-  
-  // Effectuer la détection d'appareil
-  useEffect(() => {
-    const detectDevices = () => {
-      const width = window.innerWidth;
-      const isMobileDevice = width <= 768 || /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      const isTabletDevice = (width > 768 && width <= 1024) || 
-                           (/iPad/i.test(navigator.userAgent) || 
-                           (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1 && !window.MSStream));
-      const isIOSDevice = /iPad|iPhone|iPod/i.test(navigator.userAgent) || 
-                       (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-      
-      setIsMobile(isMobileDevice);
-      setIsTablet(isTabletDevice);
-      setIsIOS(isIOSDevice);
-    };
-    
-    detectDevices();
-    window.addEventListener('resize', detectDevices);
-    
-    return () => {
-      window.removeEventListener('resize', detectDevices);
-    };
-  }, []);
+  // Utiliser notre hook responsive pour la détection d'écran
+  const screen = useDeviceDetect();
+  // Variables pour la compatibilité avec le code existant
+  const isMobile = screen.isMobile;
+  const isTablet = screen.isTablet;
+  const isIOS = screen.isIOS;
   
   // Détecter et gérer les événements du clavier sur iOS
   useEffect(() => {
@@ -260,6 +240,46 @@ const ContractEditorPage = () => {
     } catch (error) {
       console.error('Error saving contract:', error);
       setError('Impossible de sauvegarder le contrat. Veuillez réessayer plus tard.');
+    }
+  };
+  
+  const handleShareContract = async () => {
+    if (!contractId) return;
+    
+    try {
+      // Afficher une boîte de dialogue de confirmation
+      if (window.confirm("Voulez-vous exporter ce contrat ? Le fichier sera téléchargé au format JSON.")) {
+        // Afficher une notification de chargement
+        setNotification({
+          type: 'info',
+          message: 'Préparation du contrat pour l\'export...'
+        });
+        
+        // Sauvegarder d'abord pour s'assurer que toutes les modifications sont prises en compte
+        await handleSave();
+        
+        // Exporter le contrat
+        await exportContract(contractId);
+        
+        // Afficher une notification de succès
+        setNotification({
+          type: 'success',
+          message: 'Contrat exporté avec succès'
+        });
+        
+        // Masquer la notification après 3 secondes
+        setTimeout(() => {
+          setNotification(null);
+        }, 3000);
+      }
+    } catch (error) {
+      console.error('Error exporting contract:', error);
+      
+      // Afficher une notification d'erreur
+      setNotification({
+        type: 'error',
+        message: 'Erreur lors de l\'exportation du contrat'
+      });
     }
   };
   
@@ -857,7 +877,7 @@ const ContractEditorPage = () => {
               title={`${elementComments.length} commentaire${elementComments.length > 1 ? 's' : ''}`}
             >
               <div className="relative">
-                <MessageCircle size={16} className="text-yellow-500" />
+                <MessageCircle size={16} className="text-yellow-600" />
                 {elementComments.length > 1 && (
                   <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full">
                     {elementComments.length}
@@ -974,28 +994,36 @@ const ContractEditorPage = () => {
             <div className="flex items-center space-x-2">
               <button
                 onClick={handleSave}
-                className="hidden sm:flex items-center text-xs sm:text-sm bg-blue-600 hover:bg-blue-700 text-white py-1.5 px-2 sm:px-3 rounded-lg shadow-sm transition-colors"
+                className="hidden sm:flex items-center justify-center text-xs sm:text-sm bg-blue-600 hover:bg-blue-700 text-white py-1.5 px-2 sm:px-3 rounded-lg shadow-sm transition-colors"
+                title="Enregistrer"
               >
-                <Save size={16} className="mr-1" />
-                <span className="hidden sm:inline">Enregistrer</span>
+                <Save size={16} className="text-white" />
               </button>
               
               <button
                 onClick={handleDownloadPdf}
-                className="hidden sm:flex items-center text-xs sm:text-sm bg-gray-700 hover:bg-gray-800 text-white py-1.5 px-2 sm:px-3 rounded-lg shadow-sm transition-colors"
+                className="hidden sm:flex items-center justify-center text-xs sm:text-sm bg-gray-700 hover:bg-gray-800 text-white py-1.5 px-2 sm:px-3 rounded-lg shadow-sm transition-colors"
+                title="Télécharger en PDF"
               >
-                <Download size={16} className="mr-1" />
-                <span className="hidden sm:inline">PDF</span>
+                <FileText size={16} className="text-white" />
+              </button>
+              
+              <button
+                onClick={handleShareContract}
+                className="hidden sm:flex items-center justify-center text-xs sm:text-sm border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 py-1.5 px-2 sm:px-3 rounded-lg shadow-sm transition-colors"
+                title="Exporter le contrat"
+              >
+                <FileUp size={16} className="text-indigo-600" />
               </button>
               
               {/* Menu de réglages */}
               <div className="relative">
                 <button 
-                  className="flex items-center text-xs sm:text-sm border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 py-1.5 px-2 sm:px-3 rounded-lg shadow-sm transition-colors"
+                  className="flex items-center justify-center text-xs sm:text-sm border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 py-1.5 px-2 sm:px-3 rounded-lg shadow-sm transition-colors"
                   onClick={() => setShowSettings(!showSettings)}
+                  title="Réglages de police"
                 >
-                  <Type size={16} className="mr-1" />
-                  <span className="hidden sm:inline">Police</span>
+                  <Type size={16} />
                 </button>
                 
                 {showSettings && (
@@ -1029,35 +1057,35 @@ const ContractEditorPage = () => {
               
               <button
                 onClick={toggleFullscreen}
-                className="hidden sm:flex items-center text-xs sm:text-sm border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 py-1.5 px-2 sm:px-3 rounded-lg shadow-sm transition-colors"
+                className="hidden sm:flex items-center justify-center text-xs sm:text-sm border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 py-1.5 px-2 sm:px-3 rounded-lg shadow-sm transition-colors"
+                title={isFullscreen ? "Quitter le plein écran" : "Plein écran"}
               >
                 {isFullscreen ? (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M8 3v3a2 2 0 0 1-2 2H3"></path><path d="M21 8h-3a2 2 0 0 1-2-2V3"></path><path d="M3 16h3a2 2 0 0 1 2 2v3"></path><path d="M16 21v-3a2 2 0 0 1 2-2h3"></path>
                   </svg>
                 ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M8 3H5a2 2 0 0 0-2 2v3"></path><path d="M21 8V5a2 2 0 0 0-2-2h-3"></path><path d="M3 16v3a2 2 0 0 0 2 2h3"></path><path d="M16 21h3a2 2 0 0 0 2-2v-3"></path>
                   </svg>
                 )}
-                <span className="hidden sm:inline">{isFullscreen ? 'Réduire' : 'Plein écran'}</span>
               </button>
               
               {/* Boutons pour afficher les commentaires et les sections (bureau) */}
               <button
                 onClick={toggleComments}
-                className="hidden sm:flex items-center text-xs sm:text-sm border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 py-1.5 px-2 sm:px-3 rounded-lg shadow-sm transition-colors"
+                className="hidden sm:flex items-center justify-center text-xs sm:text-sm border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 py-1.5 px-2 sm:px-3 rounded-lg shadow-sm transition-colors"
+                title={showComments ? "Masquer les commentaires" : "Afficher les commentaires"}
               >
-                <MessageCircle size={16} className={`mr-1 ${showComments ? 'text-yellow-500' : ''}`} />
-                <span className="hidden sm:inline">Commentaires</span>
+                <MessageCircle size={16} className={showComments ? 'text-yellow-600' : 'text-yellow-400'} />
               </button>
               
               <button
                 onClick={toggleSections}
-                className="hidden sm:flex items-center text-xs sm:text-sm border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 py-1.5 px-2 sm:px-3 rounded-lg shadow-sm transition-colors"
+                className="hidden sm:flex items-center justify-center text-xs sm:text-sm border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 py-1.5 px-2 sm:px-3 rounded-lg shadow-sm transition-colors"
+                title={showSections ? "Masquer les sections" : "Afficher les sections"}
               >
-                <List size={16} className={`mr-1 ${showSections ? 'text-blue-500' : ''}`} />
-                <span className="hidden sm:inline">Sections</span>
+                <List size={16} className={showSections ? 'text-purple-600' : 'text-purple-400'} />
               </button>
               
               {/* Menu mobile */}
@@ -1080,35 +1108,42 @@ const ContractEditorPage = () => {
                 onClick={() => { handleSave(); setShowMobileMenu(false); }}
                 className="w-full flex items-center text-sm bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 px-3 rounded-lg transition-colors"
               >
-                <Save size={16} className="mr-2" />
+                <Save size={16} className="mr-2 text-green-600" />
                 Enregistrer
               </button>
               <button
                 onClick={() => { handleDownloadPdf(); setShowMobileMenu(false); }}
                 className="w-full flex items-center text-sm bg-gray-50 hover:bg-gray-100 text-gray-800 py-2 px-3 rounded-lg transition-colors"
               >
-                <Download size={16} className="mr-2" />
+                <FileText size={16} className="mr-2 text-red-600" />
                 Télécharger en PDF
+              </button>
+              <button
+                onClick={() => { handleShareContract(); setShowMobileMenu(false); }}
+                className="w-full flex items-center text-sm bg-gray-50 hover:bg-gray-100 text-gray-800 py-2 px-3 rounded-lg transition-colors"
+              >
+                <FileUp size={16} className="mr-2 text-indigo-600" />
+                Exporter le contrat
               </button>
               <button
                 onClick={() => { toggleSections(); setShowMobileMenu(false); }}
                 className={`w-full flex items-center text-sm ${showSections ? 'bg-blue-50 text-blue-700' : 'bg-gray-50 text-gray-800'} hover:bg-gray-100 py-2 px-3 rounded-lg transition-colors`}
               >
-                <List size={16} className="mr-2" />
+                <List size={16} className="mr-2 text-purple-600" />
                 {showSections ? 'Masquer les sections' : 'Afficher les sections'}
               </button>
               <button
                 onClick={() => { toggleComments(); setShowMobileMenu(false); }}
                 className={`w-full flex items-center text-sm ${showComments ? 'bg-yellow-50 text-yellow-700' : 'bg-gray-50 text-gray-800'} hover:bg-gray-100 py-2 px-3 rounded-lg transition-colors`}
               >
-                <MessageCircle size={16} className="mr-2" />
+                <MessageCircle size={16} className="mr-2 text-yellow-600" />
                 {showComments ? 'Masquer les commentaires' : 'Afficher les commentaires'}
               </button>
               <button
                 onClick={() => { toggleKeyboard(); setShowMobileMenu(false); }}
                 className="w-full flex items-center text-sm bg-gray-50 hover:bg-gray-100 text-gray-800 py-2 px-3 rounded-lg transition-colors"
               >
-                <Keyboard size={16} className="mr-2" />
+                <Keyboard size={16} className="mr-2 text-gray-600" />
                 {keyboardVisible ? 'Masquer le clavier' : 'Afficher le clavier'}
               </button>
             </div>
@@ -1119,6 +1154,26 @@ const ContractEditorPage = () => {
             <div className="absolute top-full right-4 mt-2 px-3 py-2 bg-green-50 text-green-700 text-sm rounded-md shadow-sm border border-green-100 flex items-center z-30">
               <CheckCircle size={16} className="mr-2" />
               Modifications enregistrées
+            </div>
+          )}
+          
+          {/* Afficher les notifications */}
+          {notification && (
+            <div className={`absolute top-full right-4 mt-2 px-3 py-2 text-sm rounded-md shadow-sm border flex items-center z-30 ${
+              notification.type === 'success' 
+                ? 'bg-green-50 text-green-700 border-green-100' 
+                : notification.type === 'error'
+                ? 'bg-red-50 text-red-700 border-red-100'
+                : 'bg-blue-50 text-blue-700 border-blue-100'
+            }`}>
+              {notification.type === 'success' ? (
+                <Check size={16} className="mr-2" />
+              ) : notification.type === 'error' ? (
+                <AlertCircle size={16} className="mr-2" />
+              ) : (
+                <Loader size={16} className="mr-2 animate-spin" />
+              )}
+              {notification.message}
             </div>
           )}
         </div>
@@ -1194,13 +1249,13 @@ const ContractEditorPage = () => {
           }}
         >
           <button onClick={() => applyFormatting('bold')} title="Gras">
-            <Bold size={isMobile ? 12 : 14} />
+            <Bold size={isMobile ? 12 : 14} className="text-blue-600" />
           </button>
           <button onClick={() => applyFormatting('italic')} title="Italique">
-            <Italic size={isMobile ? 12 : 14} />
+            <Italic size={isMobile ? 12 : 14} className="text-green-600" />
           </button>
           <button onClick={() => applyFormatting('underline')} title="Souligné">
-            <Underline size={isMobile ? 12 : 14} />
+            <Underline size={isMobile ? 12 : 14} className="text-indigo-600" />
           </button>
           <button onClick={() => applyFormatting('highlight')} title="Surligner">
             <svg xmlns="http://www.w3.org/2000/svg" width={isMobile ? 12 : 14} height={isMobile ? 12 : 14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-500">
@@ -1209,16 +1264,16 @@ const ContractEditorPage = () => {
             </svg>
           </button>
           <button onClick={() => applyFormatting('alignLeft')} title="Aligner à gauche">
-            <AlignLeft size={isMobile ? 12 : 14} />
+            <AlignLeft size={isMobile ? 12 : 14} className="text-gray-600" />
           </button>
           <button onClick={() => applyFormatting('alignCenter')} title="Centrer">
-            <AlignCenter size={isMobile ? 12 : 14} />
+            <AlignCenter size={isMobile ? 12 : 14} className="text-gray-600" />
           </button>
           <button onClick={() => applyFormatting('alignRight')} title="Aligner à droite">
-            <AlignRight size={isMobile ? 12 : 14} />
+            <AlignRight size={isMobile ? 12 : 14} className="text-gray-600" />
           </button>
           <button onClick={handleAddComment} title="Ajouter un commentaire">
-            <MessageCircle size={isMobile ? 12 : 14} className="text-yellow-500" />
+            <MessageCircle size={isMobile ? 12 : 14} className="text-yellow-600" />
           </button>
         </div>
       )}

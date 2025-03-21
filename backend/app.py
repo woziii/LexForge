@@ -323,6 +323,82 @@ def get_contract_elements(contract_id):
     
     return jsonify({'elements': editor_elements, 'comments': []})
 
+@app.route('/api/contracts/export/<contract_id>', methods=['GET'])
+def export_contract(contract_id):
+    """
+    Endpoint pour exporter un contrat au format JSON.
+    Retourne le contrat complet dans un format qui préserve toutes les données et le formatage.
+    """
+    file_path = os.path.join(CONTRACTS_DIR, f"{contract_id}.json")
+    
+    if not os.path.exists(file_path):
+        return jsonify({'error': 'Contract not found'}), 404
+    
+    # Lire le contrat complet depuis le fichier
+    with open(file_path, 'r', encoding='utf-8') as f:
+        contract = json.load(f)
+    
+    # Ajouter des métadonnées d'exportation
+    contract['export_info'] = {
+        'exported_at': datetime.now().isoformat(),
+        'version': '1.0',
+        'application': 'LexForge'
+    }
+    
+    # Définir les en-têtes pour le téléchargement du fichier
+    response = jsonify(contract)
+    response.headers.set('Content-Disposition', f'attachment; filename=lexforge_contract_{contract_id}.json')
+    return response
+
+@app.route('/api/contracts/import', methods=['POST'])
+def import_contract():
+    """
+    Endpoint pour importer un contrat au format JSON.
+    """
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file provided'}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+    
+    if not file.filename.endswith('.json'):
+        return jsonify({'error': 'File must be a JSON file'}), 400
+    
+    try:
+        # Lire le contenu du fichier JSON
+        contract_data = json.loads(file.read().decode('utf-8'))
+        
+        # Validation basique pour vérifier qu'il s'agit bien d'un fichier de contrat LexForge
+        if 'id' not in contract_data or 'data' not in contract_data or 'title' not in contract_data:
+            return jsonify({'error': 'Invalid contract format'}), 400
+        
+        # Générer un nouvel ID pour éviter les doublons
+        new_id = str(uuid.uuid4())
+        contract_data['id'] = new_id
+        
+        # Mettre à jour les dates
+        current_time = datetime.now().isoformat()
+        contract_data['created_at'] = current_time
+        contract_data['updated_at'] = current_time
+        
+        # Sauvegarder le contrat importé
+        file_path = os.path.join(CONTRACTS_DIR, f"{new_id}.json")
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(contract_data, f, ensure_ascii=False, indent=2)
+        
+        # Retourner l'ID du nouveau contrat et son titre
+        return jsonify({
+            'id': new_id,
+            'title': contract_data['title'],
+            'message': 'Contract imported successfully'
+        })
+    
+    except json.JSONDecodeError:
+        return jsonify({'error': 'Invalid JSON file'}), 400
+    except Exception as e:
+        return jsonify({'error': f'Error importing contract: {str(e)}'}), 500
+
 # Pour le développement local
 if __name__ == '__main__':
     app.run(debug=True, port=5001)
