@@ -76,7 +76,7 @@ const ExportModal = ({ isOpen, onClose, onExport, contractTitle, contractId }) =
               </button>
             </div>
             <p className="mt-1 text-xs text-indigo-600">
-              En exportant au format JSON, vous pourrez envoyer votre contrat directement à Lucas MAURICI pour un conseil juridique personnalisé et convivial !
+              Le format JSON permet de partager facilement ton contrat avec Lucas MAURICI pour un conseil juridique adapté.
             </p>
           </div>
 

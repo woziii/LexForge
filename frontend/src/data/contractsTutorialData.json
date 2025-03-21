@@ -2,49 +2,49 @@
   "messages": [
     {
       "id": 1,
-      "text": "Salut ! Bienvenue dans le tutoriel des contrats. Je vais te montrer comment utiliser cette page pour booster ta collaboration avec Lucas MAURICI, ton conseiller juridique perso ! 🚀",
+      "text": "Bienvenue dans le tutoriel des contrats ! Je vais te montrer comment utiliser les fonctionnalités d'import et d'export 🚀",
       "image": "saul_sourire.jpg",
       "read": false,
       "highlight": null
     },
     {
       "id": 2,
-      "text": "Pour importer un contrat, utilise cette zone super pratique située en haut de la page. Glisse-dépose ton fichier ou clique pour le sélectionner - facile comme bonjour !",
+      "text": "Pour importer un contrat, utilise cette zone située en haut de la page. Tu peux y glisser-déposer un fichier JSON ou cliquer pour le sélectionner.",
       "image": "saul_pensif.jpg",
       "read": false,
       "highlight": "contract-import-zone"
     },
     {
       "id": 3,
-      "text": "Grâce à cette fonction d'import, tu peux reprendre instantanément un contrat que Lucas t'a optimisé ! Fini les allers-retours par email, tout est intégré dans l'app ! 😎",
+      "text": "Cette fonction d'import te permet de reprendre facilement un contrat qui a été révisé ou optimisé, sans passer par des échanges d'emails compliqués.",
       "image": "auto",
       "read": false,
       "highlight": null
     },
     {
       "id": 4,
-      "text": "Pour envoyer ton contrat à Lucas et bénéficier de son expertise juridique cool et accessible, clique sur l'icône d'exportation dans la colonne « Actions ».",
+      "text": "Pour exporter un contrat et le partager avec Lucas pour un conseil juridique, clique sur l'icône d'exportation dans la colonne « Actions ».",
       "image": "saul_pensif.jpg",
       "read": false,
       "highlight": "contract-export-button"
     },
     {
       "id": 5,
-      "text": "Personnalise le nom de ton fichier avant de l'envoyer - ça aidera Lucas à identifier rapidement ton projet pour te proposer un conseil juridique sur mesure et sans prise de tête !",
-      "image": "saul_sourire.jpg",
+      "text": "Tu peux personnaliser le nom du fichier avant de l'envoyer pour identifier clairement ton projet et simplifier le suivi.",
+      "image": "auto",
       "read": false,
-      "highlight": "export-filename-input"
+      "highlight": null
     },
     {
       "id": 6,
-      "text": "Cette combinaison d'import/export révolutionne ta relation avec ton conseiller juridique ! Plus besoin de longues explications, Lucas comprend directement ton besoin à partir du contrat ! 🔄✨",
+      "text": "Cette combinaison d'import/export simplifie considérablement le processus de révision juridique. Elle permet de collaborer efficacement sur tes contrats.",
       "image": "auto",
       "read": false,
       "highlight": null
     },
     {
       "id": 7,
-      "text": "N'hésite pas à cliquer sur cette ampoule quand tu veux pour redécouvrir comment LexForge et Lucas MAURICI forment le duo parfait pour tes besoins juridiques ! 💡",
+      "text": "N'hésite pas à cliquer sur cette ampoule si tu as besoin d'aide sur les fonctionnalités d'import et d'export de contrats ! 💡",
       "image": "saul_sourire.jpg",
       "read": false,
       "highlight": "contracts-tutorial-lightbulb"

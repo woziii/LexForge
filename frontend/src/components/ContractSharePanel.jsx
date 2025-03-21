@@ -163,7 +163,7 @@ const ContractSharePanel = ({ contractId = null, onImportSuccess = null, variant
           />
           <UploadCloud size={24} className="text-blue-600 mb-2" />
           <p className="text-sm text-center text-gray-500">
-            {importFile ? importFile.name : "Importe ici un contrat optimisé par Lucas"}
+            {importFile ? importFile.name : "Importe ici un contrat au format JSON"}
           </p>
         </div>
         
@@ -221,7 +221,7 @@ const ContractSharePanel = ({ contractId = null, onImportSuccess = null, variant
             ) : (
               <>
                 <FileDown size={16} className="mr-2 text-indigo-600" />
-                <span>Envoyer à Lucas</span>
+                <span>Partager avec Lucas</span>
               </>
             )}
           </button>
@@ -257,7 +257,7 @@ const ContractSharePanel = ({ contractId = null, onImportSuccess = null, variant
               Exporter un contrat
             </h4>
             <p className="text-sm text-blue-600 mb-4">
-              Envoie ton contrat directement à Lucas MAURICI pour un conseil juridique sans prise de tête ! Un simple clic et ton expert juridique perso s'occupe de tout. ✨
+              Exporte ton contrat au format JSON pour le partager avec Lucas MAURICI et bénéficier d'un conseil juridique adapté à tes besoins.
             </p>
             
             <button
@@ -275,7 +275,7 @@ const ContractSharePanel = ({ contractId = null, onImportSuccess = null, variant
               ) : (
                 <>
                   <FileDown size={16} className="mr-2" />
-                  <span>{contractId ? 'Envoyer à Lucas pour avis' : 'Aucun contrat sélectionné'}</span>
+                  <span>{contractId ? 'Exporter ce contrat' : 'Aucun contrat sélectionné'}</span>
                 </>
               )}
             </button>
@@ -288,7 +288,7 @@ const ContractSharePanel = ({ contractId = null, onImportSuccess = null, variant
               Importer un contrat
             </h4>
             <p className="text-sm text-gray-600 mb-4">
-              Reprends facilement un contrat optimisé par Lucas ! Finis les allers-retours par email - importe le contrat en un clin d'œil et continue à travailler avec l'expertise juridique intégrée. 🚀
+              Importe un contrat au format JSON pour continuer à travailler dessus ou pour intégrer les modifications recommandées par Lucas.
             </p>
             
             <div 
@@ -308,7 +308,7 @@ const ContractSharePanel = ({ contractId = null, onImportSuccess = null, variant
               />
               <UploadCloud size={24} className="text-blue-600 mb-2" />
               <p className="text-sm text-center text-gray-500">
-                {importFile ? importFile.name : "Cliquez ou glissez un fichier ici"}
+                {importFile ? importFile.name : "Importe ici un contrat au format JSON"}
               </p>
             </div>
             
