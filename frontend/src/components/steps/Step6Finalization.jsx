@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Download, Check, Edit } from 'lucide-react';
 import { generatePdf, saveContract } from '../../services/api';
 import { useAuth, SignInButton } from '@clerk/clerk-react';
@@ -15,6 +15,16 @@ const Step6Finalization = ({ contractData }) => {
   const { isSignedIn } = useAuth();
   
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Sauvegarder les données du contrat dans le localStorage avant la connexion
+  useEffect(() => {
+    if (!isSignedIn && contractData) {
+      localStorage.setItem('pendingContractData', JSON.stringify(contractData));
+      localStorage.setItem('pendingFilename', filename);
+      localStorage.setItem('pendingTitle', title);
+    }
+  }, [contractData, filename, title, isSignedIn]);
   
   const handleFilenameChange = (e) => {
     setFilename(e.target.value);
@@ -73,6 +83,14 @@ const Step6Finalization = ({ contractData }) => {
   const isFormComplete = contractData.type_contrat.length > 0 && 
                         contractData.description_oeuvre !== "" &&
                         Object.keys(contractData.auteur_info).length > 0;
+                        
+  // Configuration des options de redirection pour Clerk SignIn
+  const signInOptions = {
+    redirectUrl: window.location.href,
+    initialValues: { 
+      redirectUrl: window.location.href
+    }
+  };
   
   return (
     <div className="space-y-6">
@@ -115,19 +133,6 @@ const Step6Finalization = ({ contractData }) => {
           </div>
         </div>
       </div>
-      
-      {!isSignedIn && (
-        <div className="mb-4 bg-yellow-50 border-l-4 border-yellow-400 p-4">
-          <div className="flex">
-            <div className="ml-3">
-              <p className="text-sm text-yellow-700">
-                <strong>Information :</strong> Pour télécharger votre contrat en PDF ou accéder à l'éditeur, 
-                vous devez vous connecter ou créer un compte. C'est gratuit et rapide !
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
       
       <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
         {isSignedIn ? (
@@ -179,7 +184,18 @@ const Step6Finalization = ({ contractData }) => {
           </>
         ) : (
           <>
-            <SignInButton mode="modal">
+            <div className="col-span-2 mb-4">
+              <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                <div className="flex">
+                  <div className="ml-3">
+                    <p className="text-sm text-yellow-700">
+                      <strong>Information :</strong> Vous devez vous connecter ou créer un compte pour télécharger votre contrat au format PDF ou accéder à l'éditeur avancé. Cliquez sur l'un des boutons ci-dessous pour vous identifier.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <SignInButton mode="modal" afterSignInUrl={window.location.href} afterSignUpUrl={window.location.href}>
               <button 
                 className="flex items-center justify-center py-3 px-4 rounded-md shadow-sm text-white font-medium bg-green-600 hover:bg-green-700 transition-colors"
               >
@@ -188,7 +204,7 @@ const Step6Finalization = ({ contractData }) => {
               </button>
             </SignInButton>
             
-            <SignInButton mode="modal">
+            <SignInButton mode="modal" afterSignInUrl={window.location.href} afterSignUpUrl={window.location.href}>
               <button 
                 className="flex items-center justify-center py-3 px-4 rounded-md shadow-sm text-white font-medium bg-blue-600 hover:bg-blue-700 transition-colors"
               >

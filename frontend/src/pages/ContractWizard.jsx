@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Check, ArrowRight, ArrowLeft, FileText, Sparkles } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import PreviewPanel from '../components/PreviewPanel';
 import Step1ProjectDescription from '../components/steps/Step1ProjectDescription';
 import Step2CessionMode from '../components/steps/Step2CessionMode';
@@ -20,6 +21,7 @@ const STEPS = [
 ];
 
 const ContractWizard = () => {
+  const location = useLocation();
   const [activeStep, setActiveStep] = useState(1);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [contractPreview, setContractPreview] = useState('');
@@ -35,6 +37,15 @@ const ContractWizard = () => {
     supports: [],
     remuneration: ""
   });
+  
+  // Récupérer les données du contrat sauvegardées après authentification
+  useEffect(() => {
+    if (location.state?.contractData) {
+      setContractData(location.state.contractData);
+      setActiveStep(6); // Retourner à l'étape 6
+      window.history.replaceState({}, document.title); // Nettoyer l'état pour éviter de récupérer les mêmes données après un rechargement
+    }
+  }, [location]);
   
   const totalSteps = STEPS.length;
   

@@ -1,0 +1,19 @@
+{
+  "user_id": "user_2unxyqemnwEODzBxmC2Epw7Eo2l",
+  "personal_info": {
+    "gentille": "M.",
+    "nom": "MAURICI",
+    "prenom": "Lucas",
+    "email": "maurici.lucas@proton.me",
+    "telephone": "0659965152",
+    "profession": "Juriste",
+    "adresse": "104 avenue de Versailles"
+  },
+  "company_info": {
+    "nom": "Tellers",
+    "forme_juridique": "SAS",
+    "capital": "1",
+    "rcs": "22",
+    "siege": "DAD"
+  }
+}

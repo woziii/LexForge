@@ -4,11 +4,11 @@ Fichier de configuration contenant les constantes et paramètres utilisés dans 
 
 # Informations sur le cessionnaire (Tellers)
 TELLERS_INFO = {
-    "nom": "Tellers",
-    "forme_juridique": "société par actions simplifiée unipersonnelle",
-    "capital": "1000 €",
-    "rcs": "932 553 266 R.C.S. Lyon",
-    "siege": "12 RUE DE LA PART-DIEU, 69003 LYON"
+    "nom": "Tellers", 
+    "forme_juridique": "SAS", 
+    "capital": "1", 
+    "rcs": "22", 
+    "siege": "DAD" 
 }
 
 # Options pour les différents types de contrats
