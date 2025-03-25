@@ -9,6 +9,7 @@ import {
   Menu,
   X
 } from 'lucide-react';
+import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/clerk-react";
 import NotificationBell from './ui/NotificationBell';
 
 const Layout = () => {
@@ -49,97 +50,122 @@ const Layout = () => {
           <nav className="hidden md:flex items-center space-x-6">
             <Link
               to="/"
-              className={`flex items-center ${isActive('/') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`flex items-center space-x-1 text-sm font-medium ${
+                isActive('/') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
+              }`}
             >
-              <Home size={18} className="mr-1" strokeWidth={2} />
+              <Home size={18} />
               <span>Accueil</span>
             </Link>
+
             <Link
               to="/wizard"
-              className={`flex items-center ${isActive('/wizard') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`flex items-center space-x-1 text-sm font-medium ${
+                isActive('/wizard') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
+              }`}
             >
-              <FilePlus2 size={18} className="mr-1" strokeWidth={2} />
-              <span>Générateur</span>
+              <FilePlus2 size={18} />
+              <span>Nouveau Contrat</span>
             </Link>
-            <Link
-              to="/contracts"
-              className={`flex items-center ${isActive('/contracts') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-            >
-              <FolderKanban size={18} className="mr-1" strokeWidth={2} />
-              <span>Contrats</span>
-            </Link>
+
+            <SignedIn>
+              <Link
+                to="/contracts"
+                className={`flex items-center space-x-1 text-sm font-medium ${
+                  isActive('/contracts') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <FolderKanban size={18} />
+                <span>Mes Contrats</span>
+              </Link>
+              <UserButton afterSignOutUrl="/" />
+            </SignedIn>
+
+            <SignedOut>
+              <SignInButton mode="modal">
+                <button className="flex items-center space-x-1 text-sm font-medium text-gray-500 hover:text-gray-700">
+                  <UserCircle size={18} />
+                  <span>Se connecter</span>
+                </button>
+              </SignInButton>
+            </SignedOut>
+
             <Link
               to="/about"
-              className={`flex items-center ${isActive('/about') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`flex items-center space-x-1 text-sm font-medium ${
+                isActive('/about') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
+              }`}
             >
-              <InfoIcon size={18} className="mr-1" strokeWidth={2} />
+              <InfoIcon size={18} />
               <span>À propos</span>
             </Link>
-            <NotificationBell />
-            <button 
-              className="text-gray-500 hover:text-gray-700 flex items-center focus:outline-none"
-              aria-label="Profil utilisateur"
-            >
-              <UserCircle size={20} strokeWidth={2} />
-            </button>
           </nav>
         </div>
 
-        {/* Menu mobile - Redesigné */}
+        {/* Menu mobile */}
         {isMenuOpen && (
-          <div className="md:hidden bg-white border-t border-gray-200 py-2 shadow-md animate-fadeIn">
-            <div className="flex flex-col px-4 space-y-2">
+          <div className="md:hidden">
+            <div className="px-2 pt-2 pb-3 space-y-1">
               <Link
                 to="/"
-                className={`flex items-center py-2.5 px-3 rounded-lg ${isActive('/') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'}`}
+                className={`block px-3 py-2 rounded-md text-base font-medium ${
+                  isActive('/') ? 'bg-blue-50 text-blue-600' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
                 onClick={() => setIsMenuOpen(false)}
               >
-                <Home size={18} className="mr-3" strokeWidth={2} />
-                <span className="font-medium">Accueil</span>
+                Accueil
               </Link>
+
               <Link
                 to="/wizard"
-                className={`flex items-center py-2.5 px-3 rounded-lg ${isActive('/wizard') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'}`}
+                className={`block px-3 py-2 rounded-md text-base font-medium ${
+                  isActive('/wizard') ? 'bg-blue-50 text-blue-600' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
                 onClick={() => setIsMenuOpen(false)}
               >
-                <FilePlus2 size={18} className="mr-3" strokeWidth={2} />
-                <span className="font-medium">Générateur</span>
+                Nouveau Contrat
               </Link>
-              <Link
-                to="/contracts"
-                className={`flex items-center py-2.5 px-3 rounded-lg ${isActive('/contracts') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'}`}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <FolderKanban size={18} className="mr-3" strokeWidth={2} />
-                <span className="font-medium">Contrats</span>
-              </Link>
+
+              <SignedIn>
+                <Link
+                  to="/contracts"
+                  className={`block px-3 py-2 rounded-md text-base font-medium ${
+                    isActive('/contracts') ? 'bg-blue-50 text-blue-600' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                  }`}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Mes Contrats
+                </Link>
+                <div className="px-3 py-2">
+                  <UserButton afterSignOutUrl="/" />
+                </div>
+              </SignedIn>
+
+              <SignedOut>
+                <SignInButton mode="modal">
+                  <button
+                    className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Se connecter
+                  </button>
+                </SignInButton>
+              </SignedOut>
+
               <Link
                 to="/about"
-                className={`flex items-center py-2.5 px-3 rounded-lg ${isActive('/about') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'}`}
+                className={`block px-3 py-2 rounded-md text-base font-medium ${
+                  isActive('/about') ? 'bg-blue-50 text-blue-600' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
                 onClick={() => setIsMenuOpen(false)}
               >
-                <InfoIcon size={18} className="mr-3" strokeWidth={2} />
-                <span className="font-medium">À propos</span>
+                À propos
               </Link>
-              <div className="border-t border-gray-100 pt-2 mt-1">
-                <div className="flex items-center justify-between">
-                  <button 
-                    className="flex items-center py-2.5 px-3 text-left rounded-lg text-gray-600 hover:bg-gray-50 hover:text-gray-800"
-                    aria-label="Profil utilisateur"
-                  >
-                    <UserCircle size={20} className="mr-3" strokeWidth={2} />
-                    <span className="font-medium">Profil</span>
-                  </button>
-                  <div className="py-2.5 px-3">
-                    <NotificationBell />
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         )}
       </header>
-      
+
       {/* Contenu principal */}
       <main className="flex-grow">
         <Outlet />

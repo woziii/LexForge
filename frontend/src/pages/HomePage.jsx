@@ -1,5 +1,5 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   ArrowRight, 
   Scale, 
@@ -8,8 +8,20 @@ import {
   FileSignature, 
   ShieldCheck 
 } from 'lucide-react';
+import { useAuth } from '@clerk/clerk-react';
 
 const HomePage = () => {
+  const { isSignedIn } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Si l'utilisateur est connecté et qu'il y a une redirection en attente
+    if (isSignedIn && location.state?.from) {
+      navigate(location.state.from, { replace: true });
+    }
+  }, [isSignedIn, location.state, navigate]);
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-white via-blue-50 to-indigo-50">
       {/* Section principale avec titre central dominant */}

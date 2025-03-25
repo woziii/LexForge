@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Download, Check, Edit } from 'lucide-react';
 import { generatePdf, saveContract } from '../../services/api';
+import { useAuth, SignInButton } from '@clerk/clerk-react';
 
 const Step6Finalization = ({ contractData }) => {
   const [filename, setFilename] = useState('');
@@ -11,6 +12,7 @@ const Step6Finalization = ({ contractData }) => {
   const [generationSuccess, setGenerationSuccess] = useState(false);
   const [error, setError] = useState('');
   const [savedContractId, setSavedContractId] = useState(null);
+  const { isSignedIn } = useAuth();
   
   const navigate = useNavigate();
   
@@ -23,6 +25,10 @@ const Step6Finalization = ({ contractData }) => {
   };
   
   const handleGeneratePdf = async () => {
+    if (!isSignedIn) {
+      return;
+    }
+    
     setIsGenerating(true);
     setError('');
     setGenerationSuccess(false);
@@ -39,6 +45,10 @@ const Step6Finalization = ({ contractData }) => {
   };
   
   const handleAccessEditor = async () => {
+    if (!isSignedIn) {
+      return;
+    }
+    
     setIsSaving(true);
     setError('');
     
@@ -60,101 +70,12 @@ const Step6Finalization = ({ contractData }) => {
   };
   
   // Vérifier si les données essentielles sont remplies
-  const isAuthorInfoComplete = () => {
-    const { auteur_info } = contractData;
-    
-    if (contractData.auteur_type === "Personne physique") {
-      return auteur_info.gentille && auteur_info.nom && auteur_info.prenom;
-    } else {
-      return auteur_info.nom && auteur_info.forme_juridique;
-    }
-  };
-  
-  const isWorkDescriptionComplete = () => {
-    const needsAuthorRights = contractData.type_contrat.includes("Auteur (droits d'auteur)");
-    const needsImageRights = contractData.type_contrat.includes("Image (droit à l'image)");
-    
-    if (needsAuthorRights && !contractData.description_oeuvre) {
-      return false;
-    }
-    
-    if (needsImageRights && !contractData.description_image) {
-      return false;
-    }
-    
-    return true;
-  };
-  
-  const isRemunerationComplete = () => {
-    return contractData.type_cession !== "Onéreuse" || contractData.remuneration;
-  };
-  
-  const isFormComplete = 
-    contractData.type_contrat.length > 0 && 
-    isAuthorInfoComplete() && 
-    isWorkDescriptionComplete() && 
-    isRemunerationComplete();
+  const isFormComplete = contractData.type_contrat.length > 0 && 
+                        contractData.description_oeuvre !== "" &&
+                        Object.keys(contractData.auteur_info).length > 0;
   
   return (
-    <div>
-      <h2 className="text-xl font-bold text-gray-800 mb-4">Finalisation du contrat</h2>
-      
-      <div className="mb-6">
-        <h3 className="text-lg font-medium text-gray-700 mb-3">Vérification des informations</h3>
-        
-        <div className="space-y-4">
-          <div className="flex items-start">
-            <div className={`flex-shrink-0 h-5 w-5 ${contractData.type_contrat.length > 0 ? 'text-green-500' : 'text-red-500'}`}>
-              {contractData.type_contrat.length > 0 ? <Check size={20} /> : '✗'}
-            </div>
-            <div className="ml-3">
-              <span className="text-gray-700">Type de contrat</span>
-            </div>
-          </div>
-          
-          <div className="flex items-start">
-            <div className={`flex-shrink-0 h-5 w-5 ${isAuthorInfoComplete() ? 'text-green-500' : 'text-red-500'}`}>
-              {isAuthorInfoComplete() ? <Check size={20} /> : '✗'}
-            </div>
-            <div className="ml-3">
-              <span className="text-gray-700">Informations sur l'auteur/modèle</span>
-            </div>
-          </div>
-          
-          <div className="flex items-start">
-            <div className={`flex-shrink-0 h-5 w-5 ${isWorkDescriptionComplete() ? 'text-green-500' : 'text-red-500'}`}>
-              {isWorkDescriptionComplete() ? <Check size={20} /> : '✗'}
-            </div>
-            <div className="ml-3">
-              <span className="text-gray-700">Description de l'œuvre/image</span>
-            </div>
-          </div>
-          
-          {contractData.type_cession === "Onéreuse" && (
-            <div className="flex items-start">
-              <div className={`flex-shrink-0 h-5 w-5 ${contractData.remuneration ? 'text-green-500' : 'text-red-500'}`}>
-                {contractData.remuneration ? <Check size={20} /> : '✗'}
-              </div>
-              <div className="ml-3">
-                <span className="text-gray-700">Rémunération</span>
-              </div>
-            </div>
-          )}
-        </div>
-        
-        {!isFormComplete && (
-          <div className="mt-4 bg-yellow-50 border-l-4 border-yellow-400 p-4">
-            <div className="flex">
-              <div className="ml-3">
-                <p className="text-sm text-yellow-700">
-                  Veuillez compléter toutes les informations requises avant de générer le contrat.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-      
+    <div className="space-y-6">
       <div className="mb-6">
         <h3 className="text-lg font-medium text-gray-700 mb-3">Options de finalisation</h3>
         
@@ -195,50 +116,89 @@ const Step6Finalization = ({ contractData }) => {
         </div>
       </div>
       
+      {!isSignedIn && (
+        <div className="mb-4 bg-yellow-50 border-l-4 border-yellow-400 p-4">
+          <div className="flex">
+            <div className="ml-3">
+              <p className="text-sm text-yellow-700">
+                <strong>Information :</strong> Pour télécharger votre contrat en PDF ou accéder à l'éditeur, 
+                vous devez vous connecter ou créer un compte. C'est gratuit et rapide !
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-        <button 
-          className={`flex items-center justify-center py-3 px-4 rounded-md shadow-sm text-white font-medium transition-colors ${
-            isFormComplete 
-              ? 'bg-green-600 hover:bg-green-700' 
-              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-          }`}
-          onClick={handleGeneratePdf}
-          disabled={!isFormComplete || isGenerating}
-        >
-          {isGenerating ? (
-            <>
-              <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white mr-2"></div>
-              Génération en cours...
-            </>
-          ) : (
-            <>
-              <Download size={18} className="mr-2" />
-              Télécharger au format PDF
-            </>
-          )}
-        </button>
-        
-        <button 
-          className={`flex items-center justify-center py-3 px-4 rounded-md shadow-sm text-white font-medium transition-colors ${
-            isFormComplete 
-              ? 'bg-blue-600 hover:bg-blue-700' 
-              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-          }`}
-          onClick={handleAccessEditor}
-          disabled={!isFormComplete || isSaving}
-        >
-          {isSaving ? (
-            <>
-              <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white mr-2"></div>
-              Préparation de l'éditeur...
-            </>
-          ) : (
-            <>
-              <Edit size={18} className="mr-2" />
-              Accéder à l'éditeur
-            </>
-          )}
-        </button>
+        {isSignedIn ? (
+          <>
+            <button 
+              className={`flex items-center justify-center py-3 px-4 rounded-md shadow-sm text-white font-medium transition-colors ${
+                isFormComplete 
+                  ? 'bg-green-600 hover:bg-green-700' 
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              }`}
+              onClick={handleGeneratePdf}
+              disabled={!isFormComplete || isGenerating}
+            >
+              {isGenerating ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white mr-2"></div>
+                  Génération en cours...
+                </>
+              ) : (
+                <>
+                  <Download size={18} className="mr-2" />
+                  Télécharger au format PDF
+                </>
+              )}
+            </button>
+            
+            <button 
+              className={`flex items-center justify-center py-3 px-4 rounded-md shadow-sm text-white font-medium transition-colors ${
+                isFormComplete 
+                  ? 'bg-blue-600 hover:bg-blue-700' 
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              }`}
+              onClick={handleAccessEditor}
+              disabled={!isFormComplete || isSaving}
+            >
+              {isSaving ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white mr-2"></div>
+                  Préparation de l'éditeur...
+                </>
+              ) : (
+                <>
+                  <Edit size={18} className="mr-2" />
+                  Accéder à l'éditeur
+                  <span className="ml-2 text-xs bg-blue-100 text-blue-800 py-0.5 px-1.5 rounded-md">Beta</span>
+                </>
+              )}
+            </button>
+          </>
+        ) : (
+          <>
+            <SignInButton mode="modal">
+              <button 
+                className="flex items-center justify-center py-3 px-4 rounded-md shadow-sm text-white font-medium bg-green-600 hover:bg-green-700 transition-colors"
+              >
+                <Download size={18} className="mr-2" />
+                Télécharger au format PDF
+              </button>
+            </SignInButton>
+            
+            <SignInButton mode="modal">
+              <button 
+                className="flex items-center justify-center py-3 px-4 rounded-md shadow-sm text-white font-medium bg-blue-600 hover:bg-blue-700 transition-colors"
+              >
+                <Edit size={18} className="mr-2" />
+                Accéder à l'éditeur
+                <span className="ml-2 text-xs bg-blue-100 text-blue-800 py-0.5 px-1.5 rounded-md">Beta</span>
+              </button>
+            </SignInButton>
+          </>
+        )}
       </div>
       
       {error && (
