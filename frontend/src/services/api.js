@@ -3,7 +3,7 @@ import axios from 'axios';
 // Déterminer l'URL de l'API en fonction de l'environnement
 const API_URL = process.env.REACT_APP_API_URL || 
                 (process.env.NODE_ENV === 'production' 
-                  ? '/api' 
+                  ? 'https://lexforge-backend.onrender.com/api' 
                   : 'http://localhost:5001/api');
 
 console.log('Using API URL:', API_URL);
@@ -13,6 +13,8 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  // Désactiver withCredentials pour tester si c'est la source du problème
+  withCredentials: false,
 });
 
 export const analyzeProject = async (description) => {
@@ -170,6 +172,23 @@ export const importContract = async (file) => {
   }
 };
 
+export const testCors = async () => {
+  try {
+    console.log('Testing CORS with API URL:', API_URL);
+    const response = await axios.get(`${API_URL}/cors-test`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      withCredentials: false,
+    });
+    console.log('CORS test response:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('CORS test failed:', error);
+    throw error;
+  }
+};
+
 // Corriger l'avertissement ESLint en créant une variable pour l'export par défaut
 const apiService = {
   analyzeProject,
@@ -182,7 +201,8 @@ const apiService = {
   updateContract,
   deleteContract,
   exportContract,
-  importContract
+  importContract,
+  testCors
 };
 
 export default apiService;

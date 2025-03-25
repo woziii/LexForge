@@ -20,10 +20,12 @@ from contract_builder import ContractBuilder
 
 app = Flask(__name__)
 
-# Configuration CORS plus permissive pour le déploiement
-# Permettre l'accès depuis le frontend déployé sur Vercel
-frontend_origin = os.environ.get('ORIGIN', 'https://lexforge.vercel.app')
-CORS(app, resources={r"/api/*": {"origins": [frontend_origin, "http://localhost:3000"]}})
+# Configuration CORS complètement permissive
+CORS(app, 
+     origins="*", 
+     allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
+     supports_credentials=True,
+     max_age=3600)
 
 # Définir le répertoire temporaire pour les fichiers PDF
 if not os.path.exists('tmp'):
@@ -398,6 +400,27 @@ def import_contract():
         return jsonify({'error': 'Invalid JSON file'}), 400
     except Exception as e:
         return jsonify({'error': f'Error importing contract: {str(e)}'}), 500
+
+@app.route('/api/cors-test', methods=['GET', 'POST', 'OPTIONS'])
+def cors_test():
+    """
+    Endpoint simple pour tester la configuration CORS.
+    """
+    if request.method == 'OPTIONS':
+        # Handle OPTIONS request explicitly
+        response = app.make_default_options_response()
+        response.headers['Access-Control-Allow-Origin'] = '*'
+        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        return response
+        
+    return jsonify({
+        'status': 'success',
+        'message': 'CORS test successful',
+        'method': request.method,
+        'headers': dict(request.headers),
+        'remote_addr': request.remote_addr
+    })
 
 # Pour le développement local
 if __name__ == '__main__':
