@@ -189,6 +189,26 @@ export const testCors = async () => {
   }
 };
 
+export const getUserProfile = async () => {
+  try {
+    const response = await api.get('/user-profile');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    throw error;
+  }
+};
+
+export const updateUserProfile = async (profileData) => {
+  try {
+    const response = await api.post('/user-profile', profileData);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating user profile:', error);
+    throw error;
+  }
+};
+
 // Corriger l'avertissement ESLint en créant une variable pour l'export par défaut
 const apiService = {
   analyzeProject,
@@ -202,6 +222,8 @@ const apiService = {
   deleteContract,
   exportContract,
   importContract,
+  getUserProfile,
+  updateUserProfile,
   testCors
 };
 

@@ -6,6 +6,7 @@ import ContractWizard from './pages/ContractWizard';
 import AboutPage from './pages/AboutPage';
 import ContractsPage from './pages/ContractsPage';
 import ContractEditorPage from './pages/ContractEditorPage';
+import DashboardPage from './pages/DashboardPage';
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="contracts" element={<ContractsPage />} />
         <Route path="editor/:contractId" element={<ContractEditorPage />} />
         <Route path="about" element={<AboutPage />} />
+        <Route path="dashboard" element={<DashboardPage />} />
       </Route>
     </Routes>
   );

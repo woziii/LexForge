@@ -202,3 +202,185 @@ def preview_contract(contract_type, is_free, author_type, author_info,
         apercu += "Pour le Modèle :                                         Pour le Cessionnaire :"
     
     return apercu
+
+
+def generate_contract_preview(contract_data):
+    """
+    Fonction améliorée pour générer un aperçu du contrat à partir d'un dictionnaire de données.
+    Compatible avec la nouvelle structure de données utilisée dans le frontend et dans app.py.
+    
+    Args:
+        contract_data (dict): Dictionnaire contenant toutes les données du contrat
+            - type_contrat: Liste des types de contrats
+            - type_cession: "Gratuite" ou "Onéreuse"
+            - auteur_type: Type d'auteur
+            - auteur_info: Informations sur l'auteur
+            - description_oeuvre: Description de l'œuvre
+            - description_image: Description de l'image 
+            - supports: Liste des supports
+            - droits_cedes: Liste des droits cédés
+            - remuneration: Détails de la rémunération
+            - exclusivite: Bool indiquant si la cession est exclusive
+            - cessionnaire_info: Informations sur le cessionnaire
+
+    Returns:
+        str: Texte formaté représentant l'aperçu du contrat
+    """
+    # Extraire les données du contrat
+    contract_type = contract_data.get('type_contrat', [])
+    is_free = contract_data.get('type_cession', 'Gratuite')
+    author_type = contract_data.get('auteur_type', 'Personne physique')
+    author_info = contract_data.get('auteur_info', {})
+    work_description = contract_data.get('description_oeuvre', '')
+    image_description = contract_data.get('description_image', '')
+    supports = contract_data.get('supports', [])
+    additional_rights = contract_data.get('droits_cedes', [])
+    remuneration = contract_data.get('remuneration', '')
+    is_exclusive = contract_data.get('exclusivite', False)
+    cessionnaire_info = contract_data.get('cessionnaire_info', {})
+    
+    # Version améliorée - utiliser les informations du cessionnaire si disponibles
+    apercu = ContractTemplates.get_title(contract_type) + "\n\n"
+    apercu += "ENTRE LES SOUSSIGNÉS :\n\n"
+    
+    # Informations sur l'auteur/modèle avec gestion améliorée des champs manquants
+    if author_type == "Personne physique":
+        gentille = author_info.get("gentille", "M.")
+        nom = author_info.get("nom", "")
+        prenom = author_info.get("prenom", "")
+        date_naissance = author_info.get("date_naissance", "")
+        nationalite = author_info.get("nationalite", "")
+        adresse = author_info.get("adresse", "")
+        
+        apercu += f"{gentille} {prenom} {nom}"
+        if date_naissance:
+            apercu += f", né(e) le {date_naissance}"
+        if nationalite:
+            apercu += f", de nationalité {nationalite}"
+        if adresse:
+            apercu += f", domicilié(e) au {adresse}"
+    else:
+        # Personne morale
+        nom = author_info.get("nom", "")
+        forme_juridique = author_info.get("forme_juridique", "")
+        capital = author_info.get("capital", "")
+        rcs = author_info.get("rcs", "")
+        siege = author_info.get("siege", "")
+        representant = author_info.get("representant", "")
+        qualite_representant = author_info.get("qualite_representant", "")
+        
+        apercu += f"{nom}"
+        if forme_juridique:
+            apercu += f", {forme_juridique}"
+        if capital:
+            apercu += f", au capital de {capital}"
+        if rcs:
+            apercu += f", immatriculée sous le numéro {rcs}"
+        if siege:
+            apercu += f", dont le siège social est situé {siege}"
+        if representant and qualite_representant:
+            apercu += f", représentée par {representant} en sa qualité de {qualite_representant}"
+    
+    # Dénomination de l'auteur
+    if "Auteur (droits d'auteur)" in contract_type and "Image (droit à l'image)" in contract_type:
+        apercu += ", ci-après dénommé(e) \"l'Auteur et le Modèle\",\n\n"
+    elif "Auteur (droits d'auteur)" in contract_type:
+        apercu += ", ci-après dénommé(e) \"l'Auteur\",\n\n"
+    else:
+        apercu += ", ci-après dénommé(e) \"le Modèle\",\n\n"
+    
+    # Informations sur le cessionnaire (utilisation des données personnalisées si disponibles)
+    if cessionnaire_info and cessionnaire_info.get('nom'):
+        # Pour une personne physique
+        if 'prenom' in cessionnaire_info:
+            civilite = cessionnaire_info.get('gentille', '')
+            prenom = cessionnaire_info.get('prenom', '')
+            nom = cessionnaire_info.get('nom', '')
+            adresse = cessionnaire_info.get('adresse', '')
+            
+            apercu += f"{civilite} {prenom} {nom}"
+            if adresse:
+                apercu += f", domicilié(e) au {adresse}"
+        # Pour une personne morale
+        else:
+            nom = cessionnaire_info.get('nom', '')
+            forme_juridique = cessionnaire_info.get('forme_juridique', '')
+            capital = cessionnaire_info.get('capital', '')
+            rcs = cessionnaire_info.get('rcs', '')
+            siege = cessionnaire_info.get('siege', '')
+            
+            apercu += f"{nom}"
+            if forme_juridique:
+                apercu += f", {forme_juridique}"
+            if capital:
+                apercu += f", au capital de {capital}"
+            if rcs:
+                apercu += f", immatriculée sous le numéro {rcs}"
+            if siege:
+                apercu += f", dont le siège social est situé {siege}"
+    else:
+        # Utiliser les informations par défaut de Tellers
+        apercu += "Tellers, société par actions simplifiée unipersonnelle au capital de 1000 €, "
+        apercu += "immatriculée sous le numéro 932 553 266 R.C.S. Lyon, et dont le siège social est situé au : "
+        apercu += "12 RUE DE LA PART-DIEU, 69003 LYON, représentée par son Président en exercice dûment habilité à l'effet des présentes"
+    
+    apercu += ", ci-après dénommé \"le Cessionnaire\",\n\n"
+    
+    # Introduction
+    apercu += "Ci-après dénommées ensemble \"les Parties\" ou individuellement \"la Partie\",\n\n"
+    apercu += "CECI EXPOSÉ, IL A ÉTÉ CONVENU CE QUI SUIT :\n\n"
+    
+    # ARTICLE 1 - OBJET DU CONTRAT
+    apercu += "ARTICLE 1 – OBJET DU CONTRAT\n\n"
+    
+    if "Auteur (droits d'auteur)" in contract_type:
+        apercu += "1.1 Œuvre concernée\n\n"
+        apercu += f"L'Auteur déclare être le créateur et titulaire exclusif des droits d'auteur sur l'œuvre suivante :\n\n"
+        apercu += f"{work_description}\n\n"
+    
+    if "Image (droit à l'image)" in contract_type:
+        apercu += "1.2 Images concernées\n\n"
+        apercu += f"Le Modèle autorise l'utilisation de son image telle qu'elle apparaît dans : \n\n"
+        apercu += f"{image_description}\n\n"
+    
+    # Suite de l'aperçu du contrat (articles restants)
+    # ARTICLE 2 - DROITS CÉDÉS
+    apercu += "ARTICLE 2 – ÉTENDUE DES DROITS CÉDÉS\n\n"
+    
+    apercu += "2.1 Nature de la cession\n\n"
+    apercu += "L'Auteur cède au Cessionnaire, "
+    
+    if is_exclusive:
+        apercu += "à titre exclusif, "
+    else:
+        apercu += "à titre non exclusif, "
+    
+    if is_free == "Gratuite":
+        apercu += "gratuitement et pour la durée précisée à l'article 4, les droits patrimoniaux suivants :\n\n"
+    else:
+        apercu += "pour la durée précisée à l'article 4 et moyennant rémunération, les droits suivants :\n\n"
+    
+    # Ajout du reste des articles (version simplifiée)
+    apercu += "2.2 Droits patrimoniaux cédés\n\n"
+    apercu += "- Droit de reproduction\n"
+    apercu += "- Droit de représentation\n"
+    
+    if is_free != "Gratuite" and additional_rights:
+        apercu += "\nDroits supplémentaires inclus :\n"
+        for right in additional_rights:
+            apercu += f"- {right}\n"
+    
+    apercu += "\n[APERÇU SIMPLIFIÉ - Pour plus de détails, veuillez consulter le contrat complet]\n"
+    
+    # Signature
+    apercu += "\nFait à ________________, le ________________\n\n"
+    apercu += "En deux exemplaires originaux.\n\n"
+    
+    if "Auteur (droits d'auteur)" in contract_type and "Image (droit à l'image)" in contract_type:
+        apercu += "Pour l'Auteur et Modèle :                                Pour le Cessionnaire :"
+    elif "Auteur (droits d'auteur)" in contract_type:
+        apercu += "Pour l'Auteur :                                          Pour le Cessionnaire :"
+    else:
+        apercu += "Pour le Modèle :                                         Pour le Cessionnaire :"
+    
+    return apercu

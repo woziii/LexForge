@@ -46,9 +46,25 @@ def create_temp_file(prefix="", suffix=""):
 
 def generate_pdf(contract_type, is_free, author_type, author_info,
                 work_description, image_description, supports,
-                additional_rights, remuneration, is_exclusive):
+                additional_rights, remuneration, is_exclusive, cessionnaire_info=None):
     """
     Génère un PDF du contrat avec des champs interactifs.
+    
+    Args:
+        contract_type (list): Liste des types de contrats sélectionnés
+        is_free (str): Type de cession ("Gratuite" ou "Onéreuse")
+        author_type (str): Type d'auteur ("Personne physique" ou "Personne morale")
+        author_info (dict): Informations sur l'auteur
+        work_description (str): Description de l'œuvre
+        image_description (str): Description de l'image
+        supports (list): Liste des supports sélectionnés
+        additional_rights (list): Liste des droits supplémentaires sélectionnés
+        remuneration (str): Modalités de rémunération
+        is_exclusive (bool): True si la cession est exclusive, False sinon
+        cessionnaire_info (dict, optional): Informations sur le cessionnaire
+        
+    Returns:
+        str: Chemin vers le fichier PDF généré
     """
     # Conversion des paramètres
     is_free_bool = (is_free == "Gratuite")
@@ -68,7 +84,8 @@ def generate_pdf(contract_type, is_free, author_type, author_info,
     contract_elements = ContractBuilder.build_contract_elements(
         contract_type, is_free_bool, author_type, author_info,
         work_description, image_description, final_supports,
-        final_additional_rights, remuneration, is_exclusive_bool
+        final_additional_rights, remuneration, is_exclusive_bool,
+        cessionnaire_info=cessionnaire_info
     )
     
     # Créer un document PDF avec moins d'options pour accélérer la génération

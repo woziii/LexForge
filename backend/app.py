@@ -10,13 +10,17 @@ import sys
 import json
 import uuid
 from datetime import datetime
+from werkzeug.utils import secure_filename
+from config import TELLERS_INFO
 
 # Import des modules locaux
 from text_analyzer import analyze_work_description, get_explanation
-from contract_previewer import preview_contract
+from contract_previewer import preview_contract, generate_contract_preview
 from pdf_generator import generate_pdf
 from utils import collect_author_info, ensure_default_supports
 from contract_builder import ContractBuilder
+from contract_generator import generate_contract_text
+from contract_analyzer import analyze_project_description
 
 app = Flask(__name__)
 
@@ -32,9 +36,40 @@ if not os.path.exists('tmp'):
     os.makedirs('tmp')
     
 # Définir le répertoire de stockage des contrats
-CONTRACTS_DIR = os.path.join(os.path.dirname(__file__), 'contracts')
-if not os.path.exists(CONTRACTS_DIR):
-    os.makedirs(CONTRACTS_DIR)
+DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
+CONTRACTS_DIR = os.path.join(DATA_DIR, 'contracts')
+USER_PROFILES_DIR = os.path.join(DATA_DIR, 'user_profiles')
+
+# Créer les dossiers s'ils n'existent pas
+os.makedirs(CONTRACTS_DIR, exist_ok=True)
+os.makedirs(USER_PROFILES_DIR, exist_ok=True)
+
+# Chemin du fichier de profil utilisateur (pour simplifier, un seul utilisateur)
+USER_PROFILE_FILE = os.path.join(USER_PROFILES_DIR, 'user_profile.json')
+
+# Structure par défaut pour un nouveau profil
+DEFAULT_PROFILE = {
+    "physical_person": {
+        "is_configured": False,
+        "gentille": "",
+        "nom": "",
+        "prenom": "",
+        "date_naissance": "",
+        "nationalite": "",
+        "adresse": ""
+    },
+    "legal_entity": {
+        "is_configured": False,
+        "nom": "",
+        "forme_juridique": "",
+        "capital": "",
+        "rcs": "",
+        "siege": "",
+        "representant": "",
+        "qualite_representant": ""
+    },
+    "selected_entity_type": ""
+}
 
 @app.route('/api', methods=['GET'])
 def index():
@@ -71,28 +106,33 @@ def preview():
     """
     Endpoint pour prévisualiser le contrat.
     """
-    data = request.json
+    contract_data = request.json
     
-    # Extraire les données du contrat
-    contract_type = data.get('type_contrat', [])
-    is_free = data.get('type_cession', 'Gratuite')
-    author_type = data.get('auteur_type', 'Personne physique')
-    author_info = data.get('auteur_info', {})
-    work_description = data.get('description_oeuvre', '')
-    image_description = data.get('description_image', '')
-    supports = data.get('supports', [])
-    additional_rights = data.get('droits_cedes', [])
-    remuneration = data.get('remuneration', '')
-    is_exclusive = data.get('exclusivite', False)
-    
-    # Générer l'aperçu du contrat
-    preview_text = preview_contract(
-        contract_type, is_free, author_type, author_info,
-        work_description, image_description, supports,
-        additional_rights, remuneration, is_exclusive
-    )
-    
-    return jsonify({'preview': preview_text})
+    try:
+        # Si l'utilisateur a un profil configuré, utiliser ces informations
+        user_profile = {}
+        if os.path.exists(USER_PROFILE_FILE):
+            with open(USER_PROFILE_FILE, 'r') as f:
+                user_profile = json.load(f)
+        
+        # Si un type d'entité est sélectionné, utiliser ses informations comme cessionnaire
+        if user_profile.get('selected_entity_type') == 'physical_person' and user_profile['physical_person']['is_configured']:
+            cessionnaire_info = user_profile['physical_person']
+        elif user_profile.get('selected_entity_type') == 'legal_entity' and user_profile['legal_entity']['is_configured']:
+            cessionnaire_info = user_profile['legal_entity']
+        else:
+            # Utiliser les informations par défaut de Tellers
+            cessionnaire_info = TELLERS_INFO
+        
+        # Ajouter les informations du cessionnaire aux données du contrat
+        contract_data['cessionnaire_info'] = cessionnaire_info
+        
+        # Utiliser la nouvelle fonction generate_contract_preview
+        preview_text = generate_contract_preview(contract_data)
+        return jsonify({'preview': preview_text})
+    except Exception as e:
+        print(f"Erreur lors de la génération de l'aperçu: {str(e)}")
+        return jsonify({'preview': "Une erreur est survenue lors de la génération de l'aperçu.", 'error': str(e)})
 
 @app.route('/api/generate-pdf', methods=['POST'])
 def create_pdf():
@@ -115,11 +155,29 @@ def create_pdf():
     remuneration = contract_data.get('remuneration', '')
     is_exclusive = contract_data.get('exclusivite', False)
     
+    # Récupérer les informations du cessionnaire depuis le profil utilisateur
+    cessionnaire_info = None
+    if os.path.exists(USER_PROFILE_FILE):
+        with open(USER_PROFILE_FILE, 'r') as f:
+            user_profile = json.load(f)
+        
+        # Si un type d'entité est sélectionné, utiliser ses informations comme cessionnaire
+        if user_profile.get('selected_entity_type') == 'physical_person' and user_profile['physical_person']['is_configured']:
+            cessionnaire_info = user_profile['physical_person']
+        elif user_profile.get('selected_entity_type') == 'legal_entity' and user_profile['legal_entity']['is_configured']:
+            cessionnaire_info = user_profile['legal_entity']
+        else:
+            # Utiliser les informations par défaut de Tellers
+            cessionnaire_info = TELLERS_INFO
+    else:
+        cessionnaire_info = TELLERS_INFO
+    
     # Générer le PDF
     pdf_path = generate_pdf(
         contract_type, is_free, author_type, author_info,
         work_description, image_description, supports,
-        additional_rights, remuneration, is_exclusive
+        additional_rights, remuneration, is_exclusive,
+        cessionnaire_info=cessionnaire_info
     )
     
     # Envoyer le fichier PDF
@@ -289,11 +347,29 @@ def get_contract_elements(contract_id):
     remuneration = contract_data.get('remuneration', '')
     is_exclusive = contract_data.get('exclusivite', False)
     
+    # Récupérer les informations du cessionnaire depuis le profil utilisateur
+    cessionnaire_info = None
+    if os.path.exists(USER_PROFILE_FILE):
+        with open(USER_PROFILE_FILE, 'r') as f:
+            user_profile = json.load(f)
+        
+        # Si un type d'entité est sélectionné, utiliser ses informations comme cessionnaire
+        if user_profile.get('selected_entity_type') == 'physical_person' and user_profile['physical_person']['is_configured']:
+            cessionnaire_info = user_profile['physical_person']
+        elif user_profile.get('selected_entity_type') == 'legal_entity' and user_profile['legal_entity']['is_configured']:
+            cessionnaire_info = user_profile['legal_entity']
+        else:
+            # Utiliser les informations par défaut de Tellers
+            cessionnaire_info = TELLERS_INFO
+    else:
+        cessionnaire_info = TELLERS_INFO
+    
     # Générer les éléments du contrat avec le ContractBuilder
     elements = ContractBuilder.build_contract_elements(
         contract_type, is_free, author_type, author_info,
         work_description, image_description, supports,
-        additional_rights, remuneration, is_exclusive
+        additional_rights, remuneration, is_exclusive,
+        cessionnaire_info=cessionnaire_info  # Ajouter les informations du cessionnaire
     )
     
     # Convertir les éléments en format pour l'éditeur
@@ -421,6 +497,43 @@ def cors_test():
         'headers': dict(request.headers),
         'remote_addr': request.remote_addr
     })
+
+@app.route('/api/user-profile', methods=['GET'])
+def get_user_profile():
+    """Récupère le profil de l'utilisateur."""
+    try:
+        # Si le fichier de profil n'existe pas, créer un profil par défaut
+        if not os.path.exists(USER_PROFILE_FILE):
+            with open(USER_PROFILE_FILE, 'w') as f:
+                json.dump(DEFAULT_PROFILE, f, indent=2)
+            return jsonify(DEFAULT_PROFILE)
+        
+        # Lire et retourner le profil
+        with open(USER_PROFILE_FILE, 'r') as f:
+            profile = json.load(f)
+            return jsonify(profile)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/user-profile', methods=['POST'])
+def update_user_profile():
+    """Met à jour le profil de l'utilisateur."""
+    try:
+        # Récupérer les données du profil depuis la requête
+        profile_data = request.json
+        
+        # Valider les données minimales
+        if not profile_data:
+            return jsonify({'error': 'Aucune donnée fournie'}), 400
+        
+        # Sauvegarder le profil
+        with open(USER_PROFILE_FILE, 'w') as f:
+            json.dump(profile_data, f, indent=2)
+        
+        return jsonify({'success': True, 'message': 'Profil mis à jour avec succès'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 # Pour le développement local
 if __name__ == '__main__':

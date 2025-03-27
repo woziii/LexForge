@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   ArrowRight, 
@@ -6,10 +6,33 @@ import {
   Camera, 
   Sparkles, 
   FileSignature, 
-  ShieldCheck 
+  ShieldCheck,
+  LayoutDashboard,
+  InfoIcon
 } from 'lucide-react';
+import { getUserProfile } from '../services/api';
 
 const HomePage = () => {
+  const [isProfileConfigured, setIsProfileConfigured] = useState(null);
+  
+  useEffect(() => {
+    const checkUserProfile = async () => {
+      try {
+        const profile = await getUserProfile();
+        
+        const hasPhysicalPerson = profile?.physical_person?.is_configured;
+        const hasLegalEntity = profile?.legal_entity?.is_configured;
+        
+        setIsProfileConfigured(hasPhysicalPerson || hasLegalEntity);
+      } catch (error) {
+        console.error('Error checking user profile:', error);
+        setIsProfileConfigured(false);
+      }
+    };
+    
+    checkUserProfile();
+  }, []);
+  
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-white via-blue-50 to-indigo-50">
       {/* Section principale avec titre central dominant */}
@@ -39,14 +62,41 @@ const HomePage = () => {
             </div>
           </div>
           
-          {/* Bouton d'action principal avec animation */}
-          <Link 
-            to="/wizard" 
-            className="inline-flex items-center px-6 sm:px-8 py-3 sm:py-4 border border-transparent text-base font-medium rounded-xl shadow-md text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transform transition-all duration-200 hover:scale-105 hover:shadow-lg"
-          >
-            Créer un contrat
-            <ArrowRight size={18} className="ml-2 animate-pulse" />
-          </Link>
+          {/* Notification pour la configuration du profil si nécessaire */}
+          {isProfileConfigured === false && (
+            <div className="max-w-lg mx-auto mb-6 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800 flex items-start">
+              <InfoIcon size={16} className="mr-2 flex-shrink-0 mt-0.5 text-amber-500" />
+              <div>
+                <p>Pour créer des contrats personnalisés, veuillez d'abord configurer vos informations de profil.</p>
+                <Link 
+                  to="/dashboard" 
+                  className="inline-flex items-center mt-2 text-amber-800 font-medium hover:text-amber-900"
+                >
+                  Configurer mon profil
+                  <ArrowRight size={14} className="ml-1" />
+                </Link>
+              </div>
+            </div>
+          )}
+          
+          {/* Boutons d'action */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+            <Link 
+              to="/wizard" 
+              className="inline-flex items-center px-6 sm:px-8 py-3 sm:py-4 border border-transparent text-base font-medium rounded-xl shadow-md text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transform transition-all duration-200 hover:scale-105 hover:shadow-lg"
+            >
+              Créer un contrat
+              <ArrowRight size={18} className="ml-2 animate-pulse" />
+            </Link>
+            
+            <Link 
+              to="/dashboard" 
+              className="inline-flex items-center px-6 sm:px-8 py-3 sm:py-4 border border-gray-300 text-base font-medium rounded-xl shadow-sm text-gray-700 bg-white hover:bg-gray-50 transform transition-all duration-200 hover:shadow-md"
+            >
+              <LayoutDashboard size={18} className="mr-2" />
+              Tableau de bord
+            </Link>
+          </div>
         </div>
         
         {/* Caractéristiques en badges */}

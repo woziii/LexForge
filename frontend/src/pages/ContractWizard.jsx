@@ -7,7 +7,8 @@ import Step3AuthorInfo from '../components/steps/Step3AuthorInfo';
 import Step4WorkDescription from '../components/steps/Step4WorkDescription';
 import Step5Supports from '../components/steps/Step5Supports';
 import Step6Finalization from '../components/steps/Step6Finalization';
-import { previewContract } from '../services/api';
+import ProfileRequiredModal from '../components/ui/ProfileRequiredModal';
+import { previewContract, getUserProfile } from '../services/api';
 
 // Définition des étapes
 const STEPS = [
@@ -23,6 +24,8 @@ const ContractWizard = () => {
   const [activeStep, setActiveStep] = useState(1);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [contractPreview, setContractPreview] = useState('');
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [isCheckingProfile, setIsCheckingProfile] = useState(true);
   const [contractData, setContractData] = useState({
     type_contrat: [],
     type_cession: "Gratuite",
@@ -37,6 +40,33 @@ const ContractWizard = () => {
   });
   
   const totalSteps = STEPS.length;
+  
+  // Vérifier si le profil est configuré
+  useEffect(() => {
+    const checkUserProfile = async () => {
+      try {
+        setIsCheckingProfile(true);
+        const profile = await getUserProfile();
+        
+        const hasPhysicalPerson = profile?.physical_person?.is_configured;
+        const hasLegalEntity = profile?.legal_entity?.is_configured;
+        
+        if (!hasPhysicalPerson && !hasLegalEntity) {
+          setShowProfileModal(true);
+        } else if (profile?.selected_entity_type) {
+          // Utiliser les informations de l'entité sélectionnée comme cessionnaire
+          // Cette logique serait implémentée dans le backend
+        }
+      } catch (error) {
+        console.error('Error checking user profile:', error);
+        setShowProfileModal(true);
+      } finally {
+        setIsCheckingProfile(false);
+      }
+    };
+    
+    checkUserProfile();
+  }, []);
   
   // Calculer la progression
   const progress = (activeStep / totalSteps) * 100;
@@ -126,8 +156,23 @@ const ContractWizard = () => {
     }
   };
   
+  // Afficher un indicateur de chargement pendant la vérification du profil
+  if (isCheckingProfile) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-white via-blue-50 to-indigo-50">
+        <div className="animate-spin h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-blue-50 to-indigo-50 pb-12">
+      {/* Modal pour la configuration du profil */}
+      <ProfileRequiredModal 
+        isOpen={showProfileModal} 
+        onClose={() => setShowProfileModal(false)} 
+      />
+      
       {/* En-tête avec progression */}
       <div className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">

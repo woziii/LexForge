@@ -1,0 +1,22 @@
+{
+  "legal_entity": {
+    "capital": "zadzad",
+    "forme_juridique": "dazda",
+    "is_configured": true,
+    "nom": "Tellers",
+    "qualite_representant": "azdazda",
+    "rcs": "dazdazd",
+    "representant": "zdazdazd",
+    "siege": "azdazada"
+  },
+  "physical_person": {
+    "adresse": "dazazda",
+    "date_naissance": "2025-03-20",
+    "gentille": "Mme",
+    "is_configured": true,
+    "nationalite": "azdazd",
+    "nom": "zadadazdazd",
+    "prenom": "dazdzadazd"
+  },
+  "selected_entity_type": "legal_entity"
+}
