@@ -1,0 +1,39 @@
+{
+  "messages": [
+    {
+      "id": 1,
+      "text": "Bienvenue dans la configuration de profil ! Je m'appelle Saul, et je vais t'aider à comprendre pourquoi cette étape est importante. 👋",
+      "image": "saul_sourire.jpg",
+      "read": false,
+      "highlight": null
+    },
+    {
+      "id": 2,
+      "text": "Les informations de cessionnaire sont essentielles pour la validité juridique de tes contrats. Le cessionnaire est la personne ou l'entreprise qui reçoit les droits cédés.",
+      "image": "saul_pensif.jpg",
+      "read": false,
+      "highlight": "profile-config-form"
+    },
+    {
+      "id": 3,
+      "text": "Tu peux configurer ton profil en tant que personne physique (toi-même) ou en tant qu'entreprise (personne morale) - ou même les deux si tu en as besoin !",
+      "image": "auto",
+      "read": false,
+      "highlight": "profile-type-selection"
+    },
+    {
+      "id": 4,
+      "text": "Toutes ces informations apparaîtront dans le préambule de tes contrats. C'est ce qui les rend juridiquement valides et opposables en cas de litige. 📝",
+      "image": "saul_pensif.jpg",
+      "read": false,
+      "highlight": null
+    },
+    {
+      "id": 5,
+      "text": "Maintenant, complétons ton profil ! Plus tes informations sont précises, plus tes contrats seront solides sur le plan juridique ! 🚀",
+      "image": "saul_motive.jpg",
+      "read": false,
+      "highlight": null
+    }
+  ]
+} 

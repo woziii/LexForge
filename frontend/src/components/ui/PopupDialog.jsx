@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X } from 'lucide-react';
+import { X, ChevronRight, MessageSquare } from 'lucide-react';
 import { getMessageImage } from '../../utils/logicImageSelector';
 
 /**
  * Composant PopupDialog
  * 
- * Affiche une boîte de dialogue minimaliste avec l'image de Saul
+ * Affiche une boîte de dialogue moderne avec un design épuré
  * et le texte qui s'affiche progressivement.
  * 
  * @param {Object} props - Les propriétés du composant
@@ -19,48 +19,60 @@ const PopupDialog = ({ messages, onClose, title, theme = 'blue', characterName =
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const [displayedText, setDisplayedText] = useState('');
   const [isTypingComplete, setIsTypingComplete] = useState(false);
+  const [isFadingOut, setIsFadingOut] = useState(false);
   const dialogRef = useRef(null);
   
   const currentMessage = messages[currentMessageIndex];
-  // L'image est maintenant importée dynamiquement via require()
   const messagePath = getMessageImage(currentMessage);
   
   // Mapping des couleurs en fonction du thème
   const themeColors = {
     blue: {
-      bg: 'bg-blue-50',
-      border: 'border-blue-100', 
+      primary: 'bg-blue-600',
+      lighter: 'bg-blue-50',
+      lighterHover: 'hover:bg-blue-100',
+      border: 'border-blue-200',
       text: 'text-blue-800',
-      accent: 'bg-blue-600',
-      button: 'bg-blue-50 text-blue-600 hover:bg-blue-100 border-blue-200',
-      shadow: 'rgba(59, 130, 246, 0.3), 0 8px 10px -6px rgba(59, 130, 246, 0.2)'
+      accent: 'text-blue-600',
+      shadow: 'rgba(37, 99, 235, 0.15)'
     },
     yellow: {
-      bg: 'bg-yellow-50',
-      border: 'border-yellow-100',
-      text: 'text-yellow-800',
-      accent: 'bg-yellow-600',
-      button: 'bg-yellow-50 text-yellow-600 hover:bg-yellow-100 border-yellow-200',
-      shadow: 'rgba(255, 193, 7, 0.3), 0 8px 10px -6px rgba(255, 193, 7, 0.2)'
+      primary: 'bg-amber-500',
+      lighter: 'bg-amber-50',
+      lighterHover: 'hover:bg-amber-100',
+      border: 'border-amber-200',
+      text: 'text-amber-800',
+      accent: 'text-amber-600',
+      shadow: 'rgba(245, 158, 11, 0.15)'
     },
     green: {
-      bg: 'bg-green-50',
-      border: 'border-green-100',
-      text: 'text-green-800',
-      accent: 'bg-green-600',
-      button: 'bg-green-50 text-green-600 hover:bg-green-100 border-green-200',
-      shadow: 'rgba(16, 185, 129, 0.3), 0 8px 10px -6px rgba(16, 185, 129, 0.2)'
+      primary: 'bg-emerald-600',
+      lighter: 'bg-emerald-50',
+      lighterHover: 'hover:bg-emerald-100',
+      border: 'border-emerald-200',
+      text: 'text-emerald-800',
+      accent: 'text-emerald-600',
+      shadow: 'rgba(5, 150, 105, 0.15)'
     }
   };
   
   // Utiliser les couleurs du thème ou bleu par défaut
   const colors = themeColors[theme] || themeColors.blue;
   
+  // Fermer le popup avec une animation de transition
+  const handleClose = () => {
+    setIsFadingOut(true);
+    // Attendre la fin de l'animation avant de fermer
+    setTimeout(() => {
+      onClose();
+    }, 300);
+  };
+  
   // Effet pour gérer le clic en dehors du dialogue
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dialogRef.current && !dialogRef.current.contains(event.target)) {
-        onClose();
+        handleClose();
       }
     };
     
@@ -101,7 +113,7 @@ const PopupDialog = ({ messages, onClose, title, theme = 'blue', characterName =
     if (currentMessageIndex < messages.length - 1) {
       setCurrentMessageIndex(prev => prev + 1);
     } else {
-      onClose();
+      handleClose();
     }
   };
   
@@ -116,42 +128,45 @@ const PopupDialog = ({ messages, onClose, title, theme = 'blue', characterName =
   };
   
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-25 backdrop-blur-sm transition-opacity duration-300 ease-in-out">
       <div 
         ref={dialogRef}
-        className="relative max-w-md w-full mx-4 bg-white rounded-lg overflow-hidden transform transition-all animate-fadeIn"
+        className={`relative w-full max-w-xl bg-white rounded-xl overflow-hidden shadow-xl transform transition-all duration-300 ${
+          isFadingOut ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'
+        }`}
         style={{
-          boxShadow: `0 10px 25px -5px ${colors.shadow}`
+          boxShadow: `0 10px 25px -5px ${colors.shadow}, 0 8px 10px -6px ${colors.shadow}`
         }}
       >
         {/* En-tête avec titre (si fourni) */}
         {title && (
-          <div className={`px-5 py-3 ${colors.bg} border-b ${colors.border}`}>
-            <div className="flex justify-between items-center">
-              <h3 className={`text-sm font-semibold ${colors.text}`}>{title}</h3>
-              <button
-                onClick={onClose}
-                className="text-gray-500 hover:text-gray-700 transition-colors"
-                aria-label="Fermer"
-              >
-                <X size={18} />
-              </button>
-            </div>
+          <div className={`px-6 py-4 ${colors.lighter} border-b ${colors.border} flex justify-between items-center`}>
+            <h3 className="text-lg font-semibold text-gray-800 flex items-center">
+              <MessageSquare className={`w-5 h-5 mr-2 ${colors.accent}`} />
+              {title}
+            </h3>
+            <button
+              onClick={handleClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
+              aria-label="Fermer"
+            >
+              <X size={18} />
+            </button>
           </div>
         )}
         
-        {/* Corps du dialogue - design minimaliste */}
-        <div className="p-5">
-          <div className="flex items-start">
-            {/* Image de Saul avec nom en style RPG */}
-            <div className="flex flex-col items-center flex-shrink-0 mr-4 w-20">
+        {/* Corps du dialogue - design moderne */}
+        <div className="p-6">
+          <div className="flex items-start gap-5">
+            {/* Image avec effet de carte */}
+            <div className="relative flex-shrink-0 w-24 bg-gradient-to-b from-gray-50 to-gray-100 rounded-lg p-3 shadow-sm border border-gray-200">
               <img 
                 src={messagePath} 
                 alt={characterName} 
-                className="w-20 h-20 object-contain mb-1" 
+                className="w-full h-auto object-contain mb-2" 
               />
-              {/* Nom sous l'image */}
-              <div className={`px-2 py-0.5 ${colors.accent} text-white text-xs font-semibold rounded-sm w-full text-center`}>
+              {/* Badge du personnage */}
+              <div className={`absolute -bottom-2 left-1/2 transform -translate-x-1/2 px-3 py-1 ${colors.primary} text-white text-xs font-medium rounded-full whitespace-nowrap`}>
                 {characterName}
               </div>
             </div>
@@ -160,10 +175,10 @@ const PopupDialog = ({ messages, onClose, title, theme = 'blue', characterName =
             <div className="flex-grow">
               {/* Bouton fermer (si pas de titre) */}
               {!title && (
-                <div className="flex justify-end mb-1">
+                <div className="flex justify-end mb-2">
                   <button
-                    onClick={onClose}
-                    className="text-gray-500 hover:text-gray-700 transition-colors"
+                    onClick={handleClose}
+                    className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
                     aria-label="Fermer"
                   >
                     <X size={18} />
@@ -173,24 +188,27 @@ const PopupDialog = ({ messages, onClose, title, theme = 'blue', characterName =
               
               {/* Bulle de texte */}
               <div 
-                className={`${colors.bg} p-4 rounded-lg border ${colors.border} cursor-pointer mb-3`}
+                className={`${colors.lighter} p-4 rounded-lg ${colors.border} cursor-pointer mb-4 border shadow-sm`}
                 onClick={handleSpeedUpText}
               >
-                <p className="text-gray-800 leading-relaxed min-h-[3rem]">
+                <p className="text-gray-800 leading-relaxed min-h-[4rem]">
                   {displayedText}
-                  {!isTypingComplete && <span className="animate-pulse ml-0.5">▌</span>}
+                  {!isTypingComplete && (
+                    <span className="inline-block w-2 h-4 ml-0.5 bg-gray-400 opacity-75 animate-blink"></span>
+                  )}
                 </p>
               </div>
               
-              {/* Indicateur de progression (facultatif) */}
+              {/* Navigation et progression */}
               <div className="flex justify-between items-center">
+                {/* Indicateur de progression */}
                 <div className="flex space-x-1">
                   {messages.map((_, index) => (
                     <div 
                       key={index}
-                      className={`h-1.5 w-5 rounded-full ${
+                      className={`h-1.5 w-8 rounded-full transition-colors duration-300 ${
                         index === currentMessageIndex 
-                          ? colors.accent 
+                          ? colors.primary
                           : index < currentMessageIndex 
                             ? 'bg-gray-300' 
                             : 'bg-gray-200'
@@ -202,14 +220,21 @@ const PopupDialog = ({ messages, onClose, title, theme = 'blue', characterName =
                 {/* Bouton de navigation */}
                 <button
                   onClick={handleNextMessage}
-                  className={`px-3 py-1.5 text-sm rounded-md transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-${theme}-500 ${
-                    isTypingComplete 
-                      ? colors.button
-                      : 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
-                  }`}
                   disabled={!isTypingComplete}
+                  className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 focus:outline-none ${
+                    isTypingComplete 
+                      ? `${colors.primary} text-white hover:opacity-90 shadow-sm`
+                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  }`}
                 >
-                  {currentMessageIndex < messages.length - 1 ? 'Suite' : 'Fermer'}
+                  {currentMessageIndex < messages.length - 1 ? (
+                    <>
+                      Suivant
+                      <ChevronRight size={16} className="ml-1" />
+                    </>
+                  ) : (
+                    'Terminer'
+                  )}
                 </button>
               </div>
             </div>

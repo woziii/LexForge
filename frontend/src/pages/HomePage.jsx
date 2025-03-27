@@ -64,18 +64,17 @@ const HomePage = () => {
           
           {/* Notification pour la configuration du profil si nécessaire */}
           {isProfileConfigured === false && (
-            <div className="max-w-lg mx-auto mb-6 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800 flex items-start">
-              <InfoIcon size={16} className="mr-2 flex-shrink-0 mt-0.5 text-amber-500" />
-              <div>
-                <p>Pour créer des contrats personnalisés, veuillez d'abord configurer vos informations de profil.</p>
-                <Link 
-                  to="/dashboard" 
-                  className="inline-flex items-center mt-2 text-amber-800 font-medium hover:text-amber-900"
-                >
-                  Configurer mon profil
-                  <ArrowRight size={14} className="ml-1" />
-                </Link>
-              </div>
+            <div className="max-w-sm mx-auto mb-8 flex items-center justify-between rounded-full pl-4 pr-2 py-1.5 bg-white/70 border border-blue-100 shadow-sm">
+              <p className="text-xs text-gray-600">
+                <span className="text-blue-600 font-medium">Conseil :</span> Configurez votre profil pour personnaliser vos contrats
+              </p>
+              <Link 
+                to="/dashboard" 
+                className="ml-2 inline-flex items-center text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 transition rounded-full px-3 py-1"
+              >
+                Configurer
+                <ArrowRight size={10} className="ml-1" />
+              </Link>
             </div>
           )}
           
@@ -87,14 +86,6 @@ const HomePage = () => {
             >
               Créer un contrat
               <ArrowRight size={18} className="ml-2 animate-pulse" />
-            </Link>
-            
-            <Link 
-              to="/dashboard" 
-              className="inline-flex items-center px-6 sm:px-8 py-3 sm:py-4 border border-gray-300 text-base font-medium rounded-xl shadow-sm text-gray-700 bg-white hover:bg-gray-50 transform transition-all duration-200 hover:shadow-md"
-            >
-              <LayoutDashboard size={18} className="mr-2" />
-              Tableau de bord
             </Link>
           </div>
         </div>
