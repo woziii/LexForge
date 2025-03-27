@@ -5,7 +5,7 @@ import {
   FolderKanban, 
   FilePlus2, 
   InfoIcon, 
-  UserCircle,
+  LayoutDashboard,
   Menu,
   X
 } from 'lucide-react';
@@ -69,6 +69,13 @@ const Layout = () => {
               <span>Contrats</span>
             </Link>
             <Link
+              to="/dashboard"
+              className={`flex items-center ${isActive('/dashboard') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              <LayoutDashboard size={18} className="mr-1" strokeWidth={2} />
+              <span>Dashboard</span>
+            </Link>
+            <Link
               to="/about"
               className={`flex items-center ${isActive('/about') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
             >
@@ -76,12 +83,6 @@ const Layout = () => {
               <span>À propos</span>
             </Link>
             <NotificationBell />
-            <button 
-              className="text-gray-500 hover:text-gray-700 flex items-center focus:outline-none"
-              aria-label="Profil utilisateur"
-            >
-              <UserCircle size={20} strokeWidth={2} />
-            </button>
           </nav>
         </div>
 
@@ -114,6 +115,14 @@ const Layout = () => {
                 <span className="font-medium">Contrats</span>
               </Link>
               <Link
+                to="/dashboard"
+                className={`flex items-center py-2.5 px-3 rounded-lg ${isActive('/dashboard') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'}`}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <LayoutDashboard size={18} className="mr-3" strokeWidth={2} />
+                <span className="font-medium">Dashboard</span>
+              </Link>
+              <Link
                 to="/about"
                 className={`flex items-center py-2.5 px-3 rounded-lg ${isActive('/about') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'}`}
                 onClick={() => setIsMenuOpen(false)}
@@ -123,13 +132,6 @@ const Layout = () => {
               </Link>
               <div className="border-t border-gray-100 pt-2 mt-1">
                 <div className="flex items-center justify-between">
-                  <button 
-                    className="flex items-center py-2.5 px-3 text-left rounded-lg text-gray-600 hover:bg-gray-50 hover:text-gray-800"
-                    aria-label="Profil utilisateur"
-                  >
-                    <UserCircle size={20} className="mr-3" strokeWidth={2} />
-                    <span className="font-medium">Profil</span>
-                  </button>
                   <div className="py-2.5 px-3">
                     <NotificationBell />
                   </div>
