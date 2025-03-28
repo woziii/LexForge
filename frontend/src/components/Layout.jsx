@@ -156,8 +156,9 @@ const Layout = () => {
               </div>
               <p className="text-xs sm:text-sm text-gray-400 mt-1">Votre collaborateur juridique virtuel pour des contrats qui déchirent</p>
             </div>
-            <div className="text-xs sm:text-sm text-gray-400">
-              © {new Date().getFullYear()} LexForge - Tous droits réservés
+            <div className="flex flex-col items-center text-xs sm:text-sm text-gray-400">
+              <div>© {new Date().getFullYear()} LexForge - Tous droits réservés</div>
+              <Link to="/legal" className="hover:text-blue-300 mt-1">Mentions légales</Link>
             </div>
           </div>
         </div>

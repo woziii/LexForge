@@ -7,6 +7,7 @@ import AboutPage from './pages/AboutPage';
 import ContractsPage from './pages/ContractsPage';
 import ContractEditorPage from './pages/ContractEditorPage';
 import DashboardPage from './pages/DashboardPage';
+import LegalPage from './pages/LegalPage';
 import { WelcomePopup, MiniSaul } from './components/ui';
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
           <Route path="editor/:contractId" element={<ContractEditorPage />} />
           <Route path="about" element={<AboutPage />} />
           <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="legal" element={<LegalPage />} />
         </Route>
       </Routes>
     </>
