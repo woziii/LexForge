@@ -57,10 +57,10 @@ const Step6Finalization = ({ contractData, updateContractData }) => {
       }
       
       // Préparer un titre pour le contrat
-      const title = title || `Contrat ${Date.now()}`;
+      const contractTitle = title || `Contrat ${Date.now()}`;
       
       // Sauvegarder le contrat en brouillon
-      const savedContract = await saveContract(contractData, title);
+      const savedContract = await saveContract(contractData, contractTitle);
       
       // Rediriger vers l'éditeur avec l'ID du contrat
       if (savedContract && savedContract.id) {
