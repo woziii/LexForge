@@ -43,6 +43,12 @@ const WelcomePopup = ({ forceShow = false, onClose: externalOnClose }) => {
     },
     {
       id: 5,
+      text: "⚠️ Information technique : Le serveur de LexForge s'éteint après une période d'inactivité pour économiser des ressources. À votre arrivée, il peut nécessiter environ 50 secondes pour se réactiver. Pendant ce temps, certaines fonctionnalités utilisant le backend peuvent être temporairement indisponibles. Merci de votre patience !",
+      image: "saul_pensif.jpg",
+      read: false
+    },
+    {
+      id: 6,
       text: "Explorez notre éditeur avancé pour personnaliser vos contrats, enregistrez plusieurs versions, et exportez-les en PDF prêts à l'emploi. Si vous avez besoin d'aide, cherchez l'icone 💡, et hop 💨 j'apparaitrai comme le génie d'Aladin !",
       image: "saul_motive.jpg",
       read: false

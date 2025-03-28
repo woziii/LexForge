@@ -13,7 +13,8 @@ import {
   Star,
   MessageSquare,
   X,
-  Send
+  Send,
+  AlertCircle
 } from 'lucide-react';
 import { getUserProfile } from '../services/api';
 
@@ -86,6 +87,14 @@ const HomePage = () => {
                 Sans IA générative
               </div>
             </div>
+          </div>
+          
+          {/* Notification technique concernant le délai d'activation du serveur */}
+          <div className="max-w-md mx-auto mb-6 flex items-center rounded-lg pl-4 pr-4 py-3 bg-amber-50 border border-amber-200 shadow-sm">
+            <AlertCircle size={16} className="text-amber-500 flex-shrink-0 mr-2" />
+            <p className="text-xs text-amber-700">
+              <span className="font-medium">Note technique :</span> Le serveur peut nécessiter jusqu'à 50 secondes pour s'activer après une période d'inactivité. Pendant ce temps, certaines fonctionnalités peuvent être temporairement indisponibles.
+            </p>
           </div>
           
           {/* Notification pour la configuration du profil si nécessaire */}
