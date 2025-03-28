@@ -33,18 +33,9 @@ const ProfileRequiredModal = ({ isOpen, onClose }) => {
     loadProfile();
   }, [isOpen]);
   
-  // Auto-démarrage du tutoriel si pas encore vu
-  useEffect(() => {
-    if (!isLoading && !hasSeenTutorial && isOpen) {
-      const timer = setTimeout(() => {
-        setShowTutorial(true);
-        setHasSeenTutorial(true);
-      }, 1000);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [isLoading, hasSeenTutorial, isOpen]);
-
+  // L'auto-démarrage du tutoriel a été désactivé
+  // Le tutoriel ne s'affiche plus automatiquement
+  
   const handleDashboardRedirect = () => {
     navigate('/dashboard');
     onClose();

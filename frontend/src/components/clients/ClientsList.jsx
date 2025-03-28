@@ -102,67 +102,42 @@ const ClientsList = ({ onEditClient, onSelectClient }) => {
           {searchTerm ? "Aucun client ne correspond à votre recherche." : "Aucun client n'a été ajouté pour le moment."}
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Type
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Nom / Entité
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Coordonnées
-                </th>
-                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredClients.map((client) => (
-                <tr 
-                  key={client.id} 
-                  className="hover:bg-gray-50 cursor-pointer"
-                  onClick={() => handleSelect(client)}
-                >
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      {client.type === 'physical_person' ? (
-                        <User className="h-5 w-5 text-blue-500" />
-                      ) : (
-                        <Building2 className="h-5 w-5 text-indigo-500" />
-                      )}
-                      <span className="ml-2 text-sm text-gray-600">
-                        {client.type === 'physical_person' ? 'Personne physique' : 'Personne morale'}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+        <div>
+          {/* Version mobile - affichage en cartes */}
+          <div className="md:hidden space-y-3 mt-4">
+            {filteredClients.map((client) => (
+              <div 
+                key={client.id} 
+                className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer"
+                onClick={() => handleSelect(client)}
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <div className="flex items-center">
                     {client.type === 'physical_person' ? (
-                      <div className="text-sm font-medium text-gray-900">
-                        {client.gentille} {client.prenom} {client.nom}
-                      </div>
+                      <User className="h-5 w-5 text-blue-500 mr-2" />
                     ) : (
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">{client.nom}</div>
-                        <div className="text-xs text-gray-500">{client.forme_juridique}</div>
-                      </div>
+                      <Building2 className="h-5 w-5 text-indigo-500 mr-2" />
                     )}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-500 truncate max-w-xs">
-                      {client.type === 'physical_person' ? client.adresse : client.siege}
+                    <div>
+                      {client.type === 'physical_person' ? (
+                        <div className="font-medium text-gray-900">
+                          {client.gentille} {client.prenom} {client.nom}
+                        </div>
+                      ) : (
+                        <div className="font-medium text-gray-900">{client.nom}</div>
+                      )}
+                      <div className="text-xs text-gray-500">
+                        {client.type === 'physical_person' ? 'Personne physique' : `${client.forme_juridique || 'Personne morale'}`}
+                      </div>
                     </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                  </div>
+                  <div className="flex space-x-1">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         onEditClient(client);
                       }}
-                      className="text-blue-600 hover:text-blue-900 transition-colors p-1"
+                      className="text-blue-600 hover:text-blue-900 transition-colors p-1.5 bg-blue-50 rounded-full"
                     >
                       <Edit className="h-4 w-4" />
                     </button>
@@ -171,15 +146,99 @@ const ClientsList = ({ onEditClient, onSelectClient }) => {
                         e.stopPropagation();
                         handleDeleteClick(client.id);
                       }}
-                      className="text-red-600 hover:text-red-900 transition-colors p-1"
+                      className="text-red-600 hover:text-red-900 transition-colors p-1.5 bg-red-50 rounded-full"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
-                  </td>
+                  </div>
+                </div>
+                <div className="text-sm text-gray-500 break-words">
+                  {client.type === 'physical_person' ? client.adresse : client.siege}
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          {/* Version desktop - tableau standard */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Type
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Nom / Entité
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Coordonnées
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredClients.map((client) => (
+                  <tr 
+                    key={client.id} 
+                    className="hover:bg-gray-50 cursor-pointer"
+                    onClick={() => handleSelect(client)}
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        {client.type === 'physical_person' ? (
+                          <User className="h-5 w-5 text-blue-500" />
+                        ) : (
+                          <Building2 className="h-5 w-5 text-indigo-500" />
+                        )}
+                        <span className="ml-2 text-sm text-gray-600">
+                          {client.type === 'physical_person' ? 'Personne physique' : 'Personne morale'}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {client.type === 'physical_person' ? (
+                        <div className="text-sm font-medium text-gray-900">
+                          {client.gentille} {client.prenom} {client.nom}
+                        </div>
+                      ) : (
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">{client.nom}</div>
+                          <div className="text-xs text-gray-500">{client.forme_juridique}</div>
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-500 truncate max-w-xs">
+                        {client.type === 'physical_person' ? client.adresse : client.siege}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEditClient(client);
+                        }}
+                        className="text-blue-600 hover:text-blue-900 transition-colors p-1"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteClick(client.id);
+                        }}
+                        className="text-red-600 hover:text-red-900 transition-colors p-1"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
       
