@@ -9,7 +9,6 @@ import {
   Menu,
   X
 } from 'lucide-react';
-import NotificationBell from './ui/NotificationBell';
 
 const Layout = () => {
   const location = useLocation();
@@ -82,7 +81,6 @@ const Layout = () => {
               <InfoIcon size={18} className="mr-1" strokeWidth={2} />
               <span>À propos</span>
             </Link>
-            <NotificationBell />
           </nav>
         </div>
 
@@ -133,7 +131,7 @@ const Layout = () => {
               <div className="border-t border-gray-100 pt-2 mt-1">
                 <div className="flex items-center justify-between">
                   <div className="py-2.5 px-3">
-                    <NotificationBell />
+                    {/* Espace réservé pour d'autres éléments */}
                   </div>
                 </div>
               </div>

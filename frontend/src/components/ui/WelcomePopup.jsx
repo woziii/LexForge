@@ -7,9 +7,13 @@ import NotificationPopup from './NotificationPopup';
  * Affiche un popup de bienvenue qui présente LexForge et ses fonctionnalités
  * aux utilisateurs lors de leur première visite sur le site.
  * Utilise localStorage pour ne l'afficher qu'une seule fois.
+ * 
+ * @param {Object} props - Les propriétés du composant
+ * @param {boolean} props.forceShow - Force l'affichage du popup même si l'utilisateur l'a déjà vu
+ * @param {Function} props.onClose - Fonction pour fermer le popup depuis l'extérieur
  */
-const WelcomePopup = () => {
-  const [isOpen, setIsOpen] = useState(false);
+const WelcomePopup = ({ forceShow = false, onClose: externalOnClose }) => {
+  const [isOpen, setIsOpen] = useState(forceShow);
   
   // Messages de bienvenue
   const welcomeMessages = [
@@ -21,31 +25,37 @@ const WelcomePopup = () => {
     },
     {
       id: 2,
-      text: "LexForge est actuellement en version Beta. Comme un brouillon de contrat, nous peaufinons encore quelques clauses avec des mises à jour régulières. Soyez indulgent, même les meilleurs avocats font des fautes de frappe !",
+      text: "LexForge est actuellement en version Beta. Nous ajoutons régulièrement de nouvelles fonctionnalités et améliorons celles existantes. Vos retours sont essentiels pour nous aider à perfectionner la plateforme.",
       image: "saul_pensif.jpg",
       read: false
     },
     {
       id: 3,
-      text: "La Beta, c'est comme un contrat en cours de négociation : quelques bugs pourraient s'y glisser ! Si vous en repérez, dites-le nous - je n'ai pas encore mon diplôme en debugging juridique !",
-      image: "saul_motive.jpg",
+      text: "Notre plateforme vous permet de générer des contrats juridiquement solides en quelques clics. Tous nos modèles sont conçus par un juriste et régulièrement mis à jour.",
+      image: "saul_ok.jpg",
       read: false
     },
     {
       id: 4,
-      text: "Pour l'instant, notre cabinet propose deux spécialités : cession de droits d'auteur et contrat de prestation. D'autres modèles de contrats sont en cours de rédaction par nos stagiaires virtuels !",
+      text: "Actuellement, vous pouvez créer deux types de contrats : cession de droits d'auteur et droit à l'image. Chaque contrat est entièrement personnalisable selon vos besoins spécifiques ( ⚠️ Attention ! LexForge ne propose que des contrats types, pour répondre à des besoins simple ne nécéssitant pas d'accompagnement particulier… LexForge ne se substitue pas à un juriste ou un avocat).",
       image: "saul_pensif.jpg",
       read: false
     },
     {
       id: 5,
-      text: "LexForge vous permet de créer des contrats aussi solides qu'un argumentaire en Cour Suprême, mais sans le jargon incompréhensible. Allez, entrez dans mon cabinet virtuel et créons du droit ensemble !",
+      text: "Explorez notre éditeur avancé pour personnaliser vos contrats, enregistrez plusieurs versions, et exportez-les en PDF prêts à l'emploi. Si vous avez besoin d'aide, cherchez l'icone 💡, et hop 💨 j'apparaitrai comme le génie d'Aladin !",
       image: "saul_motive.jpg",
       read: false
     }
   ];
 
   useEffect(() => {
+    // Si l'affichage est forcé, ne pas vérifier localStorage
+    if (forceShow) {
+      setIsOpen(true);
+      return;
+    }
+    
     // Vérifier si c'est la première visite de l'utilisateur
     const hasVisitedBefore = localStorage.getItem('hasVisitedLexForge');
     
@@ -53,12 +63,21 @@ const WelcomePopup = () => {
     if (!hasVisitedBefore) {
       setIsOpen(true);
     }
-  }, []);
+  }, [forceShow]);
 
   // Fonction pour fermer le popup et enregistrer que l'utilisateur a déjà visité le site
   const handleClose = () => {
     setIsOpen(false);
-    localStorage.setItem('hasVisitedLexForge', 'true');
+    
+    // N'enregistrer la visite que lors de la première fois
+    if (!localStorage.getItem('hasVisitedLexForge')) {
+      localStorage.setItem('hasVisitedLexForge', 'true');
+    }
+    
+    // Si une fonction de fermeture externe est fournie, l'appeler
+    if (externalOnClose) {
+      externalOnClose();
+    }
   };
 
   if (!isOpen) return null;

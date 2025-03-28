@@ -7,12 +7,13 @@ import AboutPage from './pages/AboutPage';
 import ContractsPage from './pages/ContractsPage';
 import ContractEditorPage from './pages/ContractEditorPage';
 import DashboardPage from './pages/DashboardPage';
-import { WelcomePopup } from './components/ui';
+import { WelcomePopup, MiniSaul } from './components/ui';
 
 function App() {
   return (
     <>
       <WelcomePopup />
+      <MiniSaul />
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<HomePage />} />
