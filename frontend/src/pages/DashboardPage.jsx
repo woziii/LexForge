@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, User, Save, AlertCircle, Check, HelpCircle, Briefcase, Shield } from 'lucide-react';
+import { Building2, User, Save, AlertCircle, Check, HelpCircle, Briefcase, Shield, Users } from 'lucide-react';
 import { getUserProfile, updateUserProfile } from '../services/api';
 import { AUTHOR_TYPES, CIVILITY_OPTIONS } from '../utils/constants';
+import ClientsTab from '../components/clients/ClientsTab';
 
 const DashboardPage = () => {
   const navigate = useNavigate();
@@ -31,7 +32,8 @@ const DashboardPage = () => {
       representant: '',
       qualite_representant: '',
     },
-    selected_entity_type: '' // 'physical_person' ou 'legal_entity'
+    selected_entity_type: '', // 'physical_person' ou 'legal_entity'
+    clients: [] // Tableau de clients
   });
 
   useEffect(() => {
@@ -68,55 +70,45 @@ const DashboardPage = () => {
     }));
   };
 
-  const validatePhysicalPerson = () => {
-    const { gentille, nom, prenom, date_naissance, adresse } = profileData.physical_person;
-    return gentille && nom && prenom && date_naissance && adresse;
-  };
-
-  const validateLegalEntity = () => {
-    const { nom, forme_juridique, capital, rcs, siege, representant, qualite_representant } = profileData.legal_entity;
-    return nom && forme_juridique && capital && rcs && siege && representant && qualite_representant;
-  };
-
   const handleSaveProfile = async () => {
-    // Vérifier que les données requises sont présentes
-    let hasError = false;
-    let updatedProfileData = { ...profileData };
-    
-    if (profileData.selected_entity_type === 'physical_person') {
-      if (!validatePhysicalPerson()) {
-        setErrorMessage('Veuillez remplir tous les champs obligatoires pour la personne physique.');
-        hasError = true;
-      } else {
-        updatedProfileData.physical_person.is_configured = true;
-      }
-    } else if (profileData.selected_entity_type === 'legal_entity') {
-      if (!validateLegalEntity()) {
-        setErrorMessage('Veuillez remplir tous les champs obligatoires pour la personne morale.');
-        hasError = true;
-      } else {
-        updatedProfileData.legal_entity.is_configured = true;
-      }
-    } else {
-      setErrorMessage('Veuillez sélectionner un type d\'entité (personne physique ou morale).');
-      hasError = true;
-    }
-
-    if (hasError) return;
-
     try {
       setIsSaving(true);
       setErrorMessage('');
       
-      await updateUserProfile(updatedProfileData);
-      setProfileData(updatedProfileData);
-      setSuccessMessage('Vos informations ont été enregistrées avec succès !');
+      // Vérifier les données obligatoires selon le type d'entité
+      if (profileData.selected_entity_type === 'physical_person') {
+        if (!profileData.physical_person.gentille || !profileData.physical_person.nom || !profileData.physical_person.prenom) {
+          setErrorMessage('Veuillez remplir tous les champs obligatoires.');
+          setIsSaving(false);
+          return;
+        }
+        
+        // Marquer comme configuré
+        profileData.physical_person.is_configured = true;
+      } else if (profileData.selected_entity_type === 'legal_entity') {
+        if (!profileData.legal_entity.nom || !profileData.legal_entity.forme_juridique) {
+          setErrorMessage('Veuillez remplir tous les champs obligatoires.');
+          setIsSaving(false);
+          return;
+        }
+        
+        // Marquer comme configuré
+        profileData.legal_entity.is_configured = true;
+      } else {
+        setErrorMessage('Veuillez sélectionner un type de cessionnaire.');
+        setIsSaving(false);
+        return;
+      }
       
+      await updateUserProfile(profileData);
+      setSuccessMessage('Vos informations ont été enregistrées avec succès.');
+      
+      // Masquer le message de succès après 3 secondes
       setTimeout(() => {
         setSuccessMessage('');
       }, 3000);
     } catch (error) {
-      setErrorMessage('Une erreur est survenue lors de l\'enregistrement de votre profil. Veuillez réessayer.');
+      setErrorMessage('Une erreur est survenue lors de l\'enregistrement. Veuillez réessayer.');
     } finally {
       setIsSaving(false);
     }
@@ -159,12 +151,21 @@ const DashboardPage = () => {
           <div className="flex px-6">
             <button
               onClick={() => setActiveTab('company')}
-              className={`py-5 text-sm font-medium border-b-2 flex items-center ${activeTab === 'company' 
+              className={`py-5 text-sm font-medium border-b-2 flex items-center mr-6 ${activeTab === 'company' 
                 ? 'border-blue-500 text-blue-600' 
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
             >
               <Building2 className="w-4 h-4 mr-2" />
               Mon entreprise
+            </button>
+            <button
+              onClick={() => setActiveTab('clients')}
+              className={`py-5 text-sm font-medium border-b-2 flex items-center ${activeTab === 'clients' 
+                ? 'border-blue-500 text-blue-600' 
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+            >
+              <Users className="w-4 h-4 mr-2" />
+              Mes clients
             </button>
           </div>
         </div>
@@ -193,76 +194,98 @@ const DashboardPage = () => {
 
               {/* Entity Type Selection - Style moderne avec cartes */}
               <div className="mb-8">
-                <h3 className="text-md font-semibold text-gray-700 mb-4">Type de cessionnaire</h3>
+                <h3 className="text-base font-medium text-gray-700 mb-3">Type de cessionnaire</h3>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <button
-                    type="button"
-                    onClick={() => handleEntityTypeSelect('physical_person')}
-                    className={`relative flex items-center p-5 border rounded-xl transition-all duration-200 ${
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Option: Personne physique */}
+                  <label 
+                    className={`border rounded-xl p-4 flex cursor-pointer transition-all duration-200 ${
                       profileData.selected_entity_type === 'physical_person' 
-                        ? 'border-blue-500 bg-blue-50 shadow-md' 
-                        : 'border-gray-200 bg-white hover:border-blue-200 hover:bg-blue-50/30'
+                        ? 'bg-blue-50 border-blue-200 shadow-sm' 
+                        : 'bg-white hover:bg-gray-50 border-gray-200'
                     }`}
                   >
-                    <div className={`flex-shrink-0 mr-4 p-3 rounded-full ${
-                      profileData.selected_entity_type === 'physical_person' 
-                        ? 'bg-blue-100 text-blue-600' 
-                        : 'bg-gray-100 text-gray-500'
-                    }`}>
-                      <User className="w-6 h-6" />
+                    <input
+                      type="radio"
+                      name="entity-type"
+                      className="sr-only"
+                      checked={profileData.selected_entity_type === 'physical_person'}
+                      onChange={() => handleEntityTypeSelect('physical_person')}
+                    />
+                    
+                    <div className="flex items-center w-full">
+                      <div className="flex-shrink-0 mr-4">
+                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                          profileData.selected_entity_type === 'physical_person'
+                            ? 'bg-blue-100 text-blue-600'
+                            : 'bg-gray-100 text-gray-500'
+                        }`}>
+                          <User size={24} />
+                        </div>
+                      </div>
+                      
+                      <div className="flex-1">
+                        <h4 className="text-base font-medium text-gray-900">Personne physique</h4>
+                        <p className="text-sm text-gray-500">
+                          Utilisez cette option si vous agissez en tant qu'individu
+                        </p>
+                        
+                        {profileData.physical_person.is_configured && (
+                          <div className="mt-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <Check size={12} className="mr-1" />
+                            Configuré
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div className="text-left">
-                      <span className={`block font-medium text-lg ${profileData.selected_entity_type === 'physical_person' ? 'text-blue-700' : 'text-gray-700'}`}>
-                        Personne physique
-                      </span>
-                      <span className="block text-sm text-gray-500 mt-1">
-                        Vous agissez en tant qu'individu
-                      </span>
-                    </div>
-                    {profileData.physical_person.is_configured && (
-                      <span className="absolute top-3 right-3 px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full flex items-center">
-                        <Check className="w-3 h-3 mr-1" />
-                        Configuré
-                      </span>
-                    )}
-                  </button>
+                  </label>
                   
-                  <button
-                    type="button"
-                    onClick={() => handleEntityTypeSelect('legal_entity')}
-                    className={`relative flex items-center p-5 border rounded-xl transition-all duration-200 ${
+                  {/* Option: Personne morale */}
+                  <label 
+                    className={`border rounded-xl p-4 flex cursor-pointer transition-all duration-200 ${
                       profileData.selected_entity_type === 'legal_entity' 
-                        ? 'border-blue-500 bg-blue-50 shadow-md' 
-                        : 'border-gray-200 bg-white hover:border-blue-200 hover:bg-blue-50/30'
+                        ? 'bg-blue-50 border-blue-200 shadow-sm' 
+                        : 'bg-white hover:bg-gray-50 border-gray-200'
                     }`}
                   >
-                    <div className={`flex-shrink-0 mr-4 p-3 rounded-full ${
-                      profileData.selected_entity_type === 'legal_entity' 
-                        ? 'bg-blue-100 text-blue-600' 
-                        : 'bg-gray-100 text-gray-500'
-                    }`}>
-                      <Building2 className="w-6 h-6" />
+                    <input
+                      type="radio"
+                      name="entity-type"
+                      className="sr-only"
+                      checked={profileData.selected_entity_type === 'legal_entity'}
+                      onChange={() => handleEntityTypeSelect('legal_entity')}
+                    />
+                    
+                    <div className="flex items-center w-full">
+                      <div className="flex-shrink-0 mr-4">
+                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                          profileData.selected_entity_type === 'legal_entity'
+                            ? 'bg-blue-100 text-blue-600'
+                            : 'bg-gray-100 text-gray-500'
+                        }`}>
+                          <Building2 size={24} />
+                        </div>
+                      </div>
+                      
+                      <div className="flex-1">
+                        <h4 className="text-base font-medium text-gray-900">Personne morale</h4>
+                        <p className="text-sm text-gray-500">
+                          Utilisez cette option si vous agissez au nom d'une société
+                        </p>
+                        
+                        {profileData.legal_entity.is_configured && (
+                          <div className="mt-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <Check size={12} className="mr-1" />
+                            Configuré
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div className="text-left">
-                      <span className={`block font-medium text-lg ${profileData.selected_entity_type === 'legal_entity' ? 'text-blue-700' : 'text-gray-700'}`}>
-                        Personne morale
-                      </span>
-                      <span className="block text-sm text-gray-500 mt-1">
-                        Vous représentez une entreprise ou organisation
-                      </span>
-                    </div>
-                    {profileData.legal_entity.is_configured && (
-                      <span className="absolute top-3 right-3 px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full flex items-center">
-                        <Check className="w-3 h-3 mr-1" />
-                        Configuré
-                      </span>
-                    )}
-                  </button>
+                  </label>
                 </div>
               </div>
-
-              {/* Formulaire amélioré pour personne physique */}
+              
+              {/* Formulaire pour la personne physique */}
               {profileData.selected_entity_type === 'physical_person' && (
                 <div className="mt-8 p-6 bg-white rounded-xl border border-gray-200 shadow-sm">
                   <div className="flex items-center mb-5">
@@ -281,7 +304,7 @@ const DashboardPage = () => {
                         id="civility"
                         value={profileData.physical_person.gentille || ""}
                         onChange={(e) => handleInputChange('physical_person', 'gentille', e.target.value)}
-                        className="block w-full px-4 py-2.5 text-gray-700 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-colors"
+                        className="block w-full px-4 py-2.5 text-gray-700 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white"
                       >
                         <option value="">Sélectionnez une civilité</option>
                         {CIVILITY_OPTIONS.map((civility) => (
@@ -316,38 +339,36 @@ const DashboardPage = () => {
                       </div>
                     </div>
                     
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                      <div>
-                        <label htmlFor="birthdate" className="block text-sm font-medium text-gray-700 mb-1">Date de naissance <span className="text-red-500">*</span></label>
-                        <input
-                          type="date"
-                          id="birthdate"
-                          value={profileData.physical_person.date_naissance || ""}
-                          onChange={(e) => handleInputChange('physical_person', 'date_naissance', e.target.value)}
-                          className="block w-full px-4 py-2.5 text-gray-700 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                        />
-                      </div>
-                      
-                      <div>
-                        <label htmlFor="nationality" className="block text-sm font-medium text-gray-700 mb-1">Nationalité</label>
-                        <input
-                          type="text"
-                          id="nationality"
-                          value={profileData.physical_person.nationalite || ""}
-                          onChange={(e) => handleInputChange('physical_person', 'nationalite', e.target.value)}
-                          className="block w-full px-4 py-2.5 text-gray-700 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                          placeholder="Ex: Française"
-                        />
-                      </div>
+                    <div>
+                      <label htmlFor="birthdate" className="block text-sm font-medium text-gray-700 mb-1">Date de naissance</label>
+                      <input
+                        type="date"
+                        id="birthdate"
+                        value={profileData.physical_person.date_naissance || ""}
+                        onChange={(e) => handleInputChange('physical_person', 'date_naissance', e.target.value)}
+                        className="block w-full px-4 py-2.5 text-gray-700 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      />
                     </div>
                     
                     <div>
-                      <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">Adresse complète <span className="text-red-500">*</span></label>
+                      <label htmlFor="nationality" className="block text-sm font-medium text-gray-700 mb-1">Nationalité</label>
+                      <input
+                        type="text"
+                        id="nationality"
+                        value={profileData.physical_person.nationalite || ""}
+                        onChange={(e) => handleInputChange('physical_person', 'nationalite', e.target.value)}
+                        className="block w-full px-4 py-2.5 text-gray-700 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        placeholder="Ex: Française"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">Adresse complète</label>
                       <textarea
                         id="address"
                         value={profileData.physical_person.adresse || ""}
                         onChange={(e) => handleInputChange('physical_person', 'adresse', e.target.value)}
-                        className="block w-full px-4 py-2.5 text-gray-700 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        className="block w-full px-4 py-3 text-gray-700 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                         rows="3"
                         placeholder="Numéro, rue, code postal, ville, pays"
                       ></textarea>
@@ -355,8 +376,8 @@ const DashboardPage = () => {
                   </div>
                 </div>
               )}
-
-              {/* Formulaire amélioré pour personne morale */}
+              
+              {/* Formulaire pour la personne morale */}
               {profileData.selected_entity_type === 'legal_entity' && (
                 <div className="mt-8 p-6 bg-white rounded-xl border border-gray-200 shadow-sm">
                   <div className="flex items-center mb-5">
@@ -425,7 +446,7 @@ const DashboardPage = () => {
                         id="company-address"
                         value={profileData.legal_entity.siege || ""}
                         onChange={(e) => handleInputChange('legal_entity', 'siege', e.target.value)}
-                        className="block w-full px-4 py-2.5 text-gray-700 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        className="block w-full px-4 py-3 text-gray-700 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                         rows="3"
                         placeholder="Adresse complète du siège social"
                       ></textarea>
@@ -460,7 +481,6 @@ const DashboardPage = () => {
                 </div>
               )}
 
-              {/* Bouton de sauvegarde */}
               <div className="mt-10 flex justify-end">
                 <button
                   type="button"
@@ -486,6 +506,12 @@ const DashboardPage = () => {
                 </button>
               </div>
             </div>
+          </div>
+        )}
+
+        {activeTab === 'clients' && (
+          <div className="p-8">
+            <ClientsTab />
           </div>
         )}
       </div>

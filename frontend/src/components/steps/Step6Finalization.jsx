@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Download, Check, Edit } from 'lucide-react';
-import { generatePdf, saveContract } from '../../services/api';
+import { Download, Check, Edit, CheckCircle, AlertCircle } from 'lucide-react';
+import { generatePdf, saveContract, saveClient } from '../../services/api';
 
-const Step6Finalization = ({ contractData }) => {
+const Step6Finalization = ({ contractData, updateContractData }) => {
   const [filename, setFilename] = useState('');
   const [title, setTitle] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -11,6 +11,8 @@ const Step6Finalization = ({ contractData }) => {
   const [generationSuccess, setGenerationSuccess] = useState(false);
   const [error, setError] = useState('');
   const [savedContractId, setSavedContractId] = useState(null);
+  const [clientSaved, setClientSaved] = useState(false);
+  const [clientError, setClientError] = useState('');
   
   const navigate = useNavigate();
   
@@ -29,6 +31,12 @@ const Step6Finalization = ({ contractData }) => {
     
     try {
       await generatePdf(contractData, filename || 'contrat');
+      
+      // Si le client doit être sauvegardé (checkbox dans Step3)
+      if (contractData.auteur_info.saveToClients && !contractData.auteur_info.id) {
+        await saveAuthorAsClient();
+      }
+      
       setGenerationSuccess(true);
     } catch (error) {
       console.error('Error generating PDF:', error);
@@ -43,19 +51,49 @@ const Step6Finalization = ({ contractData }) => {
     setError('');
     
     try {
-      // Sauvegarder le contrat avant d'accéder à l'éditeur si ce n'est pas déjà fait
-      if (!savedContractId) {
-        const result = await saveContract(contractData, title || 'Contrat sans titre');
-        setSavedContractId(result.id);
-        navigate(`/editor/${result.id}`);
-      } else {
-        navigate(`/editor/${savedContractId}`);
+      // Si le client doit être sauvegardé (checkbox dans Step3)
+      if (contractData.auteur_info.saveToClients && !contractData.auteur_info.id) {
+        await saveAuthorAsClient();
+      }
+      
+      // Préparer un titre pour le contrat
+      const title = title || `Contrat ${Date.now()}`;
+      
+      // Sauvegarder le contrat en brouillon
+      const savedContract = await saveContract(contractData, title);
+      
+      // Rediriger vers l'éditeur avec l'ID du contrat
+      if (savedContract && savedContract.id) {
+        navigate(`/editor/${savedContract.id}`);
       }
     } catch (error) {
-      console.error('Error saving contract:', error);
-      setError('Une erreur est survenue lors de la sauvegarde du contrat. Veuillez réessayer.');
+      console.error('Error preparing editor:', error);
+      setError('Une erreur est survenue lors de la préparation de l\'éditeur. Veuillez réessayer.');
     } finally {
       setIsSaving(false);
+    }
+  };
+  
+  const saveAuthorAsClient = async () => {
+    try {
+      setClientError('');
+      
+      const clientData = {
+        ...contractData.auteur_info,
+        type: contractData.auteur_type === "Personne physique" ? "physical_person" : "legal_entity"
+      };
+      
+      // Supprimer la propriété saveToClients avant d'envoyer
+      delete clientData.saveToClients;
+      
+      await saveClient(clientData);
+      setClientSaved(true);
+      
+      // Masquer le message après 5 secondes
+      setTimeout(() => setClientSaved(false), 5000);
+    } catch (error) {
+      console.error('Error saving client:', error);
+      setClientError('Impossible de sauvegarder ce contact dans vos clients.');
     }
   };
   
@@ -96,103 +134,106 @@ const Step6Finalization = ({ contractData }) => {
     isRemunerationComplete();
   
   return (
-    <div>
-      <h2 className="text-xl font-bold text-gray-800 mb-4">Finalisation du contrat</h2>
+    <div className="space-y-6">
+      <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-6">Finalisation du contrat</h2>
       
-      <div className="mb-6">
-        <h3 className="text-lg font-medium text-gray-700 mb-3">Vérification des informations</h3>
-        
-        <div className="space-y-4">
-          <div className="flex items-start">
-            <div className={`flex-shrink-0 h-5 w-5 ${contractData.type_contrat.length > 0 ? 'text-green-500' : 'text-red-500'}`}>
-              {contractData.type_contrat.length > 0 ? <Check size={20} /> : '✗'}
-            </div>
-            <div className="ml-3">
-              <span className="text-gray-700">Type de contrat</span>
-            </div>
-          </div>
-          
-          <div className="flex items-start">
-            <div className={`flex-shrink-0 h-5 w-5 ${isAuthorInfoComplete() ? 'text-green-500' : 'text-red-500'}`}>
-              {isAuthorInfoComplete() ? <Check size={20} /> : '✗'}
-            </div>
-            <div className="ml-3">
-              <span className="text-gray-700">Informations sur l'auteur/modèle</span>
-            </div>
-          </div>
-          
-          <div className="flex items-start">
-            <div className={`flex-shrink-0 h-5 w-5 ${isWorkDescriptionComplete() ? 'text-green-500' : 'text-red-500'}`}>
-              {isWorkDescriptionComplete() ? <Check size={20} /> : '✗'}
-            </div>
-            <div className="ml-3">
-              <span className="text-gray-700">Description de l'œuvre/image</span>
-            </div>
-          </div>
-          
-          {contractData.type_cession === "Onéreuse" && (
-            <div className="flex items-start">
-              <div className={`flex-shrink-0 h-5 w-5 ${contractData.remuneration ? 'text-green-500' : 'text-red-500'}`}>
-                {contractData.remuneration ? <Check size={20} /> : '✗'}
-              </div>
-              <div className="ml-3">
-                <span className="text-gray-700">Rémunération</span>
-              </div>
-            </div>
+      {clientSaved && (
+        <div className="mb-4 p-3 bg-green-50 border-l-4 border-green-400 rounded-md flex items-start">
+          <CheckCircle className="w-5 h-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+          <p className="text-green-700">Le contact a été ajouté à vos clients avec succès.</p>
+        </div>
+      )}
+      
+      {clientError && (
+        <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-400 rounded-md flex items-start">
+          <AlertCircle className="w-5 h-5 text-red-500 mr-2 flex-shrink-0 mt-0.5" />
+          <p className="text-red-700">{clientError}</p>
+        </div>
+      )}
+      
+      <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 space-y-1">
+        <p className="font-medium text-blue-800">Résumé du contrat</p>
+        <p className="text-sm text-blue-600">
+          <span className="font-medium">Type de contrat :</span> {contractData.type_contrat.join(", ")}
+        </p>
+        <p className="text-sm text-blue-600">
+          <span className="font-medium">Mode de cession :</span> {contractData.type_cession}
+          {contractData.exclusivite && " (exclusive)"}
+        </p>
+        <p className="text-sm text-blue-600">
+          <span className="font-medium">Auteur/Modèle :</span> {contractData.auteur_type}
+          {contractData.auteur_type === "Personne physique" && contractData.auteur_info.prenom && (
+            <span> - {contractData.auteur_info.gentille} {contractData.auteur_info.prenom} {contractData.auteur_info.nom}</span>
           )}
+          {contractData.auteur_type === "Personne morale" && contractData.auteur_info.nom && (
+            <span> - {contractData.auteur_info.nom}</span>
+          )}
+        </p>
+      </div>
+      
+      <div className="p-4 border border-gray-200 rounded-lg">
+        <label htmlFor="contract-title" className="block text-sm font-medium text-gray-700 mb-2">
+          Titre du contrat (optionnel)
+        </label>
+        <input
+          type="text"
+          id="contract-title"
+          className="w-full border border-gray-300 rounded-md shadow-sm p-2.5 focus:ring-blue-500 focus:border-blue-500"
+          placeholder="Ex: Contrat de cession de droits - Projet XYZ"
+          value={title}
+          onChange={handleTitleChange}
+        />
+        <p className="mt-1 text-xs text-gray-500">
+          Ce titre sera utilisé pour identifier votre contrat dans votre liste de contrats.
+        </p>
+      </div>
+      
+      <div className="p-4 border border-gray-200 rounded-lg">
+        <h3 className="text-base font-medium text-gray-700 mb-2">Validation finale</h3>
+        
+        <div className="space-y-2 text-sm text-gray-600 mb-4">
+          <div className="flex items-start">
+            <div className={`w-5 h-5 rounded-full flex-shrink-0 mt-0.5 flex items-center justify-center ${
+              contractData.type_contrat.length > 0 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+            }`}>
+              {contractData.type_contrat.length > 0 ? '✓' : '✗'}
+            </div>
+            <span className="ml-2">Type de contrat sélectionné</span>
+          </div>
+          
+          <div className="flex items-start">
+            <div className={`w-5 h-5 rounded-full flex-shrink-0 mt-0.5 flex items-center justify-center ${
+              isAuthorInfoComplete() ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+            }`}>
+              {isAuthorInfoComplete() ? '✓' : '✗'}
+            </div>
+            <span className="ml-2">Informations de l'auteur/modèle complètes</span>
+          </div>
+          
+          <div className="flex items-start">
+            <div className={`w-5 h-5 rounded-full flex-shrink-0 mt-0.5 flex items-center justify-center ${
+              isWorkDescriptionComplete() ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+            }`}>
+              {isWorkDescriptionComplete() ? '✓' : '✗'}
+            </div>
+            <span className="ml-2">Description de l'œuvre/image complète</span>
+          </div>
+          
+          <div className="flex items-start">
+            <div className={`w-5 h-5 rounded-full flex-shrink-0 mt-0.5 flex items-center justify-center ${
+              isRemunerationComplete() ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+            }`}>
+              {isRemunerationComplete() ? '✓' : '✗'}
+            </div>
+            <span className="ml-2">Rémunération correctement configurée</span>
+          </div>
         </div>
         
         {!isFormComplete && (
-          <div className="mt-4 bg-yellow-50 border-l-4 border-yellow-400 p-4">
-            <div className="flex">
-              <div className="ml-3">
-                <p className="text-sm text-yellow-700">
-                  Veuillez compléter toutes les informations requises avant de générer le contrat.
-                </p>
-              </div>
-            </div>
+          <div className="p-3 bg-amber-50 border-l-4 border-amber-400 text-amber-700 text-sm">
+            Veuillez compléter toutes les informations obligatoires avant de générer votre contrat.
           </div>
         )}
-      </div>
-      
-      <div className="mb-6">
-        <h3 className="text-lg font-medium text-gray-700 mb-3">Options de finalisation</h3>
-        
-        <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm space-y-6">
-          <div>
-            <label htmlFor="filename" className="block text-sm font-medium text-gray-700 mb-1">
-              Nom du fichier PDF (optionnel)
-            </label>
-            <input 
-              type="text" 
-              id="filename" 
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              placeholder="Ex: Contrat_Cession_Droits_2023"
-              value={filename}
-              onChange={handleFilenameChange}
-            />
-            <p className="mt-1 text-sm text-gray-500">
-              Si non spécifié, le fichier sera nommé "contrat.pdf"
-            </p>
-          </div>
-          
-          <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-              Titre du contrat (pour l'éditeur)
-            </label>
-            <input 
-              type="text" 
-              id="title" 
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              placeholder="Ex: Contrat de cession de droits d'auteur"
-              value={title}
-              onChange={handleTitleChange}
-            />
-            <p className="mt-1 text-sm text-gray-500">
-              Ce titre sera utilisé pour identifier votre contrat dans la liste des contrats.
-            </p>
-          </div>
-        </div>
       </div>
       
       <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">

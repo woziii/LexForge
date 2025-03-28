@@ -1,7 +1,35 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { AUTHOR_TYPES, CIVILITY_OPTIONS } from '../../utils/constants';
+import { getClients } from '../../services/api';
+import { User, Building2, PlusCircle, CheckCircle, Search } from 'lucide-react';
 
 const Step3AuthorInfo = ({ contractData, updateContractData }) => {
+  const [clientsList, setClientsList] = useState([]);
+  const [isLoadingClients, setIsLoadingClients] = useState(false);
+  const [selectedClient, setSelectedClient] = useState(null);
+  const [showClientSelect, setShowClientSelect] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [saveToClients, setSaveToClients] = useState(false);
+
+  useEffect(() => {
+    // Charger la liste des clients si on affiche le sélecteur
+    if (showClientSelect) {
+      loadClients();
+    }
+  }, [showClientSelect]);
+
+  const loadClients = async () => {
+    try {
+      setIsLoadingClients(true);
+      const clients = await getClients();
+      setClientsList(clients || []);
+    } catch (error) {
+      console.error("Erreur lors du chargement des clients:", error);
+    } finally {
+      setIsLoadingClients(false);
+    }
+  };
+
   const handleAuthorTypeChange = (e) => {
     const value = e.target.value;
     
@@ -10,6 +38,10 @@ const Step3AuthorInfo = ({ contractData, updateContractData }) => {
       auteur_type: value,
       auteur_info: {}
     });
+    
+    // Réinitialiser les états du composant
+    setSelectedClient(null);
+    setSaveToClients(false);
   };
   
   const handleAuthorInfoChange = (e) => {
@@ -18,16 +50,158 @@ const Step3AuthorInfo = ({ contractData, updateContractData }) => {
     updateContractData({
       auteur_info: {
         ...contractData.auteur_info,
-        [name]: value
+        [name]: value,
+        // Ajouter le flag pour sauvegarder en tant que client si activé
+        saveToClients: saveToClients
       }
     });
   };
+
+  const handleClientSelect = (client) => {
+    setSelectedClient(client);
+    setShowClientSelect(false);
+    
+    // Adapter le type d'auteur en fonction du type de client
+    const auteurType = client.type === 'physical_person' ? 'Personne physique' : 'Personne morale';
+    
+    // Transférer les données du client vers le formulaire d'auteur
+    updateContractData({
+      auteur_type: auteurType,
+      auteur_info: {
+        ...client,
+        // Adapter la clé gentille/civilite si nécessaire
+        gentille: client.gentille || client.civilite || '',
+      }
+    });
+  };
+
+  const toggleClientSelect = () => {
+    setShowClientSelect(!showClientSelect);
+  };
+
+  const toggleSaveToClients = () => {
+    const newValue = !saveToClients;
+    setSaveToClients(newValue);
+    
+    // Mettre à jour le flag dans les données du contrat
+    updateContractData({
+      auteur_info: {
+        ...contractData.auteur_info,
+        saveToClients: newValue
+      }
+    });
+  };
+
+  const filteredClients = searchTerm 
+    ? clientsList.filter(client => 
+        (client.type === 'physical_person' && 
+          (`${client.prenom} ${client.nom}`.toLowerCase().includes(searchTerm.toLowerCase()))) ||
+        (client.type === 'legal_entity' && 
+          client.nom.toLowerCase().includes(searchTerm.toLowerCase()))
+      )
+    : clientsList;
   
   const isPhysicalPerson = contractData.auteur_type === "Personne physique";
   
   return (
     <div className="space-y-5">
       <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-2">Informations sur l'auteur/modèle</h2>
+      
+      {/* Action pour sélectionner un client existant */}
+      <div className="mb-6">
+        <button
+          type="button"
+          onClick={toggleClientSelect}
+          className="flex items-center px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 hover:bg-blue-100 transition-colors"
+        >
+          <User className="w-4 h-4 mr-2" />
+          <span>Sélectionner un client existant</span>
+        </button>
+        
+        {/* Afficher le client sélectionné */}
+        {selectedClient && (
+          <div className="mt-2 flex items-center p-3 bg-green-50 border border-green-200 rounded-lg">
+            <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
+            <span className="text-green-700 font-medium">
+              {selectedClient.type === 'physical_person' 
+                ? `${selectedClient.gentille} ${selectedClient.prenom} ${selectedClient.nom}` 
+                : selectedClient.nom}
+            </span>
+          </div>
+        )}
+        
+        {/* Modal de sélection de client */}
+        {showClientSelect && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg max-w-3xl w-full p-6 shadow-xl max-h-[90vh] overflow-auto">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Sélectionner un client</h3>
+              
+              {/* Barre de recherche */}
+              <div className="relative mb-4">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Rechercher un client..."
+                  className="pl-10 w-full py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              
+              {isLoadingClients ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                </div>
+              ) : filteredClients.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  {searchTerm ? "Aucun client ne correspond à votre recherche." : "Aucun client n'a été ajouté pour le moment."}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                  {filteredClients.map((client) => (
+                    <div 
+                      key={client.id} 
+                      className="border rounded-lg p-3 hover:bg-gray-50 cursor-pointer"
+                      onClick={() => handleClientSelect(client)}
+                    >
+                      <div className="flex items-center">
+                        {client.type === 'physical_person' ? (
+                          <User className="h-5 w-5 text-blue-500 mr-2" />
+                        ) : (
+                          <Building2 className="h-5 w-5 text-indigo-500 mr-2" />
+                        )}
+                        <div>
+                          {client.type === 'physical_person' ? (
+                            <div className="font-medium">
+                              {client.gentille} {client.prenom} {client.nom}
+                            </div>
+                          ) : (
+                            <>
+                              <div className="font-medium">{client.nom}</div>
+                              <div className="text-xs text-gray-500">{client.forme_juridique}</div>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setShowClientSelect(false)}
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 focus:outline-none"
+                >
+                  Fermer
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
       
       <div className="mb-4">
         <h3 className="text-base sm:text-lg font-medium text-gray-700 mb-2">Type d'auteur/modèle</h3>
@@ -247,6 +421,20 @@ const Step3AuthorInfo = ({ contractData, updateContractData }) => {
             </div>
           </div>
         )}
+        
+        {/* Option pour sauvegarder dans les clients */}
+        <div className="mt-6 flex items-center">
+          <input
+            type="checkbox"
+            id="save-to-clients"
+            checked={saveToClients}
+            onChange={toggleSaveToClients}
+            className="w-4 h-4 text-blue-600 focus:ring-blue-500 rounded"
+          />
+          <label htmlFor="save-to-clients" className="ml-2 text-sm text-gray-700">
+            Ajouter ce contact à mes clients pour de prochains contrats
+          </label>
+        </div>
       </div>
     </div>
   );

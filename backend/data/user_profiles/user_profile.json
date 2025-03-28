@@ -1,4 +1,22 @@
 {
+  "clients": [
+    {
+      "adresse": "104 Avenue de Versailles 75016, Paris",
+      "capital": "",
+      "date_naissance": "1999-03-03",
+      "forme_juridique": "",
+      "gentille": "Mme",
+      "id": "1743158797522",
+      "nationalite": "Fran\u00e7aise",
+      "nom": "Astruc",
+      "prenom": "Florine",
+      "qualite_representant": "",
+      "rcs": "",
+      "representant": "",
+      "siege": "",
+      "type": "physical_person"
+    }
+  ],
   "legal_entity": {
     "capital": "zadzad",
     "forme_juridique": "dazda",
@@ -10,13 +28,13 @@
     "siege": "azdazada"
   },
   "physical_person": {
-    "adresse": "dazazda",
-    "date_naissance": "2025-03-20",
-    "gentille": "Mme",
+    "adresse": "104 Avenue de Versailles 75016 Paris",
+    "date_naissance": "1999-12-24",
+    "gentille": "M.",
     "is_configured": true,
-    "nationalite": "azdazd",
-    "nom": "zadadazdazd",
-    "prenom": "dazdzadazd"
+    "nationalite": "Fran\u00e7aise",
+    "nom": "MAURICI",
+    "prenom": "Lucas"
   },
-  "selected_entity_type": "legal_entity"
+  "selected_entity_type": "physical_person"
 }
