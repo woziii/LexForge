@@ -128,21 +128,22 @@ const PopupDialog = ({ messages, onClose, title, theme = 'blue', characterName =
   };
   
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-25 backdrop-blur-sm transition-opacity duration-300 ease-in-out">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black bg-opacity-25 backdrop-blur-sm transition-opacity duration-300 ease-in-out">
       <div 
         ref={dialogRef}
         className={`relative w-full max-w-xl bg-white rounded-xl overflow-hidden shadow-xl transform transition-all duration-300 ${
           isFadingOut ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'
         }`}
         style={{
-          boxShadow: `0 10px 25px -5px ${colors.shadow}, 0 8px 10px -6px ${colors.shadow}`
+          boxShadow: `0 10px 25px -5px ${colors.shadow}, 0 8px 10px -6px ${colors.shadow}`,
+          maxHeight: '90vh'
         }}
       >
         {/* En-tête avec titre (si fourni) */}
         {title && (
-          <div className={`px-6 py-4 ${colors.lighter} border-b ${colors.border} flex justify-between items-center`}>
-            <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-              <MessageSquare className={`w-5 h-5 mr-2 ${colors.accent}`} />
+          <div className={`px-4 sm:px-6 py-3 sm:py-4 ${colors.lighter} border-b ${colors.border} flex justify-between items-center`}>
+            <h3 className="text-base sm:text-lg font-semibold text-gray-800 flex items-center">
+              <MessageSquare className={`w-4 h-4 sm:w-5 sm:h-5 mr-2 ${colors.accent}`} />
               {title}
             </h3>
             <button
@@ -156,10 +157,10 @@ const PopupDialog = ({ messages, onClose, title, theme = 'blue', characterName =
         )}
         
         {/* Corps du dialogue - design moderne */}
-        <div className="p-6">
-          <div className="flex items-start gap-5">
+        <div className="p-4 sm:p-6 overflow-y-auto" style={{ maxHeight: title ? 'calc(90vh - 56px)' : '90vh' }}>
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 sm:gap-5">
             {/* Image avec effet de carte */}
-            <div className="relative flex-shrink-0 w-24 bg-gradient-to-b from-gray-50 to-gray-100 rounded-lg p-3 shadow-sm border border-gray-200">
+            <div className="relative flex-shrink-0 w-20 sm:w-24 bg-gradient-to-b from-gray-50 to-gray-100 rounded-lg p-3 shadow-sm border border-gray-200 mb-2 sm:mb-0">
               <img 
                 src={messagePath} 
                 alt={characterName} 
@@ -172,7 +173,7 @@ const PopupDialog = ({ messages, onClose, title, theme = 'blue', characterName =
             </div>
             
             {/* Contenu */}
-            <div className="flex-grow">
+            <div className="flex-grow w-full">
               {/* Bouton fermer (si pas de titre) */}
               {!title && (
                 <div className="flex justify-end mb-2">
@@ -188,10 +189,10 @@ const PopupDialog = ({ messages, onClose, title, theme = 'blue', characterName =
               
               {/* Bulle de texte */}
               <div 
-                className={`${colors.lighter} p-4 rounded-lg ${colors.border} cursor-pointer mb-4 border shadow-sm`}
+                className={`${colors.lighter} p-3 sm:p-4 rounded-lg ${colors.border} cursor-pointer mb-3 sm:mb-4 border shadow-sm`}
                 onClick={handleSpeedUpText}
               >
-                <p className="text-gray-800 leading-relaxed min-h-[4rem]">
+                <p className="text-sm sm:text-base text-gray-800 leading-relaxed min-h-[4rem]">
                   {displayedText}
                   {!isTypingComplete && (
                     <span className="inline-block w-2 h-4 ml-0.5 bg-gray-400 opacity-75 animate-blink"></span>
@@ -206,7 +207,7 @@ const PopupDialog = ({ messages, onClose, title, theme = 'blue', characterName =
                   {messages.map((_, index) => (
                     <div 
                       key={index}
-                      className={`h-1.5 w-8 rounded-full transition-colors duration-300 ${
+                      className={`h-1.5 w-4 sm:w-8 rounded-full transition-colors duration-300 ${
                         index === currentMessageIndex 
                           ? colors.primary
                           : index < currentMessageIndex 
@@ -221,7 +222,7 @@ const PopupDialog = ({ messages, onClose, title, theme = 'blue', characterName =
                 <button
                   onClick={handleNextMessage}
                   disabled={!isTypingComplete}
-                  className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 focus:outline-none ${
+                  className={`flex items-center px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 focus:outline-none ${
                     isTypingComplete 
                       ? `${colors.primary} text-white hover:opacity-90 shadow-sm`
                       : 'bg-gray-200 text-gray-400 cursor-not-allowed'

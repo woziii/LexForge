@@ -1,40 +1,23 @@
 {
-  "clients": [
-    {
-      "adresse": "104 Avenue de Versailles 75016, Paris",
-      "capital": "",
-      "date_naissance": "1999-03-03",
-      "forme_juridique": "",
-      "gentille": "Mme",
-      "id": "1743158797522",
-      "nationalite": "Fran\u00e7aise",
-      "nom": "Astruc",
-      "prenom": "Florine",
-      "qualite_representant": "",
-      "rcs": "",
-      "representant": "",
-      "siege": "",
-      "type": "physical_person"
-    }
-  ],
+  "clients": [],
   "legal_entity": {
-    "capital": "zadzad",
-    "forme_juridique": "dazda",
-    "is_configured": true,
-    "nom": "Tellers",
-    "qualite_representant": "azdazda",
-    "rcs": "dazdazd",
-    "representant": "zdazdazd",
-    "siege": "azdazada"
+    "capital": "",
+    "forme_juridique": "",
+    "is_configured": false,
+    "nom": "",
+    "qualite_representant": "",
+    "rcs": "",
+    "representant": "",
+    "siege": ""
   },
   "physical_person": {
-    "adresse": "104 Avenue de Versailles 75016 Paris",
-    "date_naissance": "1999-12-24",
-    "gentille": "M.",
-    "is_configured": true,
-    "nationalite": "Fran\u00e7aise",
-    "nom": "MAURICI",
-    "prenom": "Lucas"
+    "adresse": "",
+    "date_naissance": "",
+    "gentille": "",
+    "is_configured": false,
+    "nationalite": "",
+    "nom": "",
+    "prenom": ""
   },
-  "selected_entity_type": "legal_entity"
+  "selected_entity_type": ""
 }
