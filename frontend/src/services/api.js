@@ -189,6 +189,124 @@ export const testCors = async () => {
   }
 };
 
+export const getUserProfile = async () => {
+  try {
+    const response = await api.get('/user-profile');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    throw error;
+  }
+};
+
+export const updateUserProfile = async (profileData) => {
+  try {
+    const response = await api.post('/user-profile', profileData);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating user profile:', error);
+    throw error;
+  }
+};
+
+// Fonctions pour la gestion des clients
+export const getClients = async () => {
+  try {
+    // Récupérer les clients depuis le profil utilisateur
+    const profileData = await getUserProfile();
+    return profileData.clients || [];
+  } catch (error) {
+    console.error('Error fetching clients:', error);
+    throw error;
+  }
+};
+
+export const saveClient = async (clientData) => {
+  try {
+    // Récupérer le profil complet
+    const profileData = await getUserProfile();
+    
+    // S'assurer que la propriété clients existe
+    if (!profileData.clients) {
+      profileData.clients = [];
+    }
+    
+    // Générer un ID pour le nouveau client
+    const newClient = {
+      ...clientData,
+      id: Date.now().toString()
+    };
+    
+    // Ajouter le client à la liste
+    profileData.clients.push(newClient);
+    
+    // Mettre à jour le profil complet
+    await updateUserProfile(profileData);
+    
+    return newClient;
+  } catch (error) {
+    console.error('Error saving client:', error);
+    throw error;
+  }
+};
+
+export const updateClient = async (clientId, clientData) => {
+  try {
+    // Récupérer le profil complet
+    const profileData = await getUserProfile();
+    
+    // S'assurer que la propriété clients existe
+    if (!profileData.clients || !profileData.clients.length) {
+      throw new Error('Client not found');
+    }
+    
+    // Trouver l'index du client à mettre à jour
+    const clientIndex = profileData.clients.findIndex(client => client.id === clientId);
+    
+    if (clientIndex === -1) {
+      throw new Error('Client not found');
+    }
+    
+    // Mettre à jour le client
+    profileData.clients[clientIndex] = {
+      ...profileData.clients[clientIndex],
+      ...clientData,
+      id: clientId // Conserver l'ID original
+    };
+    
+    // Mettre à jour le profil complet
+    await updateUserProfile(profileData);
+    
+    return profileData.clients[clientIndex];
+  } catch (error) {
+    console.error('Error updating client:', error);
+    throw error;
+  }
+};
+
+export const deleteClient = async (clientId) => {
+  try {
+    // Récupérer le profil complet
+    const profileData = await getUserProfile();
+    
+    // S'assurer que la propriété clients existe
+    if (!profileData.clients || !profileData.clients.length) {
+      throw new Error('Client not found');
+    }
+    
+    // Filtrer le client à supprimer
+    profileData.clients = profileData.clients.filter(client => client.id !== clientId);
+    
+    // Mettre à jour le profil complet
+    await updateUserProfile(profileData);
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting client:', error);
+    throw error;
+  }
+};
+
 // Corriger l'avertissement ESLint en créant une variable pour l'export par défaut
 const apiService = {
   analyzeProject,
@@ -202,7 +320,13 @@ const apiService = {
   deleteContract,
   exportContract,
   importContract,
-  testCors
+  getUserProfile,
+  updateUserProfile,
+  testCors,
+  getClients,
+  saveClient,
+  updateClient,
+  deleteClient
 };
 
 export default apiService;

@@ -26,6 +26,12 @@ export const AUTHOR_TYPES = [
   "Personne morale"
 ];
 
+// Options pour les types de clients
+export const CLIENT_TYPES = [
+  "Personne physique",
+  "Personne morale"
+];
+
 // Options pour la civilité
 export const CIVILITY_OPTIONS = [
   "M.",

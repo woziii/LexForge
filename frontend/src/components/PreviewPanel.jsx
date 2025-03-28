@@ -50,7 +50,9 @@ const PreviewPanel = ({ contractPreview, isLoading }) => {
         </div>
       </div>
 
-      <div className={`overflow-y-auto bg-gray-50 ${isFullscreen ? 'fixed inset-0 z-50 p-3 sm:p-6' : 'h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px] p-3 sm:p-4 rounded-b-lg'}`}>
+      <div className={`overflow-y-auto bg-gray-50 ${isFullscreen 
+        ? 'fixed inset-0 z-50 p-3 sm:p-6' 
+        : 'h-full min-h-[400px] lg:min-h-[500px] flex-grow p-3 sm:p-4 rounded-b-lg'}`}>
         {isFullscreen && (
           <button 
             className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors"

@@ -10,6 +10,7 @@
 export { default as updateData } from './updateData.json';
 export { default as editorTutorialData } from './editorTutorialData.json';
 export { default as contractsTutorialData } from './contractsTutorialData.json';
+export { default as profileTutorialData } from './profileTutorialData.json';
 
 // Vous pouvez ajouter ici d'autres imports de données
 // export { default as autresDonnees } from './autresDonnees.json'; 

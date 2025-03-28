@@ -9,7 +9,6 @@ import {
   Menu,
   X
 } from 'lucide-react';
-import NotificationBell from './ui/NotificationBell';
 
 const Layout = () => {
   const location = useLocation();
@@ -82,7 +81,6 @@ const Layout = () => {
               <InfoIcon size={18} className="mr-1" strokeWidth={2} />
               <span>À propos</span>
             </Link>
-            <NotificationBell />
           </nav>
         </div>
 
@@ -133,7 +131,7 @@ const Layout = () => {
               <div className="border-t border-gray-100 pt-2 mt-1">
                 <div className="flex items-center justify-between">
                   <div className="py-2.5 px-3">
-                    <NotificationBell />
+                    {/* Espace réservé pour d'autres éléments */}
                   </div>
                 </div>
               </div>
@@ -156,10 +154,11 @@ const Layout = () => {
                 <div className="text-lg sm:text-xl font-black text-white">LexForge</div>
                 <span className="ml-2 text-xs bg-gray-700 text-gray-300 py-0.5 px-2 rounded-md">Beta</span>
               </div>
-              <p className="text-xs sm:text-sm text-gray-400 mt-1">Assistant de création de contrats juridiques</p>
+              <p className="text-xs sm:text-sm text-gray-400 mt-1">Votre collaborateur juridique virtuel pour des contrats qui déchirent</p>
             </div>
-            <div className="text-xs sm:text-sm text-gray-400">
-              © {new Date().getFullYear()} LexForge - Tous droits réservés
+            <div className="flex flex-col items-center text-xs sm:text-sm text-gray-400">
+              <div>© {new Date().getFullYear()} LexForge - Tous droits réservés</div>
+              <Link to="/legal" className="hover:text-blue-300 mt-1">Mentions légales</Link>
             </div>
           </div>
         </div>

@@ -66,7 +66,7 @@ class ContractBuilder:
     @staticmethod
     def build_contract_elements(contract_type, is_free, author_type, author_info, 
                                work_description, image_description, supports, 
-                               additional_rights, remuneration, is_exclusive):
+                               additional_rights, remuneration, is_exclusive, cessionnaire_info=None):
         """
         Construit tous les éléments du contrat.
         
@@ -81,6 +81,7 @@ class ContractBuilder:
             additional_rights (list): Liste des droits supplémentaires sélectionnés
             remuneration (str): Modalités de rémunération
             is_exclusive (bool): True si la cession est exclusive, False sinon
+            cessionnaire_info (dict, optional): Informations sur le cessionnaire
             
         Returns:
             list: Liste des éléments du contrat pour ReportLab
@@ -97,7 +98,7 @@ class ContractBuilder:
         elements.append(Spacer(1, 15))
         
         # 2. Préambule
-        preamble_text = ContractTemplates.get_preamble_text(contract_type, author_type, author_info)
+        preamble_text = ContractTemplates.get_preamble_text(contract_type, author_type, author_info, cessionnaire_info)
         paragraphs = preamble_text.split('\n\n')
         for i, paragraph in enumerate(paragraphs):
             if paragraph.strip():

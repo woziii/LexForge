@@ -29,7 +29,7 @@ class ContractTemplates:
             return "CONTRAT DE CESSION DE DROITS À L'IMAGE"
     
     @staticmethod
-    def get_preamble_text(contract_type, author_type, author_info):
+    def get_preamble_text(contract_type, author_type, author_info, cessionnaire_info=None):
         """
         Retourne le texte du préambule du contrat.
         
@@ -37,6 +37,7 @@ class ContractTemplates:
             contract_type (list): Liste des types de contrats sélectionnés
             author_type (str): Type d'auteur ("Personne physique" ou "Personne morale")
             author_info (dict): Informations sur l'auteur
+            cessionnaire_info (dict, optional): Informations sur le cessionnaire
             
         Returns:
             str: Texte du préambule
@@ -82,11 +83,46 @@ class ContractTemplates:
         else:
             preamble += ", ci-après dénommé(e) \"le Modèle\",\n\n"
         
-        # Informations sur Tellers (bénéficiaire)
-        preamble += f"{TELLERS_INFO['nom']}, {TELLERS_INFO['forme_juridique']} au capital de {TELLERS_INFO['capital']}, "
-        preamble += f"immatriculée sous le numéro {TELLERS_INFO['rcs']}, et dont le siège social est situé au : "
-        preamble += f"{TELLERS_INFO['siege']}, représentée par son Président en exercice dûment habilité à l'effet des présentes, "
-        preamble += "ci-après dénommée \"le Cessionnaire\",\n\n"
+        # Informations sur le cessionnaire (personnalisé si disponible, sinon Tellers par défaut)
+        if cessionnaire_info and isinstance(cessionnaire_info, dict) and cessionnaire_info.get('nom'):
+            # Pour une personne physique
+            if 'prenom' in cessionnaire_info:
+                gentille = cessionnaire_info.get('gentille', '')
+                prenom = cessionnaire_info.get('prenom', '')
+                nom = cessionnaire_info.get('nom', '')
+                adresse = cessionnaire_info.get('adresse', '')
+                
+                preamble += f"{gentille} {prenom} {nom}"
+                if adresse:
+                    preamble += f", domicilié(e) au {adresse}"
+            # Pour une personne morale
+            else:
+                nom = cessionnaire_info.get('nom', '')
+                forme_juridique = cessionnaire_info.get('forme_juridique', '')
+                capital = cessionnaire_info.get('capital', '')
+                rcs = cessionnaire_info.get('rcs', '')
+                siege = cessionnaire_info.get('siege', '')
+                representant = cessionnaire_info.get('representant', '')
+                qualite_representant = cessionnaire_info.get('qualite_representant', '')
+                
+                preamble += f"{nom}"
+                if forme_juridique:
+                    preamble += f", {forme_juridique}"
+                if capital:
+                    preamble += f" au capital de {capital}"
+                if rcs:
+                    preamble += f", immatriculée sous le numéro {rcs}"
+                if siege:
+                    preamble += f", dont le siège social est situé {siege}"
+                if representant and qualite_representant:
+                    preamble += f", représentée par {representant} en sa qualité de {qualite_representant}"
+        else:
+            # Utiliser les informations par défaut de Tellers
+            preamble += f"{TELLERS_INFO['nom']}, {TELLERS_INFO['forme_juridique']} au capital de {TELLERS_INFO['capital']}, "
+            preamble += f"immatriculée sous le numéro {TELLERS_INFO['rcs']}, et dont le siège social est situé au : "
+            preamble += f"{TELLERS_INFO['siege']}, représentée par son Président en exercice dûment habilité à l'effet des présentes"
+            
+        preamble += ", ci-après dénommée \"le Cessionnaire\",\n\n"
         
         # Introduction commune
         preamble += "Ci-après dénommées ensemble \"les Parties\" ou individuellement \"la Partie\",\n\n"
