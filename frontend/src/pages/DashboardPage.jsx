@@ -174,11 +174,11 @@ const DashboardPage = () => {
         {activeTab === 'company' && (
           <div className="p-8">
             <div className="max-w-3xl mx-auto">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Informations du cessionnaire</h2>
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">Informations personnelles</h2>
               
               <div className="mb-8 text-sm text-gray-600">
                 <p className="mb-2">
-                  Ces informations sont essentielles pour générer vos contrats. Elles apparaîtront dans tous vos documents en tant que cessionnaire (bénéficiaire des droits).
+                  Ces informations sont essentielles pour générer vos contrats. Elles apparaîtront dans tous vos documents en tant que vous (bénéficiaire des droits).
                 </p>
                 
                 <div className="flex items-start bg-blue-50 p-4 rounded-xl border border-blue-100 mt-3">
@@ -194,7 +194,7 @@ const DashboardPage = () => {
 
               {/* Entity Type Selection - Style moderne avec cartes */}
               <div className="mb-8">
-                <h3 className="text-base font-medium text-gray-700 mb-3">Type de cessionnaire</h3>
+                <h3 className="text-base font-medium text-gray-700 mb-3">Type de personne</h3>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* Option: Personne physique */}
@@ -213,7 +213,7 @@ const DashboardPage = () => {
                       onChange={() => handleEntityTypeSelect('physical_person')}
                     />
                     
-                    <div className="flex items-center w-full">
+                    <div className="flex items-center w-full relative">
                       <div className="flex-shrink-0 mr-4">
                         <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
                           profileData.selected_entity_type === 'physical_person'
@@ -237,6 +237,12 @@ const DashboardPage = () => {
                           </div>
                         )}
                       </div>
+                      
+                      {profileData.selected_entity_type === 'physical_person' && (
+                        <div className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm border-2 border-white">
+                          Sélectionné
+                        </div>
+                      )}
                     </div>
                   </label>
                   
@@ -256,7 +262,7 @@ const DashboardPage = () => {
                       onChange={() => handleEntityTypeSelect('legal_entity')}
                     />
                     
-                    <div className="flex items-center w-full">
+                    <div className="flex items-center w-full relative">
                       <div className="flex-shrink-0 mr-4">
                         <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
                           profileData.selected_entity_type === 'legal_entity'
@@ -280,6 +286,12 @@ const DashboardPage = () => {
                           </div>
                         )}
                       </div>
+                      
+                      {profileData.selected_entity_type === 'legal_entity' && (
+                        <div className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm border-2 border-white">
+                          Sélectionné
+                        </div>
+                      )}
                     </div>
                   </label>
                 </div>

@@ -8,7 +8,8 @@ import {
   FileSignature, 
   ShieldCheck,
   LayoutDashboard,
-  InfoIcon
+  InfoIcon,
+  Check
 } from 'lucide-react';
 import { getUserProfile } from '../services/api';
 
@@ -56,9 +57,19 @@ const HomePage = () => {
             <p className="text-lg sm:text-xl text-gray-700 mb-3 sm:mb-4 px-1">
               Créez des contrats juridiques professionnels en quelques clics
             </p>
-            <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-              <Sparkles size={12} className="mr-1" />
-              Simple et rapide
+            <div className="flex flex-wrap justify-center gap-2 mb-3">
+              <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                <Sparkles size={12} className="mr-1" />
+                Simple et rapide
+              </div>
+              <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                <Check size={12} className="mr-1" />
+                Entièrement gratuit
+              </div>
+              <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                <ShieldCheck size={12} className="mr-1" />
+                Sans IA générative
+              </div>
             </div>
           </div>
           
