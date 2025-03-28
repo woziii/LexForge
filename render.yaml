@@ -14,3 +14,10 @@ services:
     cors:
       allowOrigins:
         - https://lexforge.vercel.app
+    disks:
+      - name: data-disk
+        mountPath: /opt/render/project/src/backend/data
+        sizeGB: 1
+      - name: tmp-disk
+        mountPath: /opt/render/project/src/backend/tmp
+        sizeGB: 1

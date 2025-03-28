@@ -32,10 +32,13 @@ CORS(app,
      max_age=3600)
 
 # Définir le répertoire temporaire pour les fichiers PDF
-if not os.path.exists('tmp'):
-    os.makedirs('tmp')
+# S'assurer que le chemin correspond à celui défini dans render.yaml
+TMP_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tmp')
+if not os.path.exists(TMP_DIR):
+    os.makedirs(TMP_DIR)
     
 # Définir le répertoire de stockage des contrats
+# S'assurer que le chemin correspond à celui défini dans render.yaml
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 CONTRACTS_DIR = os.path.join(DATA_DIR, 'contracts')
 USER_PROFILES_DIR = os.path.join(DATA_DIR, 'user_profiles')

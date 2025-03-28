@@ -8,16 +8,17 @@ import reportlab
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
 from reportlab.pdfbase import pdfform
 from reportlab.lib.colors import black, white
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT
+from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT, TA_RIGHT
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.styles import getSampleStyleSheet
 import time
 import uuid
+from datetime import datetime
 
 from config import PDF_CONFIG
 from contract_builder import ContractBuilder
@@ -32,16 +33,19 @@ except:
     # Utiliser des polices par défaut si les polices personnalisées ne sont pas disponibles
     pass
 
+# Définir le chemin du répertoire temporaire
+TMP_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tmp')
+
 def create_temp_file(prefix="", suffix=""):
     """
     Crée un fichier temporaire compatible avec Vercel.
     """
     # Créer le répertoire tmp s'il n'existe pas
-    if not os.path.exists('tmp'):
-        os.makedirs('tmp')
+    if not os.path.exists(TMP_DIR):
+        os.makedirs(TMP_DIR)
     
     # Générer un nom de fichier unique
-    filename = f"tmp/{prefix}{uuid.uuid4().hex}{suffix}"
+    filename = os.path.join(TMP_DIR, f"{prefix}{uuid.uuid4().hex}{suffix}")
     return filename
 
 def generate_pdf(contract_type, is_free, author_type, author_info,
