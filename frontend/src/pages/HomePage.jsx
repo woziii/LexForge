@@ -9,12 +9,18 @@ import {
   ShieldCheck,
   LayoutDashboard,
   InfoIcon,
-  Check
+  Check,
+  Star,
+  MessageSquare,
+  X,
+  Send
 } from 'lucide-react';
 import { getUserProfile } from '../services/api';
 
 const HomePage = () => {
   const [isProfileConfigured, setIsProfileConfigured] = useState(null);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [feedbackText, setFeedbackText] = useState('');
   
   useEffect(() => {
     const checkUserProfile = async () => {
@@ -33,6 +39,15 @@ const HomePage = () => {
     
     checkUserProfile();
   }, []);
+
+  const handleFeedbackSubmit = (e) => {
+    e.preventDefault();
+    // Pour l'instant, on affiche juste un message de confirmation
+    alert("Merci pour votre retour !");
+    setFeedbackText('');
+    setShowFeedbackModal(false);
+    // Plus tard, nous implémenterons la partie pour envoyer ce feedback
+  };
   
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-white via-blue-50 to-indigo-50">
@@ -101,33 +116,95 @@ const HomePage = () => {
           </div>
         </div>
         
-        {/* Caractéristiques en badges */}
-        <div className="mt-12 sm:mt-20 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8 w-full max-w-4xl mx-auto px-4">
-          <div className="flex flex-col items-center p-5 sm:p-6 bg-white rounded-xl shadow-sm border border-gray-100 transform transition-all duration-200 hover:shadow-md hover:-translate-y-1">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-blue-100 flex items-center justify-center mb-3 sm:mb-4">
-              <Scale size={24} sm={28} className="text-blue-600" strokeWidth={1.5} />
+        {/* Caractéristiques en badges - Layout amélioré */}
+        <div className="mt-12 sm:mt-20 w-full max-w-6xl mx-auto px-4">
+          {/* Contrats principaux - première rangée */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-6">
+            <div className="flex flex-col items-center p-5 sm:p-6 bg-white rounded-xl shadow-sm border border-gray-100 transform transition-all duration-200 hover:shadow-md hover:-translate-y-1">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-blue-100 flex items-center justify-center mb-3 sm:mb-4">
+                <Scale size={24} sm={28} className="text-blue-600" strokeWidth={1.5} />
+              </div>
+              <span className="font-medium text-base sm:text-lg text-gray-800 mb-1 sm:mb-2">Droits d'auteur</span>
+              <span className="text-sm text-center text-gray-500">Protection de vos créations intellectuelles et artistiques</span>
             </div>
-            <span className="font-medium text-base sm:text-lg text-gray-800 mb-1 sm:mb-2">Droits d'auteur</span>
-            <span className="text-sm text-center text-gray-500">Protection de vos créations intellectuelles et artistiques</span>
+            
+            <div className="flex flex-col items-center p-5 sm:p-6 bg-white rounded-xl shadow-sm border border-gray-100 transform transition-all duration-200 hover:shadow-md hover:-translate-y-1">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-teal-100 flex items-center justify-center mb-3 sm:mb-4">
+                <Camera size={24} sm={28} className="text-teal-600" strokeWidth={1.5} />
+              </div>
+              <span className="font-medium text-base sm:text-lg text-gray-800 mb-1 sm:mb-2">Droits à l'image</span>
+              <span className="text-sm text-center text-gray-500">Encadrement légal de l'utilisation de votre image ou celle de vos modèles</span>
+            </div>
+            
+            <div className="flex flex-col items-center p-5 sm:p-6 bg-white rounded-xl shadow-sm border border-gray-100 transform transition-all duration-200 hover:shadow-md hover:-translate-y-1">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-purple-100 flex items-center justify-center mb-3 sm:mb-4">
+                <ShieldCheck size={24} sm={28} className="text-purple-600" strokeWidth={1.5} />
+              </div>
+              <span className="font-medium text-base sm:text-lg text-gray-800 mb-1 sm:mb-2">Contrats combinés</span>
+              <span className="text-sm text-center text-gray-500">Protection complète en combinant les droits d'auteur et les droits à l'image</span>
+            </div>
           </div>
           
-          <div className="flex flex-col items-center p-5 sm:p-6 bg-white rounded-xl shadow-sm border border-gray-100 transform transition-all duration-200 hover:shadow-md hover:-translate-y-1">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-teal-100 flex items-center justify-center mb-3 sm:mb-4">
-              <Camera size={24} sm={28} className="text-teal-600" strokeWidth={1.5} />
+          {/* Éléments additionnels - deuxième rangée */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 sm:w-4/5 mx-auto">
+            {/* Badge de Teasing pour nouveaux contrats */}
+            <div className="flex flex-col items-center p-5 sm:p-6 bg-gradient-to-br from-amber-50 to-yellow-100 rounded-xl shadow-sm border border-amber-200 transform transition-all duration-200 hover:shadow-md hover:-translate-y-1 relative overflow-hidden">
+              <div className="absolute top-0 right-0 bg-amber-400 text-xs text-white px-2 py-0.5 rounded-bl-md font-medium">
+                Bientôt
+              </div>
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-amber-100 flex items-center justify-center mb-3 sm:mb-4">
+                <Star size={24} sm={28} className="text-amber-500" strokeWidth={1.5} />
+              </div>
+              <span className="font-medium text-base sm:text-lg text-gray-800 mb-1 sm:mb-2">Nouveaux contrats à venir</span>
+              <span className="text-sm text-center text-gray-600">NDA, Cession de PI, Maintenance logiciel, SaaS, et bien plus !</span>
             </div>
-            <span className="font-medium text-base sm:text-lg text-gray-800 mb-1 sm:mb-2">Droits à l'image</span>
-            <span className="text-sm text-center text-gray-500">Encadrement légal de l'utilisation de votre image ou celle de vos modèles</span>
-          </div>
-          
-          <div className="flex flex-col items-center p-5 sm:p-6 bg-white rounded-xl shadow-sm border border-gray-100 transform transition-all duration-200 hover:shadow-md hover:-translate-y-1 sm:col-span-2 lg:col-span-1 sm:col-start-1 sm:col-end-3 lg:col-start-auto lg:col-end-auto sm:max-w-md sm:mx-auto lg:max-w-none lg:mx-0 w-full">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-purple-100 flex items-center justify-center mb-3 sm:mb-4">
-              <ShieldCheck size={24} sm={28} className="text-purple-600" strokeWidth={1.5} />
+            
+            {/* Badge pour le feedback */}
+            <div onClick={() => setShowFeedbackModal(true)} className="flex flex-col items-center p-5 sm:p-6 bg-gradient-to-br from-indigo-50 to-blue-100 rounded-xl shadow-sm border border-blue-200 transform transition-all duration-200 hover:shadow-md hover:-translate-y-1 cursor-pointer">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-blue-100 flex items-center justify-center mb-3 sm:mb-4">
+                <MessageSquare size={24} sm={28} className="text-blue-600" strokeWidth={1.5} />
+              </div>
+              <span className="font-medium text-base sm:text-lg text-gray-800 mb-1 sm:mb-2">Votre avis compte</span>
+              <span className="text-sm text-center text-gray-600">Cliquez ici pour nous dire ce que vous pensez ou suggérer des améliorations</span>
             </div>
-            <span className="font-medium text-base sm:text-lg text-gray-800 mb-1 sm:mb-2">Contrats combinés</span>
-            <span className="text-sm text-center text-gray-500">Protection complète en combinant les droits d'auteur et les droits à l'image</span>
           </div>
         </div>
       </main>
+      
+      {/* Modal de feedback */}
+      {showFeedbackModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 relative animate-fadeIn">
+            <button 
+              onClick={() => setShowFeedbackModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"
+            >
+              <X size={20} />
+            </button>
+            
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">Votre feedback</h3>
+            <p className="text-gray-600 mb-6">Partagez vos suggestions ou commentaires pour nous aider à améliorer LexForge</p>
+            
+            <form onSubmit={handleFeedbackSubmit}>
+              <textarea
+                value={feedbackText}
+                onChange={(e) => setFeedbackText(e.target.value)}
+                placeholder="Partagez vos idées, suggestions ou besoins..."
+                className="w-full h-32 px-4 py-3 rounded-xl border border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 resize-none mb-4"
+                required
+              />
+              
+              <button 
+                type="submit"
+                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium py-3 px-4 rounded-xl shadow-sm transition"
+              >
+                <Send size={16} />
+                Envoyer mon feedback
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,7 +1,7 @@
 {
   "name": "lexforge",
   "version": "1.0.0",
-  "description": "LexForge - Assistant de création de contrats juridiques",
+  "description": "LexForge - Votre cabinet juridique virtuel pour la création de contrats personnalisés",
   "main": "index.js",
   "scripts": {
     "install-backend": "pip install -r requirements.txt && pip install -r backend/requirements.txt && python backend/nltk_setup.py",

@@ -9,6 +9,7 @@
 // Composants de notification et tutoriels
 export { default as NotificationBell } from './NotificationBell';
 export { default as NotificationPopup } from './NotificationPopup';
+export { default as WelcomePopup } from './WelcomePopup';
 export { default as TutorialLightbulb } from './TutorialLightbulb';
 export { default as TutorialPopup } from './TutorialPopup';
 export { default as MaskOverlay } from './MaskOverlay';

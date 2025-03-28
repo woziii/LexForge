@@ -7,7 +7,7 @@ const AboutPage = () => {
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold text-gray-900 mb-4">À propos de LexForge</h1>
         <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-          LexForge est un assistant intelligent de création de contrats juridiques, conçu pour simplifier la rédaction de documents légaux complexes.
+          LexForge est votre cabinet juridique virtuel pour la création de contrats sur mesure, conçu pour simplifier la rédaction de documents légaux complexes avec une touche d'humour.
         </p>
       </div>
 

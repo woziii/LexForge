@@ -156,7 +156,7 @@ const Layout = () => {
                 <div className="text-lg sm:text-xl font-black text-white">LexForge</div>
                 <span className="ml-2 text-xs bg-gray-700 text-gray-300 py-0.5 px-2 rounded-md">Beta</span>
               </div>
-              <p className="text-xs sm:text-sm text-gray-400 mt-1">Assistant de création de contrats juridiques</p>
+              <p className="text-xs sm:text-sm text-gray-400 mt-1">Votre collaborateur juridique virtuel pour des contrats qui déchirent</p>
             </div>
             <div className="text-xs sm:text-sm text-gray-400">
               © {new Date().getFullYear()} LexForge - Tous droits réservés

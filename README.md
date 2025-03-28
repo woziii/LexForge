@@ -21,11 +21,11 @@ Check out the configuration reference at https://huggingface.co/docs/hub/spaces-
 
 ## 🔥 Créez des contrats juridiques comme un professionnel, sans être juriste
 
-LexForge est une plateforme intuitive et puissante qui révolutionne la création de documents juridiques. Notre assistant intelligent vous guide pas à pas pour générer des contrats sur mesure, parfaitement adaptés à vos besoins spécifiques.
+LexForge est une plateforme intuitive et puissante qui révolutionne la création de documents juridiques. Notre cabinet juridique virtuel vous guide pas à pas pour générer des contrats sur mesure, parfaitement adaptés à vos besoins spécifiques.
 
 ## ✨ Fonctionnalités principales
 
-### Assistant de création intelligent
+### Cabinet juridique virtuel
 
 Notre interface intuitive vous accompagne à chaque étape du processus de création de contrat. Finis les maux de tête liés à la complexité juridique !
 
@@ -65,7 +65,7 @@ Adaptez l'interface à vos préférences avec les thèmes clair/sombre, les opti
 
 ## 🛠️ Informations techniques
 
-LexForge est un assistant intelligent de création de contrats juridiques, conçu pour simplifier la rédaction de documents légaux complexes à travers une expérience utilisateur intuitive et visuellement engageante.
+LexForge est votre cabinet juridique virtuel pour la création de contrats sur mesure, conçu pour simplifier la rédaction de documents légaux complexes avec une touche d'humour et une expérience utilisateur intuitive et visuellement engageante.
 
 ## Structure du projet
 
