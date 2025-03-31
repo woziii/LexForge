@@ -11,13 +11,13 @@
     "siege": ""
   },
   "physical_person": {
-    "adresse": "ezdezd",
-    "date_naissance": "2025-03-29",
+    "adresse": "",
+    "date_naissance": "",
     "gentille": "M.",
-    "is_configured": true,
-    "nationalite": "ezdze",
-    "nom": "ezdze",
-    "prenom": "dzedez"
+    "is_configured": false,
+    "nationalite": "",
+    "nom": "",
+    "prenom": ""
   },
-  "selected_entity_type": "physical_person"
+  "selected_entity_type": ""
 }

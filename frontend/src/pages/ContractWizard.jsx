@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Check, ArrowRight, ArrowLeft, FileText, Sparkles } from 'lucide-react';
 import { useAuth } from '@clerk/clerk-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import PreviewPanel from '../components/PreviewPanel';
 import Step1ProjectDescription from '../components/steps/Step1ProjectDescription';
 import Step2CessionMode from '../components/steps/Step2CessionMode';
@@ -22,12 +23,15 @@ const STEPS = [
 ];
 
 const ContractWizard = () => {
-  const [activeStep, setActiveStep] = useState(1); // Commencer directement à l'étape 1
+  const [activeStep, setActiveStep] = useState(1);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [contractPreview, setContractPreview] = useState('');
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [isCheckingProfile, setIsCheckingProfile] = useState(true);
+  const [businessInfoRequired, setBusinessInfoRequired] = useState(false);
   const { isLoaded: authLoaded, isSignedIn } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   
   const [contractData, setContractData] = useState({
     type_contrat: [],
@@ -51,8 +55,30 @@ const ContractWizard = () => {
       try {
         setIsCheckingProfile(true);
         
-        // Si l'utilisateur est authentifié, vérifier son profil
-        if (authLoaded && isSignedIn) {
+        // Vérifier si l'utilisateur vient du Dashboard après avoir rempli ses informations
+        const fromDashboard = new URLSearchParams(location.search).get('fromDashboard') === 'true';
+        
+        // Pour les utilisateurs non authentifiés
+        if (!authLoaded || !isSignedIn) {
+          // Si l'utilisateur n'est pas authentifié ET ne vient pas du Dashboard,
+          // le rediriger vers le Dashboard avec un paramètre
+          if (!fromDashboard) {
+            setBusinessInfoRequired(true);
+            navigate('/temp-dashboard?redirectTo=wizard', { replace: true });
+            return;
+          }
+          
+          // Si l'utilisateur vient du Dashboard, récupérer les informations temporaires
+          const tempBusinessInfo = sessionStorage.getItem('tempBusinessInfo');
+          if (tempBusinessInfo) {
+            const parsedData = JSON.parse(tempBusinessInfo);
+            setContractData(prevData => ({
+              ...prevData,
+              entreprise_info: parsedData
+            }));
+          }
+        } else {
+          // Si l'utilisateur est authentifié, vérifier son profil
           const profile = await getUserProfile();
           
           const hasPhysicalPerson = profile?.physical_person?.is_configured;
@@ -103,7 +129,7 @@ const ContractWizard = () => {
     };
     
     checkUserProfile();
-  }, [authLoaded, isSignedIn]);
+  }, [authLoaded, isSignedIn, navigate, location.search]);
   
   // Calculer la progression
   const progress = ((activeStep - 1) / (totalSteps - 1)) * 100;
@@ -194,7 +220,7 @@ const ContractWizard = () => {
   };
   
   // Afficher un indicateur de chargement pendant la vérification du profil
-  if (isCheckingProfile) {
+  if (isCheckingProfile || businessInfoRequired) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-white via-blue-50 to-indigo-50">
         <div className="animate-spin h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full"></div>

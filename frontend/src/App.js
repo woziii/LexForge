@@ -7,6 +7,7 @@ import AboutPage from './pages/AboutPage';
 import ContractsPage from './pages/ContractsPage';
 import ContractEditorPage from './pages/ContractEditorPage';
 import DashboardPage from './pages/DashboardPage';
+import TempDashboardPage from './pages/TempDashboardPage';
 import LegalPage from './pages/LegalPage';
 import AuthGuard from './components/AuthGuard';
 import { WelcomePopup, MiniSaul } from './components/ui';
@@ -20,6 +21,7 @@ function App() {
         <Route path="/" element={<Layout />}>
           <Route index element={<HomePage />} />
           <Route path="wizard" element={<ContractWizard />} />
+          <Route path="temp-dashboard" element={<TempDashboardPage />} />
           
           {/* Routes protégées qui nécessitent une authentification */}
           <Route
