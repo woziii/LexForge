@@ -9,10 +9,12 @@ import {
   Menu,
   X
 } from 'lucide-react';
+import { useAuth, UserButton, SignInButton } from '@clerk/clerk-react';
 
 const Layout = () => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { isLoaded, isSignedIn } = useAuth();
   
   // Détermine si un lien est actif
   const isActive = (path) => {
@@ -60,20 +62,27 @@ const Layout = () => {
               <FilePlus2 size={18} className="mr-1" strokeWidth={2} />
               <span>Générateur</span>
             </Link>
-            <Link
-              to="/contracts"
-              className={`flex items-center ${isActive('/contracts') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-            >
-              <FolderKanban size={18} className="mr-1" strokeWidth={2} />
-              <span>Contrats</span>
-            </Link>
-            <Link
-              to="/dashboard"
-              className={`flex items-center ${isActive('/dashboard') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-            >
-              <LayoutDashboard size={18} className="mr-1" strokeWidth={2} />
-              <span>Dashboard</span>
-            </Link>
+            
+            {/* Liens conditionnels pour les utilisateurs authentifiés */}
+            {isLoaded && isSignedIn && (
+              <>
+                <Link
+                  to="/contracts"
+                  className={`flex items-center ${isActive('/contracts') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                  <FolderKanban size={18} className="mr-1" strokeWidth={2} />
+                  <span>Contrats</span>
+                </Link>
+                <Link
+                  to="/dashboard"
+                  className={`flex items-center ${isActive('/dashboard') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                  <LayoutDashboard size={18} className="mr-1" strokeWidth={2} />
+                  <span>Dashboard</span>
+                </Link>
+              </>
+            )}
+            
             <Link
               to="/about"
               className={`flex items-center ${isActive('/about') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
@@ -81,6 +90,21 @@ const Layout = () => {
               <InfoIcon size={18} className="mr-1" strokeWidth={2} />
               <span>À propos</span>
             </Link>
+            
+            {/* Bouton de connexion/avatar utilisateur */}
+            {isLoaded && (
+              <div className="ml-4">
+                {isSignedIn ? (
+                  <UserButton afterSignOutUrl="/" />
+                ) : (
+                  <SignInButton mode="modal">
+                    <button className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium transition-colors">
+                      Connexion
+                    </button>
+                  </SignInButton>
+                )}
+              </div>
+            )}
           </nav>
         </div>
 
@@ -104,22 +128,29 @@ const Layout = () => {
                 <FilePlus2 size={18} className="mr-3" strokeWidth={2} />
                 <span className="font-medium">Générateur</span>
               </Link>
-              <Link
-                to="/contracts"
-                className={`flex items-center py-2.5 px-3 rounded-lg ${isActive('/contracts') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'}`}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <FolderKanban size={18} className="mr-3" strokeWidth={2} />
-                <span className="font-medium">Contrats</span>
-              </Link>
-              <Link
-                to="/dashboard"
-                className={`flex items-center py-2.5 px-3 rounded-lg ${isActive('/dashboard') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'}`}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <LayoutDashboard size={18} className="mr-3" strokeWidth={2} />
-                <span className="font-medium">Dashboard</span>
-              </Link>
+              
+              {/* Liens conditionnels pour les utilisateurs authentifiés (mobile) */}
+              {isLoaded && isSignedIn && (
+                <>
+                  <Link
+                    to="/contracts"
+                    className={`flex items-center py-2.5 px-3 rounded-lg ${isActive('/contracts') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'}`}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <FolderKanban size={18} className="mr-3" strokeWidth={2} />
+                    <span className="font-medium">Contrats</span>
+                  </Link>
+                  <Link
+                    to="/dashboard"
+                    className={`flex items-center py-2.5 px-3 rounded-lg ${isActive('/dashboard') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'}`}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <LayoutDashboard size={18} className="mr-3" strokeWidth={2} />
+                    <span className="font-medium">Dashboard</span>
+                  </Link>
+                </>
+              )}
+              
               <Link
                 to="/about"
                 className={`flex items-center py-2.5 px-3 rounded-lg ${isActive('/about') ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'}`}
@@ -128,11 +159,21 @@ const Layout = () => {
                 <InfoIcon size={18} className="mr-3" strokeWidth={2} />
                 <span className="font-medium">À propos</span>
               </Link>
+              
               <div className="border-t border-gray-100 pt-2 mt-1">
-                <div className="flex items-center justify-between">
-                  <div className="py-2.5 px-3">
-                    {/* Espace réservé pour d'autres éléments */}
-                  </div>
+                <div className="flex items-center justify-between py-2.5 px-3">
+                  {/* Bouton de connexion/avatar utilisateur (mobile) */}
+                  {isLoaded && (
+                    isSignedIn ? (
+                      <UserButton afterSignOutUrl="/" />
+                    ) : (
+                      <SignInButton mode="modal">
+                        <button className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium transition-colors">
+                          Connexion
+                        </button>
+                      </SignInButton>
+                    )
+                  )}
                 </div>
               </div>
             </div>

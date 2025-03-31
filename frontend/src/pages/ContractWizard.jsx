@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Check, ArrowRight, ArrowLeft, FileText, Sparkles } from 'lucide-react';
+import { useAuth } from '@clerk/clerk-react';
 import PreviewPanel from '../components/PreviewPanel';
 import Step1ProjectDescription from '../components/steps/Step1ProjectDescription';
 import Step2CessionMode from '../components/steps/Step2CessionMode';
@@ -21,11 +22,13 @@ const STEPS = [
 ];
 
 const ContractWizard = () => {
-  const [activeStep, setActiveStep] = useState(1);
+  const [activeStep, setActiveStep] = useState(1); // Commencer directement à l'étape 1
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [contractPreview, setContractPreview] = useState('');
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [isCheckingProfile, setIsCheckingProfile] = useState(true);
+  const { isLoaded: authLoaded, isSignedIn } = useAuth();
+  
   const [contractData, setContractData] = useState({
     type_contrat: [],
     type_cession: "Gratuite",
@@ -36,40 +39,74 @@ const ContractWizard = () => {
     description_oeuvre: "",
     description_image: "",
     supports: [],
-    remuneration: ""
+    remuneration: "",
+    entreprise_info: {}
   });
   
   const totalSteps = STEPS.length;
   
-  // Vérifier si le profil est configuré
+  // Vérifier si l'utilisateur est authentifié et a un profil configuré
   useEffect(() => {
     const checkUserProfile = async () => {
       try {
         setIsCheckingProfile(true);
-        const profile = await getUserProfile();
         
-        const hasPhysicalPerson = profile?.physical_person?.is_configured;
-        const hasLegalEntity = profile?.legal_entity?.is_configured;
-        
-        if (!hasPhysicalPerson && !hasLegalEntity) {
-          setShowProfileModal(true);
-        } else if (profile?.selected_entity_type) {
-          // Utiliser les informations de l'entité sélectionnée comme cessionnaire
-          // Cette logique serait implémentée dans le backend
+        // Si l'utilisateur est authentifié, vérifier son profil
+        if (authLoaded && isSignedIn) {
+          const profile = await getUserProfile();
+          
+          const hasPhysicalPerson = profile?.physical_person?.is_configured;
+          const hasLegalEntity = profile?.legal_entity?.is_configured;
+          
+          if (!hasPhysicalPerson && !hasLegalEntity) {
+            setShowProfileModal(true);
+          } else {
+            // Préremplir les informations d'entreprise depuis le profil de l'utilisateur
+            if (hasLegalEntity && profile.legal_entity) {
+              setContractData(prevData => ({
+                ...prevData,
+                entreprise_info: {
+                  nom: profile.legal_entity.nom || '',
+                  forme_juridique: profile.legal_entity.forme_juridique || '',
+                  siren: profile.legal_entity.siren || '',
+                  adresse: profile.legal_entity.adresse || '',
+                  code_postal: profile.legal_entity.code_postal || '',
+                  ville: profile.legal_entity.ville || '',
+                  email: profile.legal_entity.email || '',
+                  telephone: profile.legal_entity.telephone || ''
+                }
+              }));
+            } else if (hasPhysicalPerson && profile.physical_person) {
+              setContractData(prevData => ({
+                ...prevData,
+                entreprise_info: {
+                  nom: `${profile.physical_person.prenom || ''} ${profile.physical_person.nom || ''}`,
+                  forme_juridique: 'Entreprise individuelle',
+                  adresse: profile.physical_person.adresse || '',
+                  code_postal: profile.physical_person.code_postal || '',
+                  ville: profile.physical_person.ville || '',
+                  email: profile.physical_person.email || '',
+                  telephone: profile.physical_person.telephone || ''
+                }
+              }));
+            }
+          }
         }
       } catch (error) {
         console.error('Error checking user profile:', error);
-        setShowProfileModal(true);
+        if (authLoaded && isSignedIn) {
+          setShowProfileModal(true);
+        }
       } finally {
         setIsCheckingProfile(false);
       }
     };
     
     checkUserProfile();
-  }, []);
+  }, [authLoaded, isSignedIn]);
   
   // Calculer la progression
-  const progress = (activeStep / totalSteps) * 100;
+  const progress = ((activeStep - 1) / (totalSteps - 1)) * 100;
   
   // Navigation
   const handleNextStep = () => {
@@ -246,65 +283,37 @@ const ContractWizard = () => {
               {renderStepContent()}
             </div>
             
-            {/* Boutons de navigation */}
-            <div className="flex justify-between pt-4 border-t border-gray-100">
-              <button
-                type="button"
-                onClick={handlePrevStep}
-                disabled={activeStep === 1}
-                className={`flex items-center px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  activeStep === 1 
-                  ? 'text-gray-400 cursor-not-allowed' 
-                  : 'text-gray-700 hover:bg-gray-100 hover:shadow-sm'
-                }`}
-              >
-                <ArrowLeft size={16} className="mr-1" />
-                <span className="hidden xs:inline">Précédent</span>
-              </button>
-              
-              <button
-                type="button"
-                onClick={handleNextStep}
-                disabled={activeStep === totalSteps}
-                className={`flex items-center px-3 sm:px-5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  activeStep === totalSteps
-                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:shadow-md hover:scale-105'
-                }`}
-              >
-                <span className="hidden xs:inline">{activeStep === totalSteps ? 'Terminé' : 'Suivant'}</span>
-                <span className="xs:hidden">{activeStep === totalSteps ? 'Fin' : 'Suivant'}</span>
-                {activeStep !== totalSteps && <ArrowRight size={16} className="ml-1" />}
-              </button>
-            </div>
+            {/* Boutons de navigation - Ne pas afficher pour l'étape 6 */}
+            {activeStep !== 6 && (
+              <div className="flex justify-between pt-4 border-t border-gray-100">
+                <button
+                  onClick={handlePrevStep}
+                  className={`px-4 py-2 border border-gray-300 rounded-md text-gray-700 flex items-center ${
+                    activeStep > 1 ? 'hover:bg-gray-100' : 'opacity-50 cursor-not-allowed'
+                  }`}
+                  disabled={activeStep <= 1}
+                >
+                  <ArrowLeft size={16} className="mr-1" />
+                  <span>Précédent</span>
+                </button>
+                
+                <button
+                  onClick={handleNextStep}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md flex items-center"
+                >
+                  <span>Suivant</span>
+                  <ArrowRight size={16} className="ml-1" />
+                </button>
+              </div>
+            )}
           </div>
           
-          {/* Prévisualisation - Cachée par défaut sur mobile mais accessible via un bouton */}
-          <div className="hidden lg:block bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
+          {/* Prévisualisation */}
+          <div className="lg:block">
             <PreviewPanel 
-              contractPreview={contractPreview} 
-              isLoading={isPreviewLoading} 
+              preview={contractPreview}
+              isLoading={isPreviewLoading}
             />
-          </div>
-          
-          {/* Bouton pour afficher la prévisualisation sur mobile */}
-          <div className="lg:hidden mt-4">
-            <button
-              onClick={() => {
-                document.getElementById('mobilePreview').classList.toggle('hidden');
-              }}
-              className="w-full bg-white py-3 px-4 rounded-xl shadow-sm border border-gray-100 text-center text-blue-600 font-medium flex items-center justify-center"
-            >
-              <FileText className="mr-2" size={18} />
-              Afficher/Masquer l'aperçu
-            </button>
-            
-            <div id="mobilePreview" className="hidden mt-4 bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
-              <PreviewPanel 
-                contractPreview={contractPreview} 
-                isLoading={isPreviewLoading} 
-              />
-            </div>
           </div>
         </div>
       </div>

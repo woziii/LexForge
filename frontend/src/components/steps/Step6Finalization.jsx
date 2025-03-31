@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Download, Check, Edit, CheckCircle, AlertCircle } from 'lucide-react';
+import { Download, Check, Edit, CheckCircle, AlertCircle, Info } from 'lucide-react';
 import { generatePdf, saveContract, saveClient } from '../../services/api';
+import { useAuth, useSignIn } from '@clerk/clerk-react';
 
 const Step6Finalization = ({ contractData, updateContractData }) => {
   const [filename, setFilename] = useState('');
@@ -13,8 +14,38 @@ const Step6Finalization = ({ contractData, updateContractData }) => {
   const [savedContractId, setSavedContractId] = useState(null);
   const [clientSaved, setClientSaved] = useState(false);
   const [clientError, setClientError] = useState('');
+  const [tempContractData, setTempContractData] = useState(null);
+  const [authRedirectAction, setAuthRedirectAction] = useState(null);
   
   const navigate = useNavigate();
+  const { isLoaded: authLoaded, isSignedIn } = useAuth();
+  const { openSignIn } = useSignIn();
+  
+  // Récupérer les données temporaires après authentification
+  useEffect(() => {
+    if (authLoaded && isSignedIn) {
+      const savedData = sessionStorage.getItem('tempContractData');
+      const savedAction = sessionStorage.getItem('authRedirectAction');
+      
+      if (savedData && savedAction) {
+        const parsedData = JSON.parse(savedData);
+        
+        // Mettre à jour les données du contrat
+        updateContractData(parsedData);
+        
+        // Effectuer l'action appropriée après l'authentification
+        if (savedAction === 'downloadPdf') {
+          handleGeneratePdf(false);
+        } else if (savedAction === 'accessEditor') {
+          handleAccessEditor(false);
+        }
+        
+        // Nettoyer le stockage temporaire
+        sessionStorage.removeItem('tempContractData');
+        sessionStorage.removeItem('authRedirectAction');
+      }
+    }
+  }, [authLoaded, isSignedIn]);
   
   const handleFilenameChange = (e) => {
     setFilename(e.target.value);
@@ -24,7 +55,25 @@ const Step6Finalization = ({ contractData, updateContractData }) => {
     setTitle(e.target.value);
   };
   
-  const handleGeneratePdf = async () => {
+  // Fonction pour sauvegarder temporairement les données avant authentification
+  const sauvegarderTemporairement = (data, action) => {
+    sessionStorage.setItem('tempContractData', JSON.stringify(data));
+    sessionStorage.setItem('authRedirectAction', action);
+    setTempContractData(data);
+    setAuthRedirectAction(action);
+  };
+  
+  const handleGeneratePdf = async (checkAuth = true) => {
+    // Si vérification d'authentification requise et utilisateur non authentifié
+    if (checkAuth && authLoaded && !isSignedIn) {
+      // Sauvegarder les données et rediriger vers l'authentification
+      sauvegarderTemporairement(contractData, 'downloadPdf');
+      openSignIn({
+        redirectUrl: window.location.href, // Rediriger vers la même page
+      });
+      return;
+    }
+    
     setIsGenerating(true);
     setError('');
     setGenerationSuccess(false);
@@ -46,7 +95,17 @@ const Step6Finalization = ({ contractData, updateContractData }) => {
     }
   };
   
-  const handleAccessEditor = async () => {
+  const handleAccessEditor = async (checkAuth = true) => {
+    // Si vérification d'authentification requise et utilisateur non authentifié
+    if (checkAuth && authLoaded && !isSignedIn) {
+      // Sauvegarder les données et rediriger vers l'authentification
+      sauvegarderTemporairement(contractData, 'accessEditor');
+      openSignIn({
+        redirectUrl: window.location.href, // Rediriger vers la même page
+      });
+      return;
+    }
+    
     setIsSaving(true);
     setError('');
     
@@ -136,6 +195,16 @@ const Step6Finalization = ({ contractData, updateContractData }) => {
   return (
     <div className="space-y-6">
       <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-6">Finalisation du contrat</h2>
+      
+      {!isSignedIn && (
+        <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-400 rounded-md flex items-start">
+          <Info className="w-5 h-5 text-blue-500 mr-2 flex-shrink-0 mt-0.5" />
+          <p className="text-blue-700">
+            Pour télécharger votre contrat ou accéder à l'éditeur, vous devrez vous connecter ou créer un compte. 
+            Vos données seront sauvegardées pendant le processus d'authentification.
+          </p>
+        </div>
+      )}
       
       {clientSaved && (
         <div className="mb-4 p-3 bg-green-50 border-l-4 border-green-400 rounded-md flex items-start">
@@ -243,65 +312,55 @@ const Step6Finalization = ({ contractData, updateContractData }) => {
               ? 'bg-green-600 hover:bg-green-700' 
               : 'bg-gray-300 text-gray-500 cursor-not-allowed'
           }`}
-          onClick={handleGeneratePdf}
+          onClick={() => handleGeneratePdf()}
           disabled={!isFormComplete || isGenerating}
         >
           {isGenerating ? (
             <>
-              <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white mr-2"></div>
-              Génération en cours...
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+              <span>Génération en cours...</span>
             </>
           ) : (
             <>
               <Download size={18} className="mr-2" />
-              Télécharger au format PDF
+              <span>Télécharger le PDF</span>
             </>
           )}
         </button>
         
         <button 
-          className={`flex items-center justify-center py-3 px-4 rounded-md shadow-sm text-white font-medium transition-colors ${
+          className={`flex items-center justify-center py-3 px-4 rounded-md shadow-sm font-medium transition-colors ${
             isFormComplete 
-              ? 'bg-blue-600 hover:bg-blue-700' 
-              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              ? 'bg-white border border-blue-600 text-blue-600 hover:bg-blue-50' 
+              : 'bg-gray-100 border border-gray-300 text-gray-400 cursor-not-allowed'
           }`}
-          onClick={handleAccessEditor}
+          onClick={() => handleAccessEditor()}
           disabled={!isFormComplete || isSaving}
         >
           {isSaving ? (
             <>
-              <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white mr-2"></div>
-              Préparation de l'éditeur...
+              <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+              <span>Préparation de l'éditeur...</span>
             </>
           ) : (
             <>
               <Edit size={18} className="mr-2" />
-              Accéder à l'éditeur
-              <span className="ml-2 text-xs bg-blue-100 text-blue-800 font-medium px-2 py-0.5 rounded-md shadow-sm">Beta</span>
+              <span>Accéder à l'éditeur</span>
             </>
           )}
         </button>
       </div>
       
       {error && (
-        <div className="mt-4 bg-red-50 border-l-4 border-red-400 p-4">
-          <div className="flex">
-            <div className="ml-3">
-              <p className="text-sm text-red-700">{error}</p>
-            </div>
-          </div>
+        <div className="p-3 bg-red-50 border-l-4 border-red-400 text-red-700 text-sm">
+          {error}
         </div>
       )}
       
       {generationSuccess && (
-        <div className="mt-4 bg-green-50 border-l-4 border-green-400 p-4">
-          <div className="flex">
-            <div className="ml-3">
-              <p className="text-sm text-green-700">
-                Le contrat a été généré avec succès et le téléchargement devrait commencer automatiquement.
-              </p>
-            </div>
-          </div>
+        <div className="p-3 bg-green-50 border-l-4 border-green-400 text-green-700 text-sm flex items-center">
+          <Check size={18} className="mr-2 text-green-500" />
+          <span>Le PDF a été généré avec succès !</span>
         </div>
       )}
       
