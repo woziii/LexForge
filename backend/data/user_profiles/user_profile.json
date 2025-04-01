@@ -11,13 +11,13 @@
     "siege": ""
   },
   "physical_person": {
-    "adresse": "",
-    "date_naissance": "",
+    "adresse": "FR",
+    "date_naissance": "1999-12-24",
     "gentille": "M.",
-    "is_configured": false,
-    "nationalite": "",
-    "nom": "",
-    "prenom": ""
+    "is_configured": true,
+    "nationalite": "FR",
+    "nom": "MAURICI",
+    "prenom": "Lucas"
   },
-  "selected_entity_type": ""
+  "selected_entity_type": "physical_person"
 }

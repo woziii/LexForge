@@ -58,17 +58,16 @@ const ContractWizard = () => {
         // Vérifier si l'utilisateur vient du Dashboard après avoir rempli ses informations
         const fromDashboard = new URLSearchParams(location.search).get('fromDashboard') === 'true';
         
-        // Pour les utilisateurs non authentifiés
+        // Si l'utilisateur ne vient pas du Dashboard, le rediriger pour remplir ses informations
+        if (!fromDashboard) {
+          setBusinessInfoRequired(true);
+          navigate('/dashboard?redirectTo=wizard', { replace: true });
+          return;
+        }
+        
+        // Si l'utilisateur vient du Dashboard, récupérer les informations
         if (!authLoaded || !isSignedIn) {
-          // Si l'utilisateur n'est pas authentifié ET ne vient pas du Dashboard,
-          // le rediriger vers le Dashboard avec un paramètre
-          if (!fromDashboard) {
-            setBusinessInfoRequired(true);
-            navigate('/temp-dashboard?redirectTo=wizard', { replace: true });
-            return;
-          }
-          
-          // Si l'utilisateur vient du Dashboard, récupérer les informations temporaires
+          // Pour utilisateur non authentifié
           const tempBusinessInfo = sessionStorage.getItem('tempBusinessInfo');
           if (tempBusinessInfo) {
             const parsedData = JSON.parse(tempBusinessInfo);
@@ -78,7 +77,7 @@ const ContractWizard = () => {
             }));
           }
         } else {
-          // Si l'utilisateur est authentifié, vérifier son profil
+          // Pour utilisateur authentifié
           const profile = await getUserProfile();
           
           const hasPhysicalPerson = profile?.physical_person?.is_configured;
@@ -166,9 +165,32 @@ const ContractWizard = () => {
       if (contractData.type_contrat.length === 0) {
         return;
       }
-      
+
       try {
         setIsPreviewLoading(true);
+        
+        // S'assurer que entreprise_info est correctement formaté pour la prévisualisation
+        const entrepriseInfo = contractData.entreprise_info;
+        if (entrepriseInfo && Object.keys(entrepriseInfo).length > 0) {
+          // Si entreprise_info contient des données d'une personne physique
+          if (entrepriseInfo.prenom && entrepriseInfo.nom) {
+            // Vérifie si l'adresse est formatée correctement
+            const adresse = formatAddress(entrepriseInfo);
+            if (adresse && !entrepriseInfo.adresse) {
+              contractData.entreprise_info.adresse = adresse;
+            }
+          } 
+          // Si entreprise_info contient des données d'une personne morale
+          else if (entrepriseInfo.nom && entrepriseInfo.forme_juridique) {
+            // Vérifie si le siège est formaté correctement
+            const siege = formatAddress(entrepriseInfo);
+            if (siege && !entrepriseInfo.siege) {
+              contractData.entreprise_info.siege = siege;
+            }
+          }
+        }
+        
+        console.log("Données envoyées pour prévisualisation:", JSON.stringify(contractData));
         const response = await previewContract(contractData);
         setContractPreview(response.preview);
       } catch (error) {
@@ -180,6 +202,26 @@ const ContractWizard = () => {
     
     fetchPreview();
   }, [contractData]);
+  
+  // Fonction utilitaire pour formater l'adresse
+  const formatAddress = (data) => {
+    const parts = [];
+    
+    if (data.adresse) {
+      parts.push(data.adresse);
+    }
+    
+    let cityPart = '';
+    if (data.code_postal) cityPart += data.code_postal;
+    if (data.ville) {
+      if (cityPart) cityPart += ' ';
+      cityPart += data.ville;
+    }
+    
+    if (cityPart) parts.push(cityPart);
+    
+    return parts.length > 0 ? parts.join(', ') : '';
+  };
   
   // Sélectionner le composant à afficher en fonction de l'étape active
   const renderStepContent = () => {

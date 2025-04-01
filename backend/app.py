@@ -110,6 +110,7 @@ def preview():
     Endpoint pour prévisualiser le contrat.
     """
     contract_data = request.json
+    print(f"Données reçues dans preview: {json.dumps(contract_data, indent=2)}")
     
     try:
         # Si l'utilisateur a un profil configuré, utiliser ces informations
@@ -118,23 +119,64 @@ def preview():
             with open(USER_PROFILE_FILE, 'r') as f:
                 user_profile = json.load(f)
         
-        # Si un type d'entité est sélectionné, utiliser ses informations comme cessionnaire
-        if user_profile.get('selected_entity_type') == 'physical_person' and user_profile['physical_person']['is_configured']:
+        # 1. Vérifier si entreprise_info est fourni dans les données du contrat et l'utiliser en priorité
+        entreprise_info = contract_data.get('entreprise_info')
+        print(f"entreprise_info trouvé: {json.dumps(entreprise_info, indent=2) if entreprise_info else 'Non'}")
+        
+        if entreprise_info and isinstance(entreprise_info, dict) and any(entreprise_info.values()):
+            # Si entreprise_info contient des données, l'utiliser comme cessionnaire_info
+            cessionnaire_info = entreprise_info
+            print("Utilisation de entreprise_info comme cessionnaire_info")
+            
+            # S'assurer que les champs nécessaires pour la prévisualisation sont présents
+            if 'prenom' in cessionnaire_info and 'nom' in cessionnaire_info:
+                # Pour personne physique
+                if not cessionnaire_info.get('adresse') and (cessionnaire_info.get('code_postal') or cessionnaire_info.get('ville')):
+                    # Construire une adresse complète si nécessaire
+                    address_parts = []
+                    if cessionnaire_info.get('code_postal'):
+                        address_parts.append(cessionnaire_info.get('code_postal'))
+                    if cessionnaire_info.get('ville'):
+                        address_parts.append(cessionnaire_info.get('ville'))
+                    if address_parts:
+                        cessionnaire_info['adresse'] = ', '.join(address_parts)
+            else:
+                # Pour personne morale
+                if not cessionnaire_info.get('siege') and (cessionnaire_info.get('adresse') or cessionnaire_info.get('code_postal') or cessionnaire_info.get('ville')):
+                    # Construire un siège social si nécessaire
+                    address_parts = []
+                    if cessionnaire_info.get('adresse'):
+                        address_parts.append(cessionnaire_info.get('adresse'))
+                    if cessionnaire_info.get('code_postal'):
+                        address_parts.append(cessionnaire_info.get('code_postal'))
+                    if cessionnaire_info.get('ville'):
+                        address_parts.append(cessionnaire_info.get('ville'))
+                    if address_parts:
+                        cessionnaire_info['siege'] = ' '.join(address_parts)
+        
+        # 2. Sinon utiliser le profil utilisateur
+        elif user_profile.get('selected_entity_type') == 'physical_person' and user_profile['physical_person']['is_configured']:
             cessionnaire_info = user_profile['physical_person']
+            print("Utilisation du profil physical_person comme cessionnaire_info")
         elif user_profile.get('selected_entity_type') == 'legal_entity' and user_profile['legal_entity']['is_configured']:
             cessionnaire_info = user_profile['legal_entity']
+            print("Utilisation du profil legal_entity comme cessionnaire_info")
         else:
-            # Utiliser les informations par défaut de Tellers
+            # 3. Utiliser les informations par défaut de Tellers
             cessionnaire_info = TELLERS_INFO
+            print("Utilisation des informations par défaut Tellers comme cessionnaire_info")
         
         # Ajouter les informations du cessionnaire aux données du contrat
         contract_data['cessionnaire_info'] = cessionnaire_info
+        print(f"cessionnaire_info final: {json.dumps(cessionnaire_info, indent=2)}")
         
         # Utiliser la nouvelle fonction generate_contract_preview
         preview_text = generate_contract_preview(contract_data)
         return jsonify({'preview': preview_text})
     except Exception as e:
         print(f"Erreur lors de la génération de l'aperçu: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'preview': "Une erreur est survenue lors de la génération de l'aperçu.", 'error': str(e)})
 
 @app.route('/api/generate-pdf', methods=['POST'])

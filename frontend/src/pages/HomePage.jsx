@@ -117,10 +117,16 @@ const HomePage = () => {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-6">
             <Link 
               to="/wizard" 
-              className="inline-flex items-center px-6 sm:px-8 py-3.5 sm:py-4 border border-transparent text-base font-medium rounded-xl shadow-md text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transform transition-all duration-200 hover:scale-105 hover:shadow-lg"
+              className="group relative inline-flex items-center px-6 sm:px-8 py-3.5 sm:py-4 border border-transparent text-base font-medium rounded-xl shadow-md text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transform transition-all duration-300 hover:scale-105 hover:shadow-lg overflow-hidden animate-pulse-slow"
             >
-              Créer un contrat
-              <ArrowRight size={18} className="ml-2 animate-pulse" />
+              <span className="relative z-10 flex items-center">
+                <span className="mr-2">Créer un contrat</span>
+                <ArrowRight size={18} className="transform group-hover:translate-x-1 transition-transform duration-300" />
+              </span>
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-indigo-400 opacity-0 group-hover:opacity-20 transition-opacity duration-300 animate-shimmer"></div>
+              <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(255,255,255,0.1),rgba(255,255,255,0))] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </Link>
           </div>
         </div>

@@ -1,13 +1,12 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import HomePage from './pages/HomePage';
 import ContractWizard from './pages/ContractWizard';
 import AboutPage from './pages/AboutPage';
 import ContractsPage from './pages/ContractsPage';
 import ContractEditorPage from './pages/ContractEditorPage';
-import DashboardPage from './pages/DashboardPage';
-import TempDashboardPage from './pages/TempDashboardPage';
+import UnifiedDashboard from './pages/UnifiedDashboard';
 import LegalPage from './pages/LegalPage';
 import AuthGuard from './components/AuthGuard';
 import { WelcomePopup, MiniSaul } from './components/ui';
@@ -21,7 +20,10 @@ function App() {
         <Route path="/" element={<Layout />}>
           <Route index element={<HomePage />} />
           <Route path="wizard" element={<ContractWizard />} />
-          <Route path="temp-dashboard" element={<TempDashboardPage />} />
+          <Route path="dashboard" element={<UnifiedDashboard />} />
+          
+          {/* Rediriger les anciennes routes vers la nouvelle */}
+          <Route path="temp-dashboard" element={<Navigate to="/dashboard" replace />} />
           
           {/* Routes protégées qui nécessitent une authentification */}
           <Route
@@ -37,14 +39,6 @@ function App() {
             element={
               <AuthGuard>
                 <ContractEditorPage />
-              </AuthGuard>
-            }
-          />
-          <Route
-            path="dashboard"
-            element={
-              <AuthGuard>
-                <DashboardPage />
               </AuthGuard>
             }
           />

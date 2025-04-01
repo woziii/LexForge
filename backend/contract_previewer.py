@@ -222,6 +222,7 @@ def generate_contract_preview(contract_data):
             - remuneration: Détails de la rémunération
             - exclusivite: Bool indiquant si la cession est exclusive
             - cessionnaire_info: Informations sur le cessionnaire
+            - entreprise_info: Informations sur l'entreprise (alternative à cessionnaire_info)
 
     Returns:
         str: Texte formaté représentant l'aperçu du contrat
@@ -237,7 +238,14 @@ def generate_contract_preview(contract_data):
     additional_rights = contract_data.get('droits_cedes', [])
     remuneration = contract_data.get('remuneration', '')
     is_exclusive = contract_data.get('exclusivite', False)
+    
+    # Priorité à cessionnaire_info, puis entreprise_info
     cessionnaire_info = contract_data.get('cessionnaire_info', {})
+    if not cessionnaire_info or not any(cessionnaire_info.values()):
+        # Si cessionnaire_info est vide, essayer d'utiliser entreprise_info
+        cessionnaire_info = contract_data.get('entreprise_info', {})
+    
+    print(f"Dans generate_contract_preview, cessionnaire_info: {cessionnaire_info}")
     
     # Version améliorée - utiliser les informations du cessionnaire si disponibles
     apercu = ContractTemplates.get_title(contract_type) + "\n\n"
@@ -290,10 +298,10 @@ def generate_contract_preview(contract_data):
         apercu += ", ci-après dénommé(e) \"le Modèle\",\n\n"
     
     # Informations sur le cessionnaire (utilisation des données personnalisées si disponibles)
-    if cessionnaire_info and cessionnaire_info.get('nom'):
-        # Pour une personne physique
-        if 'prenom' in cessionnaire_info:
-            civilite = cessionnaire_info.get('gentille', '')
+    if cessionnaire_info and any(cessionnaire_info.values()):
+        # Pour personne physique (détection basée sur la présence de 'prenom')
+        if cessionnaire_info.get('prenom'):
+            civilite = cessionnaire_info.get('gentille', 'M.')
             prenom = cessionnaire_info.get('prenom', '')
             nom = cessionnaire_info.get('nom', '')
             adresse = cessionnaire_info.get('adresse', '')
@@ -301,13 +309,33 @@ def generate_contract_preview(contract_data):
             apercu += f"{civilite} {prenom} {nom}"
             if adresse:
                 apercu += f", domicilié(e) au {adresse}"
-        # Pour une personne morale
+        # Pour personne morale
         else:
             nom = cessionnaire_info.get('nom', '')
             forme_juridique = cessionnaire_info.get('forme_juridique', '')
             capital = cessionnaire_info.get('capital', '')
-            rcs = cessionnaire_info.get('rcs', '')
+            rcs = cessionnaire_info.get('siren', '') # Accepter 'siren' comme alternative à 'rcs'
+            if not rcs:
+                rcs = cessionnaire_info.get('rcs', '')
+            
             siege = cessionnaire_info.get('siege', '')
+            # Si siege n'est pas disponible, construire à partir d'adresse, code_postal et ville
+            if not siege and (cessionnaire_info.get('adresse') or cessionnaire_info.get('code_postal') or cessionnaire_info.get('ville')):
+                address_parts = []
+                if cessionnaire_info.get('adresse'):
+                    address_parts.append(cessionnaire_info.get('adresse'))
+                
+                if cessionnaire_info.get('code_postal') or cessionnaire_info.get('ville'):
+                    city_part = []
+                    if cessionnaire_info.get('code_postal'):
+                        city_part.append(cessionnaire_info.get('code_postal'))
+                    if cessionnaire_info.get('ville'):
+                        city_part.append(cessionnaire_info.get('ville'))
+                    if city_part:
+                        address_parts.append(' '.join(city_part))
+                
+                if address_parts:
+                    siege = ', '.join(address_parts)
             
             apercu += f"{nom}"
             if forme_juridique:
@@ -343,7 +371,6 @@ def generate_contract_preview(contract_data):
         apercu += f"Le Modèle autorise l'utilisation de son image telle qu'elle apparaît dans : \n\n"
         apercu += f"{image_description}\n\n"
     
-    # Suite de l'aperçu du contrat (articles restants)
     # ARTICLE 2 - DROITS CÉDÉS
     apercu += "ARTICLE 2 – ÉTENDUE DES DROITS CÉDÉS\n\n"
     

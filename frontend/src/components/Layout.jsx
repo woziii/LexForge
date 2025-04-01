@@ -50,17 +50,23 @@ const Layout = () => {
           <nav className="hidden md:flex items-center space-x-6">
             <Link
               to="/"
-              className={`flex items-center ${isActive('/') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`flex items-center group ${isActive('/') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
             >
-              <Home size={18} className="mr-1" strokeWidth={2} />
-              <span>Accueil</span>
+              <Home size={18} className="mr-1 strokeWidth={2} transform transition-all duration-300 group-hover:scale-110 group-hover:-translate-y-0.5" />
+              <span className="relative">
+                Accueil
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full"></span>
+              </span>
             </Link>
             <Link
               to="/wizard"
-              className={`flex items-center ${isActive('/wizard') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`flex items-center group ${isActive('/wizard') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
             >
-              <FilePlus2 size={18} className="mr-1" strokeWidth={2} />
-              <span>Générateur</span>
+              <FilePlus2 size={18} className="mr-1 strokeWidth={2} transform transition-all duration-300 group-hover:scale-110 group-hover:-translate-y-0.5" />
+              <span className="relative">
+                Générateur
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full"></span>
+              </span>
             </Link>
             
             {/* Liens conditionnels pour les utilisateurs authentifiés */}
@@ -68,27 +74,36 @@ const Layout = () => {
               <>
                 <Link
                   to="/contracts"
-                  className={`flex items-center ${isActive('/contracts') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                  className={`flex items-center group ${isActive('/contracts') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
                 >
-                  <FolderKanban size={18} className="mr-1" strokeWidth={2} />
-                  <span>Contrats</span>
+                  <FolderKanban size={18} className="mr-1 strokeWidth={2} transform transition-all duration-300 group-hover:scale-110 group-hover:-translate-y-0.5" />
+                  <span className="relative">
+                    Contrats
+                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full"></span>
+                  </span>
                 </Link>
                 <Link
                   to="/dashboard"
-                  className={`flex items-center ${isActive('/dashboard') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                  className={`flex items-center group ${isActive('/dashboard') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
                 >
-                  <LayoutDashboard size={18} className="mr-1" strokeWidth={2} />
-                  <span>Dashboard</span>
+                  <LayoutDashboard size={18} className="mr-1 strokeWidth={2} transform transition-all duration-300 group-hover:scale-110 group-hover:-translate-y-0.5" />
+                  <span className="relative">
+                    Dashboard
+                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full"></span>
+                  </span>
                 </Link>
               </>
             )}
             
             <Link
               to="/about"
-              className={`flex items-center ${isActive('/about') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`flex items-center group ${isActive('/about') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
             >
-              <InfoIcon size={18} className="mr-1" strokeWidth={2} />
-              <span>À propos</span>
+              <InfoIcon size={18} className="mr-1 strokeWidth={2} transform transition-all duration-300 group-hover:scale-110 group-hover:-translate-y-0.5" />
+              <span className="relative">
+                À propos
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full"></span>
+              </span>
             </Link>
             
             {/* Bouton de connexion/avatar utilisateur */}
@@ -98,8 +113,16 @@ const Layout = () => {
                   <UserButton afterSignOutUrl="/" />
                 ) : (
                   <SignInButton mode="modal">
-                    <button className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium transition-colors">
-                      Connexion
+                    <button className="group relative px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-full text-sm font-medium transition-all duration-300 transform hover:scale-105 hover:shadow-lg overflow-hidden animate-pulse-slow">
+                      <span className="relative z-10 flex items-center">
+                        <span className="mr-2">Connexion</span>
+                        <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                      </span>
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-indigo-400 opacity-0 group-hover:opacity-20 transition-opacity duration-300 animate-shimmer"></div>
+                      <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
                     </button>
                   </SignInButton>
                 )}
