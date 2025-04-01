@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Building2, User, Save, AlertCircle, Check, HelpCircle, Briefcase, Shield, Users } from 'lucide-react';
 import { getUserProfile, updateUserProfile } from '../services/api';
 import { AUTHOR_TYPES, CIVILITY_OPTIONS } from '../utils/constants';
@@ -7,7 +7,6 @@ import ClientsTab from '../components/clients/ClientsTab';
 
 const DashboardPage = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const [activeTab, setActiveTab] = useState('company');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -22,32 +21,20 @@ const DashboardPage = () => {
       date_naissance: '',
       nationalite: '',
       adresse: '',
-      code_postal: '',
-      ville: '',
-      email: '',
-      telephone: ''
     },
     legal_entity: {
       is_configured: false,
       nom: '',
       forme_juridique: '',
       capital: '',
-      siren: '',
+      rcs: '',
       siege: '',
-      adresse: '',
-      code_postal: '',
-      ville: '',
-      email: '',
-      telephone: '',
       representant: '',
       qualite_representant: '',
     },
     selected_entity_type: '', // 'physical_person' ou 'legal_entity'
     clients: [] // Tableau de clients
   });
-
-  // Récupérer le paramètre de redirection
-  const redirectTo = new URLSearchParams(location.search).get('redirectTo') || '';
 
   useEffect(() => {
     // Charger les données du profil utilisateur depuis le backend
@@ -66,26 +53,6 @@ const DashboardPage = () => {
     loadProfile();
   }, []);
 
-  // Formater l'adresse complète pour la prévisualisation
-  const formatAddress = (data) => {
-    const parts = [];
-    
-    if (data.adresse) {
-      parts.push(data.adresse);
-    }
-    
-    let cityPart = '';
-    if (data.code_postal) cityPart += data.code_postal;
-    if (data.ville) {
-      if (cityPart) cityPart += ' ';
-      cityPart += data.ville;
-    }
-    
-    if (cityPart) parts.push(cityPart);
-    
-    return parts.length > 0 ? parts.join(', ') : '';
-  };
-
   const handleInputChange = (entityType, field, value) => {
     setProfileData(prevData => ({
       ...prevData,
@@ -101,43 +68,6 @@ const DashboardPage = () => {
       ...prevData,
       selected_entity_type: type
     }));
-  };
-
-  // Formatage des données pour la prévisualisation
-  const formatBusinessDataForStorage = (entityType, entityData) => {
-    // Formater l'adresse complète
-    const adresseComplete = formatAddress(entityData);
-    
-    if (entityType === 'physical_person') {
-      return {
-        type: 'physical_person',
-        gentille: entityData.gentille || '',
-        nom: entityData.nom || '',
-        prenom: entityData.prenom || '',
-        adresse: entityData.adresse || '',
-        code_postal: entityData.code_postal || '',
-        ville: entityData.ville || '',
-        email: entityData.email || '',
-        telephone: entityData.telephone || '',
-        siege: adresseComplete,
-        capital: '',
-        forme_juridique: 'Entreprise individuelle'
-      };
-    } else {
-      return {
-        type: 'legal_entity',
-        nom: entityData.nom || '',
-        forme_juridique: entityData.forme_juridique || '',
-        siren: entityData.siren || '',
-        adresse: entityData.adresse || '',
-        code_postal: entityData.code_postal || '',
-        ville: entityData.ville || '',
-        email: entityData.email || '',
-        telephone: entityData.telephone || '',
-        siege: adresseComplete,
-        capital: entityData.capital || '1000 €'
-      };
-    }
   };
 
   const handleSaveProfile = async () => {
@@ -170,29 +100,14 @@ const DashboardPage = () => {
         return;
       }
       
-      // Sauvegarder les données formatées pour le sessionStorage (prévisualisation)
-      const entityType = profileData.selected_entity_type;
-      const entityData = profileData[entityType];
-      const formattedData = formatBusinessDataForStorage(entityType, entityData);
-      sessionStorage.setItem('tempBusinessInfo', JSON.stringify(formattedData));
-      
-      // Sauvegarder dans la base de données
       await updateUserProfile(profileData);
       setSuccessMessage('Vos informations ont été enregistrées avec succès.');
       
-      // Rediriger si nécessaire
-      if (redirectTo) {
-        setTimeout(() => {
-          navigate(`/${redirectTo}?fromDashboard=true`);
-        }, 1500);
-      } else {
-        // Masquer le message de succès après 3 secondes
-        setTimeout(() => {
-          setSuccessMessage('');
-        }, 3000);
-      }
+      // Masquer le message de succès après 3 secondes
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 3000);
     } catch (error) {
-      console.error('Error saving profile:', error);
       setErrorMessage('Une erreur est survenue lors de l\'enregistrement. Veuillez réessayer.');
     } finally {
       setIsSaving(false);
@@ -228,19 +143,6 @@ const DashboardPage = () => {
           <p className="text-green-700">{successMessage}</p>
         </div>
       )}
-
-      {/* Information d'aide */}
-      <div className="mb-8 p-4 bg-blue-50 rounded-lg border border-blue-100">
-        <div className="flex items-start">
-          <HelpCircle className="w-5 h-5 text-blue-500 mr-3 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-blue-800 font-medium mb-1">Pourquoi ces informations sont-elles importantes ?</p>
-            <p className="text-blue-700">
-              Veuillez choisir si vous souhaitez apparaître en tant que personne physique ou morale dans vos contrats.
-            </p>
-          </div>
-        </div>
-      </div>
 
       {/* Main content avec effet de carte */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-md overflow-hidden">
@@ -278,6 +180,16 @@ const DashboardPage = () => {
                 <p className="mb-2">
                   Ces informations sont essentielles pour générer vos contrats. Elles apparaîtront dans tous vos documents en tant que vous (bénéficiaire des droits).
                 </p>
+                
+                <div className="flex items-start bg-blue-50 p-4 rounded-xl border border-blue-100 mt-3">
+                  <HelpCircle className="w-5 h-5 text-blue-500 mr-3 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-blue-800 font-medium mb-1">Pourquoi ces informations sont-elles importantes ?</p>
+                    <p className="text-blue-700">
+                      Veuillez choisir si vous souhaitez apparaître en tant que personne physique ou morale dans vos contrats.
+                    </p>
+                  </div>
+                </div>
               </div>
 
               {/* Entity Type Selection - Style moderne avec cartes */}
@@ -440,67 +352,38 @@ const DashboardPage = () => {
                     </div>
                     
                     <div>
-                      <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
+                      <label htmlFor="birthdate" className="block text-sm font-medium text-gray-700 mb-1">Date de naissance</label>
                       <input
-                        type="text"
-                        id="address"
-                        value={profileData.physical_person.adresse || ""}
-                        onChange={(e) => handleInputChange('physical_person', 'adresse', e.target.value)}
+                        type="date"
+                        id="birthdate"
+                        value={profileData.physical_person.date_naissance || ""}
+                        onChange={(e) => handleInputChange('physical_person', 'date_naissance', e.target.value)}
                         className="block w-full px-4 py-2.5 text-gray-700 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                        placeholder="Numéro et rue"
                       />
                     </div>
                     
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                      <div>
-                        <label htmlFor="postal_code" className="block text-sm font-medium text-gray-700 mb-1">Code postal</label>
-                        <input
-                          type="text"
-                          id="postal_code"
-                          value={profileData.physical_person.code_postal || ""}
-                          onChange={(e) => handleInputChange('physical_person', 'code_postal', e.target.value)}
-                          className="block w-full px-4 py-2.5 text-gray-700 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                          placeholder="Ex: 75001"
-                        />
-                      </div>
-                      
-                      <div>
-                        <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">Ville</label>
-                        <input
-                          type="text"
-                          id="city"
-                          value={profileData.physical_person.ville || ""}
-                          onChange={(e) => handleInputChange('physical_person', 'ville', e.target.value)}
-                          className="block w-full px-4 py-2.5 text-gray-700 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                          placeholder="Ex: Paris"
-                        />
-                      </div>
+                    <div>
+                      <label htmlFor="nationality" className="block text-sm font-medium text-gray-700 mb-1">Nationalité</label>
+                      <input
+                        type="text"
+                        id="nationality"
+                        value={profileData.physical_person.nationalite || ""}
+                        onChange={(e) => handleInputChange('physical_person', 'nationalite', e.target.value)}
+                        className="block w-full px-4 py-2.5 text-gray-700 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        placeholder="Ex: Française"
+                      />
                     </div>
                     
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                      <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                        <input
-                          type="email"
-                          id="email"
-                          value={profileData.physical_person.email || ""}
-                          onChange={(e) => handleInputChange('physical_person', 'email', e.target.value)}
-                          className="block w-full px-4 py-2.5 text-gray-700 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                          placeholder="Ex: nom@exemple.com"
-                        />
-                      </div>
-                      
-                      <div>
-                        <label htmlFor="telephone" className="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
-                        <input
-                          type="tel"
-                          id="telephone"
-                          value={profileData.physical_person.telephone || ""}
-                          onChange={(e) => handleInputChange('physical_person', 'telephone', e.target.value)}
-                          className="block w-full px-4 py-2.5 text-gray-700 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                          placeholder="Ex: 06 12 34 56 78"
-                        />
-                      </div>
+                    <div>
+                      <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">Adresse complète</label>
+                      <textarea
+                        id="address"
+                        value={profileData.physical_person.adresse || ""}
+                        onChange={(e) => handleInputChange('physical_person', 'adresse', e.target.value)}
+                        className="block w-full px-4 py-3 text-gray-700 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        rows="3"
+                        placeholder="Numéro, rue, code postal, ville, pays"
+                      ></textarea>
                     </div>
                   </div>
                 </div>
@@ -545,7 +428,7 @@ const DashboardPage = () => {
                       </div>
                       
                       <div>
-                        <label htmlFor="capital" className="block text-sm font-medium text-gray-700 mb-1">Capital social</label>
+                        <label htmlFor="capital" className="block text-sm font-medium text-gray-700 mb-1">Capital social <span className="text-red-500">*</span></label>
                         <input
                           type="text"
                           id="capital"
@@ -558,77 +441,51 @@ const DashboardPage = () => {
                     </div>
                     
                     <div>
-                      <label htmlFor="siren" className="block text-sm font-medium text-gray-700 mb-1">SIREN/SIRET</label>
+                      <label htmlFor="rcs" className="block text-sm font-medium text-gray-700 mb-1">Numéro RCS <span className="text-red-500">*</span></label>
                       <input
                         type="text"
-                        id="siren"
-                        value={profileData.legal_entity.siren || ""}
-                        onChange={(e) => handleInputChange('legal_entity', 'siren', e.target.value)}
+                        id="rcs"
+                        value={profileData.legal_entity.rcs || ""}
+                        onChange={(e) => handleInputChange('legal_entity', 'rcs', e.target.value)}
                         className="block w-full px-4 py-2.5 text-gray-700 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                        placeholder="Ex: 123 456 789"
+                        placeholder="Ex: 123 456 789 R.C.S. Paris"
                       />
                     </div>
                     
                     <div>
-                      <label htmlFor="address-company" className="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
-                      <input
-                        type="text"
-                        id="address-company"
-                        value={profileData.legal_entity.adresse || ""}
-                        onChange={(e) => handleInputChange('legal_entity', 'adresse', e.target.value)}
-                        className="block w-full px-4 py-2.5 text-gray-700 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                        placeholder="Numéro et rue"
-                      />
+                      <label htmlFor="company-address" className="block text-sm font-medium text-gray-700 mb-1">Siège social <span className="text-red-500">*</span></label>
+                      <textarea
+                        id="company-address"
+                        value={profileData.legal_entity.siege || ""}
+                        onChange={(e) => handleInputChange('legal_entity', 'siege', e.target.value)}
+                        className="block w-full px-4 py-3 text-gray-700 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        rows="3"
+                        placeholder="Adresse complète du siège social"
+                      ></textarea>
                     </div>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                       <div>
-                        <label htmlFor="postal-code-company" className="block text-sm font-medium text-gray-700 mb-1">Code postal</label>
+                        <label htmlFor="representative" className="block text-sm font-medium text-gray-700 mb-1">Représentant légal <span className="text-red-500">*</span></label>
                         <input
                           type="text"
-                          id="postal-code-company"
-                          value={profileData.legal_entity.code_postal || ""}
-                          onChange={(e) => handleInputChange('legal_entity', 'code_postal', e.target.value)}
+                          id="representative"
+                          value={profileData.legal_entity.representant || ""}
+                          onChange={(e) => handleInputChange('legal_entity', 'representant', e.target.value)}
                           className="block w-full px-4 py-2.5 text-gray-700 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                          placeholder="Ex: 75001"
+                          placeholder="Nom et prénom du représentant"
                         />
                       </div>
                       
                       <div>
-                        <label htmlFor="city-company" className="block text-sm font-medium text-gray-700 mb-1">Ville</label>
+                        <label htmlFor="representative-title" className="block text-sm font-medium text-gray-700 mb-1">Qualité du représentant <span className="text-red-500">*</span></label>
                         <input
                           type="text"
-                          id="city-company"
-                          value={profileData.legal_entity.ville || ""}
-                          onChange={(e) => handleInputChange('legal_entity', 'ville', e.target.value)}
+                          id="representative-title"
+                          value={profileData.legal_entity.qualite_representant || ""}
+                          onChange={(e) => handleInputChange('legal_entity', 'qualite_representant', e.target.value)}
                           className="block w-full px-4 py-2.5 text-gray-700 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                          placeholder="Ex: Paris"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                      <div>
-                        <label htmlFor="email-company" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                        <input
-                          type="email"
-                          id="email-company"
-                          value={profileData.legal_entity.email || ""}
-                          onChange={(e) => handleInputChange('legal_entity', 'email', e.target.value)}
-                          className="block w-full px-4 py-2.5 text-gray-700 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                          placeholder="Ex: contact@entreprise.com"
-                        />
-                      </div>
-                      
-                      <div>
-                        <label htmlFor="telephone-company" className="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
-                        <input
-                          type="tel"
-                          id="telephone-company"
-                          value={profileData.legal_entity.telephone || ""}
-                          onChange={(e) => handleInputChange('legal_entity', 'telephone', e.target.value)}
-                          className="block w-full px-4 py-2.5 text-gray-700 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                          placeholder="Ex: 01 23 45 67 89"
+                          placeholder="Ex: Gérant, Président, etc."
                         />
                       </div>
                     </div>
@@ -655,7 +512,7 @@ const DashboardPage = () => {
                   ) : (
                     <>
                       <Shield className="w-5 h-5 mr-2" />
-                      {redirectTo ? "Enregistrer et continuer" : "Enregistrer mes informations"}
+                      Enregistrer mes informations
                     </>
                   )}
                 </button>

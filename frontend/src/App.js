@@ -6,7 +6,7 @@ import ContractWizard from './pages/ContractWizard';
 import AboutPage from './pages/AboutPage';
 import ContractsPage from './pages/ContractsPage';
 import ContractEditorPage from './pages/ContractEditorPage';
-import UnifiedDashboard from './pages/UnifiedDashboard';
+import DashboardPage from './pages/DashboardPage';
 import LegalPage from './pages/LegalPage';
 import AuthGuard from './components/AuthGuard';
 import { WelcomePopup, MiniSaul } from './components/ui';
@@ -20,7 +20,7 @@ function App() {
         <Route path="/" element={<Layout />}>
           <Route index element={<HomePage />} />
           <Route path="wizard" element={<ContractWizard />} />
-          <Route path="dashboard" element={<UnifiedDashboard />} />
+          <Route path="dashboard" element={<DashboardPage />} />
           
           {/* Rediriger les anciennes routes vers la nouvelle */}
           <Route path="temp-dashboard" element={<Navigate to="/dashboard" replace />} />

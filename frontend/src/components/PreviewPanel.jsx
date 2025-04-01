@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Copy, Eye, Download, X } from 'lucide-react';
 
-const PreviewPanel = ({ contractPreview, isLoading }) => {
+const PreviewPanel = ({ preview, isLoading }) => {
+  const contractPreview = preview;
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
 

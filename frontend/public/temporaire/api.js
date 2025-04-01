@@ -29,9 +29,7 @@ export const analyzeProject = async (description) => {
 
 export const previewContract = async (contractData) => {
   try {
-    console.log('Sending preview request with data:', JSON.stringify(contractData));
     const response = await api.post('/preview', contractData);
-    console.log('Preview response:', response.data);
     return response.data;
   } catch (error) {
     console.error('Error previewing contract:', error);
