@@ -21,18 +21,12 @@ window.addEventListener('beforeunload', () => {
   if (!clerkId || clerkId.startsWith('anon_')) {
     console.log('Nettoyage des données temporaires de l\'utilisateur non authentifié');
     
-    // Nettoyer toutes les données de sessionStorage sauf l'ID anonyme
-    const keysToRemove = [
-      'tempBusinessInfo',
-      'tempContractData',
-      'draftContractId',
-      'authRedirectAction',
-      'tempDashboardData'  // Ajouter les données du dashboard
-    ];
-    
-    keysToRemove.forEach(key => {
-      sessionStorage.removeItem(key);
-    });
+    // Nettoyer réellement les données temporaires
+    sessionStorage.removeItem('anonymousUserId');
+    sessionStorage.removeItem('tempBusinessInfo');
+    sessionStorage.removeItem('tempContractData');
+    sessionStorage.removeItem('draftContractId');
+    sessionStorage.removeItem('authRedirectAction');
   }
 });
 

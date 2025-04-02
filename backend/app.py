@@ -47,9 +47,6 @@ USER_PROFILES_DIR = os.path.join(DATA_DIR, 'user_profiles')
 os.makedirs(CONTRACTS_DIR, exist_ok=True)
 os.makedirs(USER_PROFILES_DIR, exist_ok=True)
 
-# Chemin du fichier de profil utilisateur (pour simplifier, un seul utilisateur)
-USER_PROFILE_FILE = os.path.join(USER_PROFILES_DIR, 'user_profile.json')
-
 # Structure par défaut pour un nouveau profil
 DEFAULT_PROFILE = {
     "physical_person": {
@@ -521,6 +518,13 @@ def export_contract(contract_id):
     with open(file_path, 'r', encoding='utf-8') as f:
         contract = json.load(f)
     
+    # Récupérer l'ID utilisateur de la requête
+    user_id = request.args.get('user_id', 'anonymous')
+    
+    # Vérifier que l'utilisateur a accès à ce contrat
+    if contract.get('user_id', 'anonymous') != user_id and user_id != 'anonymous':
+        return jsonify({'error': 'Unauthorized access to contract'}), 403
+    
     # Ajouter des métadonnées d'exportation
     contract['export_info'] = {
         'exported_at': datetime.now().isoformat(),
@@ -701,6 +705,10 @@ def access_finalization_step(contract_id):
         # Mettre à jour le statut de "from_step6" à True pour indiquer que ce contrat est passé par l'étape 6
         contract['from_step6'] = True
         contract['updated_at'] = datetime.now().isoformat()
+        
+        # S'assurer que le user_id est correctement défini dans le contrat
+        if contract.get('user_id') != user_id and user_id != 'anonymous':
+            contract['user_id'] = user_id
         
         # Sauvegarder les modifications
         with open(contract_file, 'w', encoding='utf-8') as f:

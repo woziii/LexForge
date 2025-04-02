@@ -1,6 +1,4 @@
 {
-  "created_at": "2025-04-02T16:38:25.593716",
-  "is_temporary": true,
   "legal_entity": {
     "capital": "",
     "forme_juridique": "",
@@ -12,17 +10,18 @@
     "siege": ""
   },
   "physical_person": {
-    "adresse": "zedez",
+    "adresse": "TEST",
+    "code_postal": "TEST",
     "date_naissance": "",
+    "email": "TEST",
     "gentille": "M.",
     "is_configured": true,
     "nationalite": "",
-    "nom": "zedezdzed",
-    "prenom": "edezdze",
-    "code_postal": "zedzed",
-    "ville": "dzedzed",
-    "email": "zedzed"
+    "nom": "TEST1",
+    "prenom": "TEST2",
+    "telephone": "TEST",
+    "ville": "TESTdadf"
   },
   "selected_entity_type": "physical_person",
-  "user_id": "anon_sy0resxntht_m9018186"
+  "user_id": "user_2vB3c2hURFDmvhtc2QpqUVqUM9q"
 }

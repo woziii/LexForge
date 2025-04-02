@@ -10,16 +10,17 @@
     "siege": ""
   },
   "physical_person": {
-    "adresse": "104 avenue de versailles",
-    "code_postal": "75016",
+    "adresse": "dzedez",
     "date_naissance": "",
-    "email": "lucas.maurici@aol.com",
     "gentille": "M.",
     "is_configured": true,
     "nationalite": "",
-    "nom": "MAURICI",
-    "prenom": "Lucas",
-    "ville": "Paris"
+    "nom": "dzed",
+    "prenom": "zedezdd",
+    "code_postal": "zedezd",
+    "ville": "zedzeezdez",
+    "telephone": "ddzed",
+    "email": "zedze"
   },
   "selected_entity_type": "physical_person",
   "user_id": "user_2vB3c2hURFDmvhtc2QpqUVqUM9q"

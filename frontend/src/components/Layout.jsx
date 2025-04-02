@@ -10,7 +10,7 @@ import {
   X
 } from 'lucide-react';
 import { useAuth, UserButton, SignInButton, useClerk } from '@clerk/clerk-react';
-import { migrateAnonymousUserData } from '../services/api';
+import { migrateAnonymousUserData, getCurrentUserId } from '../services/api';
 import { clearAllTempData } from '../utils/clearTempData';
 
 const Layout = () => {
@@ -18,19 +18,36 @@ const Layout = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { isLoaded, isSignedIn, userId } = useAuth();
   const { signOut } = useClerk();
+  const [previousCompositeId, setPreviousCompositeId] = useState(null);
   
   // Effet pour gérer la migration des données lors de la connexion
+  // et aussi pour détecter les changements de méthode d'authentification
   useEffect(() => {
-    // Vérifier si l'utilisateur vient de se connecter et a un ID anonyme stocké
+    // Fonction pour gérer l'authentification et les changements de méthode
     const handleUserAuthentication = async () => {
-      if (isLoaded && isSignedIn && userId) {
+      if (isLoaded && isSignedIn) {
+        // Récupérer l'ID composite actuel (inclut la méthode d'authentification)
+        const currentCompositeId = getCurrentUserId();
+        
+        // Si nous avons un ID composite précédent qui est différent de l'actuel,
+        // c'est que l'utilisateur a changé de méthode d'authentification
+        if (previousCompositeId && previousCompositeId !== currentCompositeId) {
+          console.log(`Changement détecté: ${previousCompositeId} -> ${currentCompositeId}`);
+          // On nettoie les données temporaires pour éviter la confusion
+          clearAllTempData();
+        }
+        
+        // Mettre à jour l'ID composite précédent pour comparaison future
+        setPreviousCompositeId(currentCompositeId);
+        
+        // Vérifier si l'utilisateur avait un ID anonyme et migrer si nécessaire
         const anonymousId = localStorage.getItem('anonymousUserId');
         
         if (anonymousId) {
           console.log('Utilisateur connecté avec des données anonymes, tentative de migration...');
           try {
             // Migrer les données de l'utilisateur anonyme vers l'utilisateur authentifié
-            const result = await migrateAnonymousUserData(userId);
+            const result = await migrateAnonymousUserData(currentCompositeId);
             if (result.success) {
               console.log('Migration des données réussie:', result.message);
             } else {
@@ -44,7 +61,7 @@ const Layout = () => {
     };
     
     handleUserAuthentication();
-  }, [isLoaded, isSignedIn, userId]);
+  }, [isLoaded, isSignedIn, userId, previousCompositeId]);
   
   // Détermine si un lien est actif
   const isActive = (path) => {
@@ -57,28 +74,9 @@ const Layout = () => {
   
   // Gestionnaire de déconnexion personnalisé
   const handleSignOut = async () => {
-    // Nettoyer explicitement toutes les données de session avant la déconnexion
-    sessionStorage.removeItem('tempDashboardData');
-    sessionStorage.removeItem('tempBusinessInfo');
-    sessionStorage.removeItem('tempContractData');
-    sessionStorage.removeItem('draftContractId');
-    sessionStorage.removeItem('authRedirectAction');
-    
     // Supprimer toutes les données temporaires lors de la déconnexion
     clearAllTempData();
-    
-    // Supprimer l'ID Clerk du localStorage
-    localStorage.removeItem('clerkUserId');
-    
-    // Générer un nouvel ID anonyme pour éviter de garder des références aux anciennes données
-    const newAnonymousId = 'anon_' + Math.random().toString(36).substring(2, 15) + '_' + Date.now().toString(36);
-    sessionStorage.setItem('anonymousUserId', newAnonymousId);
-    
-    // Effectuer la déconnexion
     await signOut();
-    
-    // Forcer un rafraîchissement complet de la page pour réinitialiser tous les états
-    window.location.href = "/";
   };
   
   return (

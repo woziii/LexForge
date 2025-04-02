@@ -19,24 +19,44 @@ const api = axios.create({
 
 // Fonction pour récupérer l'ID utilisateur actuel
 export const getCurrentUserId = () => {
-  // Si l'utilisateur est connecté avec Clerk, récupérer son ID depuis le localStorage
-  let userId = localStorage.getItem('clerkUserId');
-  
-  // Si nous avons un ID Clerk stocké, le retourner
-  if (userId && !userId.startsWith('anon_')) {
-    return userId;
-  }
-  
-  // Vérifier si l'objet window.Clerk est disponible (utilisateur connecté)
+  // Pour les utilisateurs authentifiés via Clerk
   try {
     if (window.Clerk && window.Clerk.user) {
-      const clerkId = window.Clerk.user.id;
-      // Stocker l'ID Clerk dans localStorage pour référence future
-      localStorage.setItem('clerkUserId', clerkId);
-      return clerkId;
+      // Récupérer l'ID de base
+      const baseId = window.Clerk.user.id;
+      
+      // Récupérer des informations sur la méthode d'authentification
+      let authMethod = "clerk";
+      
+      // Tenter d'identifier la méthode d'authentification
+      if (window.Clerk.session) {
+        const session = window.Clerk.session;
+        
+        // Examiner les identités connectées
+        if (session.user && session.user.externalAccounts) {
+          const accounts = session.user.externalAccounts;
+          
+          // Vérifier toutes les identités externes pour trouver celle active
+          // (Google, LinkedIn, etc.)
+          for (const account of accounts) {
+            if (account.verification && account.verification.status === "verified") {
+              authMethod = account.provider.toLowerCase() || authMethod;
+              break;
+            }
+          }
+        }
+      }
+      
+      // Créer un ID composite qui inclut la méthode d'authentification
+      const compositeId = `${baseId}_${authMethod}`;
+      console.log(`Utilisateur authentifié via ${authMethod}, ID composite: ${compositeId}`);
+      
+      // Stocker l'ID dans localStorage
+      localStorage.setItem('clerkUserId', compositeId);
+      return compositeId;
     }
   } catch (error) {
-    console.error('Erreur lors de la récupération de l\'ID utilisateur depuis Clerk:', error);
+    console.error('Erreur lors de la récupération des informations Clerk:', error);
   }
   
   // Pour les utilisateurs non authentifiés, priorité à sessionStorage, puis fallback sur localStorage
@@ -93,14 +113,7 @@ export const previewContract = async (contractData) => {
 
 export const generatePdf = async (contractData, filename) => {
   try {
-    // Ajouter l'ID utilisateur
-    const userId = getCurrentUserId();
-    
-    const response = await api.post('/generate-pdf', {
-      contractData,
-      filename,
-      user_id: userId
-    }, {
+    const response = await api.post('/generate-pdf', { contractData, filename }, {
       responseType: 'blob',
     });
     
@@ -281,24 +294,6 @@ export const testCors = async () => {
 export const getUserProfile = async () => {
   try {
     const userId = getCurrentUserId();
-    
-    // Pour les utilisateurs non authentifiés, vérifier d'abord si nous avons des données en sessionStorage
-    if (userId.startsWith('anon_')) {
-      // Essayer de récupérer depuis sessionStorage d'abord
-      const tempData = sessionStorage.getItem('tempDashboardData');
-      if (tempData) {
-        try {
-          const parsedData = JSON.parse(tempData);
-          console.log('Profil temporaire chargé depuis sessionStorage');
-          return parsedData;
-        } catch (error) {
-          console.error('Erreur de parsing des données temporaires:', error);
-          // Continuer avec l'appel API si le parsing échoue
-        }
-      }
-    }
-    
-    // Si aucune donnée temporaire n'est trouvée ou pour les utilisateurs authentifiés
     const response = await api.get('/user-profile', {
       params: { user_id: userId }
     });
