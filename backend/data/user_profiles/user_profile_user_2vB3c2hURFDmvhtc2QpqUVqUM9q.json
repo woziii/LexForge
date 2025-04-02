@@ -1,0 +1,26 @@
+{
+  "legal_entity": {
+    "capital": "",
+    "forme_juridique": "",
+    "is_configured": false,
+    "nom": "",
+    "qualite_representant": "",
+    "rcs": "",
+    "representant": "",
+    "siege": ""
+  },
+  "physical_person": {
+    "adresse": "104 avenue de versailles",
+    "code_postal": "75016",
+    "date_naissance": "",
+    "email": "lucas.maurici@aol.com",
+    "gentille": "M.",
+    "is_configured": true,
+    "nationalite": "",
+    "nom": "MAURICI",
+    "prenom": "Lucas",
+    "ville": "Paris"
+  },
+  "selected_entity_type": "physical_person",
+  "user_id": "user_2vB3c2hURFDmvhtc2QpqUVqUM9q"
+}

@@ -17,6 +17,52 @@ const api = axios.create({
   withCredentials: false,
 });
 
+// Fonction pour récupérer l'ID utilisateur actuel
+export const getCurrentUserId = () => {
+  // Si l'utilisateur est connecté avec Clerk, récupérer son ID depuis le localStorage
+  let userId = localStorage.getItem('clerkUserId');
+  
+  // Si nous avons un ID Clerk stocké, le retourner
+  if (userId && !userId.startsWith('anon_')) {
+    return userId;
+  }
+  
+  // Vérifier si l'objet window.Clerk est disponible (utilisateur connecté)
+  try {
+    if (window.Clerk && window.Clerk.user) {
+      const clerkId = window.Clerk.user.id;
+      // Stocker l'ID Clerk dans localStorage pour référence future
+      localStorage.setItem('clerkUserId', clerkId);
+      return clerkId;
+    }
+  } catch (error) {
+    console.error('Erreur lors de la récupération de l\'ID utilisateur depuis Clerk:', error);
+  }
+  
+  // Pour les utilisateurs non authentifiés, priorité à sessionStorage, puis fallback sur localStorage
+  // pour assurer la compatibilité avec les données existantes
+  let anonymousId = sessionStorage.getItem('anonymousUserId');
+  
+  // Si on n'a pas d'ID en sessionStorage, vérifier en localStorage (pour rétrocompatibilité)
+  if (!anonymousId) {
+    anonymousId = localStorage.getItem('anonymousUserId');
+    
+    // Si on a trouvé un ID en localStorage, le copier en sessionStorage et le garder en localStorage
+    // pour cette session uniquement (compatibilité avec données existantes)
+    if (anonymousId) {
+      sessionStorage.setItem('anonymousUserId', anonymousId);
+      console.log('ID anonyme migré de localStorage vers sessionStorage');
+    } else {
+      // Générer un nouvel ID si aucun n'existe
+      anonymousId = 'anon_' + Math.random().toString(36).substring(2, 15) + '_' + Date.now().toString(36);
+      sessionStorage.setItem('anonymousUserId', anonymousId);
+      // On ne stocke plus dans localStorage pour les nouveaux utilisateurs
+    }
+  }
+  
+  return anonymousId;
+};
+
 export const analyzeProject = async (description) => {
   try {
     const response = await api.post('/analyze', { description });
@@ -29,8 +75,14 @@ export const analyzeProject = async (description) => {
 
 export const previewContract = async (contractData) => {
   try {
-    console.log('Sending preview request with data:', JSON.stringify(contractData));
-    const response = await api.post('/preview', contractData);
+    // Ajouter l'ID utilisateur aux données du contrat
+    const dataWithUserId = {
+      ...contractData,
+      user_id: getCurrentUserId()
+    };
+    
+    console.log('Sending preview request with data:', JSON.stringify(dataWithUserId));
+    const response = await api.post('/preview', dataWithUserId);
     console.log('Preview response:', response.data);
     return response.data;
   } catch (error) {
@@ -41,7 +93,14 @@ export const previewContract = async (contractData) => {
 
 export const generatePdf = async (contractData, filename) => {
   try {
-    const response = await api.post('/generate-pdf', { contractData, filename }, {
+    // Ajouter l'ID utilisateur
+    const userId = getCurrentUserId();
+    
+    const response = await api.post('/generate-pdf', {
+      contractData,
+      filename,
+      user_id: userId
+    }, {
       responseType: 'blob',
     });
     
@@ -65,12 +124,14 @@ export const generatePdf = async (contractData, filename) => {
 
 export const saveContract = async (contractData, title, id = null, isDraft = false, fromStep6 = false) => {
   try {
+    const userId = getCurrentUserId();
     const response = await api.post('/contracts', { 
       contractData, 
       title, 
       id,
       isDraft,
-      fromStep6
+      fromStep6,
+      user_id: userId
     });
     return response.data;
   } catch (error) {
@@ -81,7 +142,10 @@ export const saveContract = async (contractData, title, id = null, isDraft = fal
 
 export const getContracts = async () => {
   try {
-    const response = await api.get('/contracts');
+    const userId = getCurrentUserId();
+    const response = await api.get('/contracts', {
+      params: { user_id: userId }
+    });
     return response.data.contracts;
   } catch (error) {
     console.error('Error fetching contracts:', error);
@@ -91,7 +155,10 @@ export const getContracts = async () => {
 
 export const getContractById = async (contractId) => {
   try {
-    const response = await api.get(`/contracts/${contractId}`);
+    const userId = getCurrentUserId();
+    const response = await api.get(`/contracts/${contractId}`, {
+      params: { user_id: userId }
+    });
     return response.data;
   } catch (error) {
     console.error('Error fetching contract:', error);
@@ -101,7 +168,10 @@ export const getContractById = async (contractId) => {
 
 export const getContractElements = async (contractId) => {
   try {
-    const response = await api.get(`/contracts/${contractId}/elements`);
+    const userId = getCurrentUserId();
+    const response = await api.get(`/contracts/${contractId}/elements`, {
+      params: { user_id: userId }
+    });
     return response.data;
   } catch (error) {
     console.error('Error fetching contract elements:', error);
@@ -111,7 +181,11 @@ export const getContractElements = async (contractId) => {
 
 export const updateContract = async (contractId, updates) => {
   try {
-    const response = await api.put(`/contracts/${contractId}`, updates);
+    const userId = getCurrentUserId();
+    const response = await api.put(`/contracts/${contractId}`, {
+      ...updates,
+      user_id: userId
+    });
     return response.data;
   } catch (error) {
     console.error('Error updating contract:', error);
@@ -121,7 +195,10 @@ export const updateContract = async (contractId, updates) => {
 
 export const deleteContract = async (contractId) => {
   try {
-    const response = await api.delete(`/contracts/${contractId}`);
+    const userId = getCurrentUserId();
+    const response = await api.delete(`/contracts/${contractId}`, {
+      params: { user_id: userId }
+    });
     return response.data;
   } catch (error) {
     console.error('Error deleting contract:', error);
@@ -165,6 +242,10 @@ export const importContract = async (file) => {
     const formData = new FormData();
     formData.append('file', file);
     
+    // Ajouter l'ID utilisateur
+    const userId = getCurrentUserId();
+    formData.append('user_id', userId);
+    
     // Configuration spécifique pour envoyer un fichier
     const config = {
       headers: {
@@ -199,7 +280,28 @@ export const testCors = async () => {
 
 export const getUserProfile = async () => {
   try {
-    const response = await api.get('/user-profile');
+    const userId = getCurrentUserId();
+    
+    // Pour les utilisateurs non authentifiés, vérifier d'abord si nous avons des données en sessionStorage
+    if (userId.startsWith('anon_')) {
+      // Essayer de récupérer depuis sessionStorage d'abord
+      const tempData = sessionStorage.getItem('tempDashboardData');
+      if (tempData) {
+        try {
+          const parsedData = JSON.parse(tempData);
+          console.log('Profil temporaire chargé depuis sessionStorage');
+          return parsedData;
+        } catch (error) {
+          console.error('Erreur de parsing des données temporaires:', error);
+          // Continuer avec l'appel API si le parsing échoue
+        }
+      }
+    }
+    
+    // Si aucune donnée temporaire n'est trouvée ou pour les utilisateurs authentifiés
+    const response = await api.get('/user-profile', {
+      params: { user_id: userId }
+    });
     return response.data;
   } catch (error) {
     console.error('Error fetching user profile:', error);
@@ -209,7 +311,11 @@ export const getUserProfile = async () => {
 
 export const updateUserProfile = async (profileData) => {
   try {
-    const response = await api.post('/user-profile', profileData);
+    const userId = getCurrentUserId();
+    const response = await api.post('/user-profile', {
+      ...profileData,
+      user_id: userId
+    });
     return response.data;
   } catch (error) {
     console.error('Error updating user profile:', error);
@@ -325,6 +431,39 @@ export const accessFinalizationStep = async (contractId) => {
   }
 };
 
+/**
+ * Fonction pour migrer les données d'un utilisateur anonyme vers un compte authentifié
+ * À appeler lorsqu'un utilisateur s'authentifie après avoir utilisé l'application en anonyme
+ */
+export const migrateAnonymousUserData = async (newUserId) => {
+  try {
+    // Récupérer l'ID anonyme de l'utilisateur avant qu'il ne se connecte
+    const anonymousId = localStorage.getItem('anonymousUserId');
+    
+    if (!anonymousId) {
+      console.log('Aucun ID anonyme trouvé, rien à migrer.');
+      return { success: false, message: 'Aucune donnée anonyme à migrer' };
+    }
+    
+    // Envoyer une requête pour migrer les données
+    const response = await api.post('/migrate-user-data', {
+      anonymous_id: anonymousId,
+      authenticated_id: newUserId
+    });
+    
+    // Si la migration réussit, supprimer l'ID anonyme
+    if (response.data.success) {
+      localStorage.removeItem('anonymousUserId');
+      console.log('Migration des données réussie, ID anonyme supprimé.');
+    }
+    
+    return response.data;
+  } catch (error) {
+    console.error('Erreur lors de la migration des données:', error);
+    return { success: false, error: error.message };
+  }
+};
+
 // Corriger l'avertissement ESLint en créant une variable pour l'export par défaut
 const apiService = {
   analyzeProject,
@@ -345,7 +484,8 @@ const apiService = {
   saveClient,
   updateClient,
   deleteClient,
-  accessFinalizationStep
+  accessFinalizationStep,
+  migrateAnonymousUserData
 };
 
 export default apiService;

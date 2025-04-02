@@ -1,0 +1,33 @@
+{
+  "physical_person": {
+    "is_configured": true,
+    "gentille": "M.",
+    "nom": "MAURICI",
+    "prenom": "Lucas",
+    "date_naissance": "",
+    "nationalite": "",
+    "adresse": "104 avenue de versailles",
+    "code_postal": "75016zefezfezf",
+    "ville": "Paris",
+    "email": "zefzefezfzefzefezf",
+    "telephone": ""
+  },
+  "legal_entity": {
+    "is_configured": false,
+    "nom": "",
+    "forme_juridique": "",
+    "capital": "",
+    "siren": "",
+    "siege": "",
+    "adresse": "",
+    "code_postal": "",
+    "ville": "",
+    "email": "",
+    "telephone": "",
+    "representant": "",
+    "qualite_representant": ""
+  },
+  "selected_entity_type": "physical_person",
+  "clients": [],
+  "user_id": "user_2vB3pVJhCstiBi41Kpt19iWOzDN"
+}

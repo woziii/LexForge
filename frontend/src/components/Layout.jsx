@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { 
   Home, 
@@ -9,12 +9,42 @@ import {
   Menu,
   X
 } from 'lucide-react';
-import { useAuth, UserButton, SignInButton } from '@clerk/clerk-react';
+import { useAuth, UserButton, SignInButton, useClerk } from '@clerk/clerk-react';
+import { migrateAnonymousUserData } from '../services/api';
+import { clearAllTempData } from '../utils/clearTempData';
 
 const Layout = () => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { isLoaded, isSignedIn } = useAuth();
+  const { isLoaded, isSignedIn, userId } = useAuth();
+  const { signOut } = useClerk();
+  
+  // Effet pour gérer la migration des données lors de la connexion
+  useEffect(() => {
+    // Vérifier si l'utilisateur vient de se connecter et a un ID anonyme stocké
+    const handleUserAuthentication = async () => {
+      if (isLoaded && isSignedIn && userId) {
+        const anonymousId = localStorage.getItem('anonymousUserId');
+        
+        if (anonymousId) {
+          console.log('Utilisateur connecté avec des données anonymes, tentative de migration...');
+          try {
+            // Migrer les données de l'utilisateur anonyme vers l'utilisateur authentifié
+            const result = await migrateAnonymousUserData(userId);
+            if (result.success) {
+              console.log('Migration des données réussie:', result.message);
+            } else {
+              console.warn('Échec de la migration des données:', result.message || result.error);
+            }
+          } catch (error) {
+            console.error('Erreur lors de la migration des données:', error);
+          }
+        }
+      }
+    };
+    
+    handleUserAuthentication();
+  }, [isLoaded, isSignedIn, userId]);
   
   // Détermine si un lien est actif
   const isActive = (path) => {
@@ -23,6 +53,32 @@ const Layout = () => {
   
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
+  };
+  
+  // Gestionnaire de déconnexion personnalisé
+  const handleSignOut = async () => {
+    // Nettoyer explicitement toutes les données de session avant la déconnexion
+    sessionStorage.removeItem('tempDashboardData');
+    sessionStorage.removeItem('tempBusinessInfo');
+    sessionStorage.removeItem('tempContractData');
+    sessionStorage.removeItem('draftContractId');
+    sessionStorage.removeItem('authRedirectAction');
+    
+    // Supprimer toutes les données temporaires lors de la déconnexion
+    clearAllTempData();
+    
+    // Supprimer l'ID Clerk du localStorage
+    localStorage.removeItem('clerkUserId');
+    
+    // Générer un nouvel ID anonyme pour éviter de garder des références aux anciennes données
+    const newAnonymousId = 'anon_' + Math.random().toString(36).substring(2, 15) + '_' + Date.now().toString(36);
+    sessionStorage.setItem('anonymousUserId', newAnonymousId);
+    
+    // Effectuer la déconnexion
+    await signOut();
+    
+    // Forcer un rafraîchissement complet de la page pour réinitialiser tous les états
+    window.location.href = "/";
   };
   
   return (
@@ -110,7 +166,10 @@ const Layout = () => {
             {isLoaded && (
               <div className="ml-4">
                 {isSignedIn ? (
-                  <UserButton afterSignOutUrl="/" />
+                  <UserButton 
+                    afterSignOutUrl="/"
+                    signOutCallback={handleSignOut}
+                  />
                 ) : (
                   <SignInButton mode="modal">
                     <button className="group relative px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-full text-sm font-medium transition-all duration-300 transform hover:scale-105 hover:shadow-lg overflow-hidden animate-pulse-slow">
@@ -188,7 +247,10 @@ const Layout = () => {
                   {/* Bouton de connexion/avatar utilisateur (mobile) */}
                   {isLoaded && (
                     isSignedIn ? (
-                      <UserButton afterSignOutUrl="/" />
+                      <UserButton 
+                        afterSignOutUrl="/"
+                        signOutCallback={handleSignOut}
+                      />
                     ) : (
                       <SignInButton mode="modal">
                         <button className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium transition-colors">

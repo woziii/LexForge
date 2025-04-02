@@ -1,58 +1,36 @@
 {
-  "id": "4124f334-995b-4468-97cb-bc125be2e7ed",
-  "title": "ContratTest",
-  "created_at": "2025-04-02T12:12:43.363603",
-  "updated_at": "2025-04-02T12:26:21.154669",
+  "id": "7d5db265-5732-44f5-afa6-55c45966afde",
+  "title": "Contrat 1743604897580",
   "data": {
+    "type_contrat": [
+      "Image (droit à l'image)",
+      "Auteur (droits d'auteur)"
+    ],
+    "type_cession": "Gratuite",
+    "droits_cedes": [],
+    "exclusivite": false,
+    "auteur_type": "Personne physique",
     "auteur_info": {
-      "adresse": "dada",
-      "date_naissance": "1999-12-24",
+      "adresse": "dzedzed",
+      "date_naissance": "2025-04-17",
       "gentille": "M.",
-      "nationalite": "Française",
-      "nom": "zadazd",
-      "prenom": "dazdaz",
+      "nationalite": "edzdz",
+      "nom": "dzedz",
+      "prenom": "edzed",
       "saveToClients": false
     },
-    "auteur_type": "Personne physique",
-    "description_image": "dza",
-    "description_oeuvre": "dazd",
-    "droits_cedes": [],
-    "entreprise_info": {},
-    "exclusivite": false,
-    "remuneration": "",
+    "description_oeuvre": "ezdezd",
+    "description_image": "edzd",
     "supports": [],
-    "type_cession": "Gratuite",
-    "type_contrat": [
-      "Auteur (droits d'auteur)",
-      "Image (droit à l'image)"
-    ]
+    "remuneration": "",
+    "entreprise_info": {},
+    "user_id": "user_2vB3pVJhCstiBi41Kpt19iWOzDN"
   },
   "is_draft": false,
   "from_step6": true,
-  "form_data": {
-    "auteur_info": {
-      "adresse": "dada",
-      "date_naissance": "1999-12-24",
-      "gentille": "M.",
-      "nationalite": "Française",
-      "nom": "zadazd",
-      "prenom": "dazdaz",
-      "saveToClients": false
-    },
-    "auteur_type": "Personne physique",
-    "description_image": "dza",
-    "description_oeuvre": "dazd",
-    "droits_cedes": [],
-    "entreprise_info": {},
-    "exclusivite": false,
-    "remuneration": "",
-    "supports": [],
-    "type_cession": "Gratuite",
-    "type_contrat": [
-      "Auteur (droits d'auteur)",
-      "Image (droit à l'image)"
-    ]
-  },
+  "user_id": "user_2vB3pVJhCstiBi41Kpt19iWOzDN",
+  "created_at": "2025-04-02T16:41:37.585356",
+  "updated_at": "2025-04-02T16:41:37.585378",
   "elements": [
     {
       "type": "paragraph",
@@ -75,7 +53,7 @@
     {
       "type": "paragraph",
       "style": "ContractText",
-      "text": "M. dazdaz zadazd, né(e) le 1999-12-24, de nationalité Française, domicilié(e) au dada, ci-après dénommé(e) \"l'Auteur et le Modèle\","
+      "text": "M. edzed dzedz, né(e) le 2025-04-17, de nationalité edzdz, domicilié(e) au dzedzed, ci-après dénommé(e) \"l'Auteur et le Modèle\","
     },
     {
       "type": "spacer",
@@ -84,7 +62,7 @@
     {
       "type": "paragraph",
       "style": "ContractText",
-      "text": "M. Lucas MAURICI, domicilié(e) au 104 avenue de versailles, ci-après dénommée \"le Cessionnaire\","
+      "text": "Mme Florine Astruc, domicilié(e) au 104 Avenue de Versailles, ci-après dénommée \"le Cessionnaire\","
     },
     {
       "type": "spacer",
@@ -165,7 +143,7 @@
     {
       "type": "paragraph",
       "style": "ContractText",
-      "text": "dazd"
+      "text": "ezdezd"
     },
     {
       "type": "spacer",
@@ -201,7 +179,7 @@
     {
       "type": "paragraph",
       "style": "ContractText",
-      "text": "dza"
+      "text": "edzd"
     },
     {
       "type": "spacer",
