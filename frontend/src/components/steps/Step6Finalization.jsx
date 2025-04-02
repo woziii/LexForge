@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Download, Check, Edit, CheckCircle, AlertCircle } from 'lucide-react';
-import { generatePdf, saveContract, saveClient } from '../../services/api';
+import { Download, Check, Edit, CheckCircle, AlertCircle, Info } from 'lucide-react';
+import { generatePdf, saveContract, saveClient, accessFinalizationStep } from '../../services/api';
+import { useAuth, useClerk } from '@clerk/clerk-react';
 
 const Step6Finalization = ({ contractData, updateContractData }) => {
   const [filename, setFilename] = useState('');
@@ -13,8 +14,157 @@ const Step6Finalization = ({ contractData, updateContractData }) => {
   const [savedContractId, setSavedContractId] = useState(null);
   const [clientSaved, setClientSaved] = useState(false);
   const [clientError, setClientError] = useState('');
+  const [tempContractData, setTempContractData] = useState(null);
+  const [authRedirectAction, setAuthRedirectAction] = useState(null);
+  const [showRecoveryMessage, setShowRecoveryMessage] = useState(false);
   
   const navigate = useNavigate();
+  const { isLoaded: authLoaded, isSignedIn } = useAuth();
+  const clerk = useClerk();
+  
+  // Fonction pour sauvegarder temporairement les données avant authentification
+  const sauvegarderTemporairement = async (data, action) => {
+    console.log('Sauvegarde temporaire des données:', data);
+    console.log('Action à effectuer après authentification:', action);
+    
+    try {
+      // Sauvegarder le contrat comme brouillon dans la base de données
+      const defaultTitle = `Brouillon - ${new Date().toLocaleString()}`;
+      const savedContract = await saveContract(
+        data,
+        title || defaultTitle,
+        null,  // id
+        true,  // isDraft
+        true   // fromStep6
+      );
+      
+      // Sauvegarder l'ID du contrat et l'action dans sessionStorage
+      sessionStorage.setItem('draftContractId', savedContract.id);
+      sessionStorage.setItem('authRedirectAction', action);
+      
+      console.log('Contrat sauvegardé comme brouillon avec ID:', savedContract.id);
+      
+      // Mémoriser l'ID et l'action en état local également
+      setSavedContractId(savedContract.id);
+      setAuthRedirectAction(action);
+      
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde temporaire:', error);
+      // En cas d'erreur, utiliser l'ancien mécanisme de sauvegarde dans sessionStorage
+      sessionStorage.setItem('tempContractData', JSON.stringify(data));
+      sessionStorage.setItem('authRedirectAction', action);
+      setTempContractData(data);
+      setAuthRedirectAction(action);
+    }
+  };
+  
+  // Récupérer les données temporaires après authentification
+  useEffect(() => {
+    if (authLoaded && isSignedIn) {
+      console.log('Authentification complète, vérification des données sauvegardées');
+      
+      const draftContractId = sessionStorage.getItem('draftContractId');
+      const savedAction = sessionStorage.getItem('authRedirectAction');
+      const savedData = sessionStorage.getItem('tempContractData');
+      
+      console.log('ID du contrat brouillon:', draftContractId);
+      console.log('Action trouvée dans sessionStorage:', savedAction);
+      
+      // Vérifier les paramètres d'URL pour l'action de redirection
+      const urlParams = new URLSearchParams(window.location.search);
+      const redirectAction = urlParams.get('redirectAction');
+      console.log('Action trouvée dans les paramètres d\'URL:', redirectAction);
+      
+      // Si des données à récupérer existent, montrer le message de récupération
+      if ((draftContractId && (savedAction || redirectAction)) || 
+          (savedData && (savedAction || redirectAction))) {
+        setShowRecoveryMessage(true);
+        // Cacher le message après 5 secondes
+        setTimeout(() => setShowRecoveryMessage(false), 5000);
+      }
+      
+      // Privilégier la récupération depuis le brouillon enregistré
+      if (draftContractId && (savedAction || redirectAction)) {
+        // Récupérer les données du contrat brouillon
+        accessFinalizationStep(draftContractId)
+          .then(response => {
+            console.log('Données récupérées du brouillon:', response.form_data);
+            
+            // Mettre à jour les données du contrat
+            updateContractData(response.form_data);
+            
+            // Effectuer l'action appropriée après l'authentification
+            const actionToPerform = redirectAction || savedAction;
+            
+            if (actionToPerform === 'downloadPdf') {
+              handleGeneratePdf(false);
+            } else if (actionToPerform === 'accessEditor') {
+              handleAccessEditor(false, draftContractId);
+            }
+            
+            // Nettoyer le stockage temporaire
+            sessionStorage.removeItem('draftContractId');
+            sessionStorage.removeItem('authRedirectAction');
+            
+            // Nettoyer tous les paramètres d'URL spécifiques à la redirection
+            if (urlParams.has('redirectAction') || urlParams.has('fromDashboard')) {
+              const newUrl = new URL(window.location.href);
+              newUrl.searchParams.delete('redirectAction');
+              newUrl.searchParams.delete('fromDashboard');
+              window.history.replaceState({}, '', newUrl.toString());
+            }
+          })
+          .catch(error => {
+            console.error('Erreur lors de la récupération du brouillon:', error);
+            // En cas d'erreur, essayer de récupérer depuis le sessionStorage
+            handleFallbackRestore();
+          });
+      } 
+      // Fallback vers l'ancien mécanisme
+      else if (savedData && (savedAction || redirectAction)) {
+        handleFallbackRestore();
+      }
+    }
+    
+    // Fonction pour gérer la restauration via l'ancien mécanisme
+    const handleFallbackRestore = () => {
+      const savedData = sessionStorage.getItem('tempContractData');
+      const savedAction = sessionStorage.getItem('authRedirectAction');
+      const urlParams = new URLSearchParams(window.location.search);
+      const redirectAction = urlParams.get('redirectAction');
+      
+      if (savedData) {
+        const parsedData = JSON.parse(savedData);
+        console.log('Données parsées depuis sessionStorage:', parsedData);
+        
+        // Mettre à jour les données du contrat
+        updateContractData(parsedData);
+        
+        // Effectuer l'action appropriée après l'authentification
+        const actionToPerform = redirectAction || savedAction;
+        
+        if (actionToPerform === 'downloadPdf') {
+          handleGeneratePdf(false);
+        } else if (actionToPerform === 'accessEditor') {
+          handleAccessEditor(false);
+        }
+        
+        // Nettoyer le stockage temporaire
+        sessionStorage.removeItem('tempContractData');
+        sessionStorage.removeItem('authRedirectAction');
+        
+        // Nettoyer tous les paramètres d'URL spécifiques à la redirection
+        if (urlParams.has('redirectAction') || urlParams.has('fromDashboard')) {
+          const newUrl = new URL(window.location.href);
+          newUrl.searchParams.delete('redirectAction');
+          newUrl.searchParams.delete('fromDashboard');
+          window.history.replaceState({}, '', newUrl.toString());
+        }
+      }
+    };
+    
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoaded, isSignedIn, updateContractData]);
   
   const handleFilenameChange = (e) => {
     setFilename(e.target.value);
@@ -24,7 +174,24 @@ const Step6Finalization = ({ contractData, updateContractData }) => {
     setTitle(e.target.value);
   };
   
-  const handleGeneratePdf = async () => {
+  const handleGeneratePdf = async (checkAuth = true) => {
+    // Si vérification d'authentification requise et utilisateur non authentifié
+    if (checkAuth && authLoaded && !isSignedIn) {
+      // Sauvegarder les données et rediriger vers l'authentification
+      sauvegarderTemporairement(contractData, 'downloadPdf');
+      
+      // Utiliser une URL absolue avec window.location.origin
+      const currentUrl = new URL(window.location.href);
+      // Préserver tous les paramètres d'URL existants
+      currentUrl.searchParams.set('redirectAction', 'downloadPdf');
+      currentUrl.searchParams.set('fromDashboard', 'true');
+      
+      clerk.openSignIn({
+        redirectUrl: currentUrl.toString()
+      });
+      return;
+    }
+    
     setIsGenerating(true);
     setError('');
     setGenerationSuccess(false);
@@ -46,7 +213,24 @@ const Step6Finalization = ({ contractData, updateContractData }) => {
     }
   };
   
-  const handleAccessEditor = async () => {
+  const handleAccessEditor = async (checkAuth = true, draftContractId = null) => {
+    // Si vérification d'authentification requise et utilisateur non authentifié
+    if (checkAuth && authLoaded && !isSignedIn) {
+      // Sauvegarder les données et rediriger vers l'authentification
+      sauvegarderTemporairement(contractData, 'accessEditor');
+      
+      // Utiliser une URL absolue avec window.location.origin
+      const currentUrl = new URL(window.location.href);
+      // Préserver tous les paramètres d'URL existants
+      currentUrl.searchParams.set('redirectAction', 'accessEditor');
+      currentUrl.searchParams.set('fromDashboard', 'true');
+      
+      clerk.openSignIn({
+        redirectUrl: currentUrl.toString()
+      });
+      return;
+    }
+    
     setIsSaving(true);
     setError('');
     
@@ -59,8 +243,26 @@ const Step6Finalization = ({ contractData, updateContractData }) => {
       // Préparer un titre pour le contrat
       const contractTitle = title || `Contrat ${Date.now()}`;
       
-      // Sauvegarder le contrat en brouillon
-      const savedContract = await saveContract(contractData, contractTitle);
+      // Si un ID de brouillon est fourni, utiliser cet ID pour la mise à jour
+      let savedContract;
+      if (draftContractId) {
+        savedContract = await saveContract(
+          contractData,
+          contractTitle,
+          draftContractId,
+          false, // Marquer comme non brouillon
+          true   // Marquer comme venant de l'étape 6
+        );
+      } else {
+        // Sauvegarder comme nouveau contrat
+        savedContract = await saveContract(
+          contractData,
+          contractTitle,
+          null,
+          false, // Marquer comme non brouillon
+          true   // Marquer comme venant de l'étape 6
+        );
+      }
       
       // Rediriger vers l'éditeur avec l'ID du contrat
       if (savedContract && savedContract.id) {
@@ -136,6 +338,25 @@ const Step6Finalization = ({ contractData, updateContractData }) => {
   return (
     <div className="space-y-6">
       <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-6">Finalisation du contrat</h2>
+      
+      {showRecoveryMessage && (
+        <div className="mb-4 p-3 bg-green-50 border-l-4 border-green-400 rounded-md flex items-start animate-fadeIn">
+          <CheckCircle className="w-5 h-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+          <p className="text-green-700">
+            Votre travail a été récupéré avec succès ! Vous pouvez maintenant continuer où vous vous étiez arrêté.
+          </p>
+        </div>
+      )}
+      
+      {!isSignedIn && (
+        <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-400 rounded-md flex items-start">
+          <Info className="w-5 h-5 text-blue-500 mr-2 flex-shrink-0 mt-0.5" />
+          <p className="text-blue-700">
+            Pour télécharger votre contrat ou accéder à l'éditeur, vous devrez vous connecter ou créer un compte. 
+            Vos données seront sauvegardées pendant le processus d'authentification.
+          </p>
+        </div>
+      )}
       
       {clientSaved && (
         <div className="mb-4 p-3 bg-green-50 border-l-4 border-green-400 rounded-md flex items-start">
@@ -243,65 +464,56 @@ const Step6Finalization = ({ contractData, updateContractData }) => {
               ? 'bg-green-600 hover:bg-green-700' 
               : 'bg-gray-300 text-gray-500 cursor-not-allowed'
           }`}
-          onClick={handleGeneratePdf}
+          onClick={() => handleGeneratePdf()}
           disabled={!isFormComplete || isGenerating}
         >
           {isGenerating ? (
             <>
-              <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white mr-2"></div>
-              Génération en cours...
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+              <span>Génération en cours...</span>
             </>
           ) : (
             <>
               <Download size={18} className="mr-2" />
-              Télécharger au format PDF
+              <span>Télécharger le PDF</span>
             </>
           )}
         </button>
         
         <button 
-          className={`flex items-center justify-center py-3 px-4 rounded-md shadow-sm text-white font-medium transition-colors ${
+          className={`flex items-center justify-center py-3 px-4 rounded-md shadow-sm font-medium transition-colors ${
             isFormComplete 
-              ? 'bg-blue-600 hover:bg-blue-700' 
-              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              ? 'bg-white border border-blue-600 text-blue-600 hover:bg-blue-50' 
+              : 'bg-gray-100 border border-gray-300 text-gray-400 cursor-not-allowed'
           }`}
-          onClick={handleAccessEditor}
+          onClick={() => handleAccessEditor()}
           disabled={!isFormComplete || isSaving}
         >
           {isSaving ? (
             <>
-              <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white mr-2"></div>
-              Préparation de l'éditeur...
+              <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+              <span>Préparation de l'éditeur...</span>
             </>
           ) : (
             <>
               <Edit size={18} className="mr-2" />
-              Accéder à l'éditeur
-              <span className="ml-2 text-xs bg-blue-100 text-blue-800 font-medium px-2 py-0.5 rounded-md shadow-sm">Beta</span>
+              <span>Accéder à l'éditeur</span>
+              <span className="ml-2 text-xs bg-blue-100 text-blue-800 py-0.5 px-1.5 rounded-md">Beta</span>
             </>
           )}
         </button>
       </div>
       
       {error && (
-        <div className="mt-4 bg-red-50 border-l-4 border-red-400 p-4">
-          <div className="flex">
-            <div className="ml-3">
-              <p className="text-sm text-red-700">{error}</p>
-            </div>
-          </div>
+        <div className="p-3 bg-red-50 border-l-4 border-red-400 text-red-700 text-sm">
+          {error}
         </div>
       )}
       
       {generationSuccess && (
-        <div className="mt-4 bg-green-50 border-l-4 border-green-400 p-4">
-          <div className="flex">
-            <div className="ml-3">
-              <p className="text-sm text-green-700">
-                Le contrat a été généré avec succès et le téléchargement devrait commencer automatiquement.
-              </p>
-            </div>
-          </div>
+        <div className="p-3 bg-green-50 border-l-4 border-green-400 text-green-700 text-sm flex items-center">
+          <Check size={18} className="mr-2 text-green-500" />
+          <span>Le PDF a été généré avec succès !</span>
         </div>
       )}
       

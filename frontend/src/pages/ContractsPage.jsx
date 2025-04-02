@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FileText, Edit, Trash2, Plus, Clock, Calendar, FileUp } from 'lucide-react';
+import { FileText, Edit, Trash2, Plus, Clock, Calendar, FileUp, FileCheck, AlertTriangle } from 'lucide-react';
 import { getContracts, deleteContract, exportContract } from '../services/api';
 import ContractSharePanel from '../components/ContractSharePanel';
 import ExportModal from '../components/ExportModal';
@@ -14,6 +14,8 @@ const ContractsPage = () => {
   const [contractToDelete, setContractToDelete] = useState(null);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [contractToExport, setContractToExport] = useState(null);
+  const [showDraftModal, setShowDraftModal] = useState(false);
+  const [draftContract, setDraftContract] = useState(null);
   
   const navigate = useNavigate();
   
@@ -37,6 +39,10 @@ const ContractsPage = () => {
   
   const handleEdit = (contractId) => {
     navigate(`/editor/${contractId}`);
+  };
+  
+  const handleFinalize = (contractId) => {
+    navigate(`/wizard/finalize/${contractId}`);
   };
   
   const confirmDelete = (contract) => {
@@ -122,6 +128,38 @@ const ContractsPage = () => {
       month: 'short',
       year: '2-digit'
     });
+  };
+  
+  const handleDraftClick = (contract, e) => {
+    // Si c'est un brouillon, afficher le modal de confirmation
+    if (contract.is_draft) {
+      e.preventDefault();
+      e.stopPropagation();
+      setDraftContract(contract);
+      setShowDraftModal(true);
+    }
+  };
+  
+  const handleDraftAction = (action) => {
+    if (!draftContract) return;
+    
+    if (action === 'finalize') {
+      // Si le contrat a été créé à partir de l'étape 6, rediriger vers la finalisation
+      if (draftContract.from_step6) {
+        navigate(`/wizard/finalize/${draftContract.id}`);
+      } else {
+        // Sinon, rediriger vers l'éditeur
+        navigate(`/editor/${draftContract.id}`);
+      }
+    } else if (action === 'delete') {
+      // Réutiliser la logique de suppression existante
+      setContractToDelete(draftContract);
+      setShowDraftModal(false);
+      setShowDeleteModal(true);
+    }
+    
+    // Dans tous les cas, fermer le modal
+    setShowDraftModal(false);
   };
   
   return (
@@ -216,7 +254,17 @@ const ContractsPage = () => {
                       <div className="flex items-center mb-3">
                         <FileText className="flex-shrink-0 h-5 w-5 text-blue-500" />
                         <div className="ml-2 flex-1">
-                          <div className="text-sm font-medium text-gray-900 truncate">{contract.title}</div>
+                          <div 
+                            className={`text-sm font-medium ${contract.is_draft ? 'text-amber-600 hover:text-amber-800 cursor-pointer' : 'text-gray-900'} truncate`}
+                            onClick={(e) => handleDraftClick(contract, e)}
+                          >
+                            {contract.title}
+                            {contract.is_draft && (
+                              <span className="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                Brouillon
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                       
@@ -228,21 +276,36 @@ const ContractsPage = () => {
                       </div>
                       
                       <div className="flex justify-between mt-2 pt-2 border-t border-gray-100">
+                        {contract.from_step6 && (
+                          <button
+                            onClick={() => handleFinalize(contract.id)}
+                            className="flex items-center text-xs text-green-600 hover:text-green-900"
+                            title="Finaliser le contrat"
+                          >
+                            <FileCheck className="h-4 w-4" />
+                          </button>
+                        )}
+                        
                         <button
                           onClick={() => handleEdit(contract.id)}
                           className="flex items-center text-xs text-blue-600 hover:text-blue-900"
+                          title="Modifier dans l'éditeur"
                         >
                           <Edit className="h-4 w-4 mr-1" />
                         </button>
+                        
                         <button
                           onClick={(e) => handleExportClick(contract, e)}
                           className="flex items-center text-xs text-indigo-600 hover:text-indigo-800"
+                          title="Exporter le contrat"
                         >
                           <FileUp className="h-4 w-4" />
                         </button>
+                        
                         <button
                           onClick={() => confirmDelete(contract)}
                           className="flex items-center text-xs text-red-600 hover:text-red-900"
+                          title="Supprimer le contrat"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -253,66 +316,92 @@ const ContractsPage = () => {
               </div>
               
               {/* Vue desktop (tableau) */}
-              <div className="hidden sm:block overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Titre
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Date de création
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Dernière modification
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {contracts.map((contract) => (
-                      <tr key={contract.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <FileText className="flex-shrink-0 h-5 w-5 text-gray-400" />
-                            <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">{contract.title}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {formatDate(contract.created_at)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {formatDate(contract.updated_at)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <button
-                            onClick={() => handleEdit(contract.id)}
-                            className="text-blue-600 hover:text-blue-900 px-2"
-                          >
-                            <Edit className="inline h-5 w-5" />
-                          </button>
-                          <button
-                            onClick={(e) => handleExportClick(contract, e)}
-                            className="text-indigo-600 hover:text-indigo-800 px-2"
-                            id="contract-export-button"
-                          >
-                            <FileUp className="inline h-5 w-5" />
-                          </button>
-                          <button
-                            onClick={() => confirmDelete(contract)}
-                            className="text-red-600 hover:text-red-900 px-2"
-                          >
-                            <Trash2 className="inline h-5 w-5" />
-                          </button>
-                        </td>
+              <div className="hidden sm:block">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full bg-white">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Titre
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Création
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Dernière modification
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Actions
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {contracts.map((contract) => (
+                        <tr key={contract.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <FileText className="flex-shrink-0 h-5 w-5 text-blue-500 mr-3" />
+                              <div 
+                                className={`text-sm font-medium ${contract.is_draft ? 'text-amber-600 hover:text-amber-800 cursor-pointer' : 'text-gray-900'} truncate max-w-xs`}
+                                onClick={(e) => handleDraftClick(contract, e)}
+                              >
+                                {contract.title}
+                                {contract.is_draft && (
+                                  <span className="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                    Brouillon
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {formatDate(contract.created_at)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {formatDate(contract.updated_at)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div className="flex items-center justify-end space-x-3">
+                              {contract.from_step6 && (
+                                <button
+                                  onClick={() => handleFinalize(contract.id)}
+                                  className="text-green-600 hover:text-green-900"
+                                  title="Finaliser le contrat"
+                                >
+                                  <FileCheck className="h-5 w-5" />
+                                </button>
+                              )}
+                              
+                              <button
+                                onClick={() => handleEdit(contract.id)}
+                                className="text-blue-600 hover:text-blue-900"
+                                title="Modifier dans l'éditeur"
+                              >
+                                <Edit className="h-5 w-5" />
+                              </button>
+                              
+                              <button
+                                onClick={(e) => handleExportClick(contract, e)}
+                                className="text-indigo-600 hover:text-indigo-800"
+                                title="Exporter le contrat"
+                              >
+                                <FileUp className="h-5 w-5" />
+                              </button>
+                              
+                              <button
+                                onClick={() => confirmDelete(contract)}
+                                className="text-red-600 hover:text-red-900"
+                                title="Supprimer le contrat"
+                              >
+                                <Trash2 className="h-5 w-5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </>
           )}
@@ -372,6 +461,58 @@ const ContractsPage = () => {
         contractTitle={contractToExport?.title}
         contractId={contractToExport?.id}
       />
+      
+      {/* Modal de confirmation pour les brouillons */}
+      {showDraftModal && draftContract && (
+        <div className="fixed z-10 inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div className="sm:flex sm:items-start">
+                  <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-amber-100 sm:mx-0 sm:h-10 sm:w-10">
+                    <AlertTriangle className="h-6 w-6 text-amber-600" aria-hidden="true" />
+                  </div>
+                  <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                    <h3 className="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                      Contrat en brouillon
+                    </h3>
+                    <div className="mt-2">
+                      <p className="text-sm text-gray-500">
+                        Ce contrat est actuellement en brouillon. Que souhaitez-vous faire avec "{draftContract.title}" ?
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button
+                  type="button"
+                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm"
+                  onClick={() => handleDraftAction('finalize')}
+                >
+                  Finaliser
+                </button>
+                <button
+                  type="button"
+                  className="mt-3 w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                  onClick={() => handleDraftAction('delete')}
+                >
+                  Supprimer
+                </button>
+                <button
+                  type="button"
+                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                  onClick={() => setShowDraftModal(false)}
+                >
+                  Annuler
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

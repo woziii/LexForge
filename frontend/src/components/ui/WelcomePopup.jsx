@@ -43,7 +43,7 @@ const WelcomePopup = ({ forceShow = false, onClose: externalOnClose }) => {
     },
     {
       id: 5,
-      text: "⚠️ Information technique : Le serveur de LexForge s'éteint après une période d'inactivité pour économiser des ressources. À votre arrivée, il peut nécessiter environ 50 secondes pour se réactiver. Pendant ce temps, certaines fonctionnalités utilisant le backend peuvent être temporairement indisponibles. Merci de votre patience !",
+      text: "⚠️ Information importante : LexForge est actuellement en version bêta. Bien que nous prenions au sérieux la protection de vos données, notre niveau de sécurité n'est pas encore optimal. Il est fortement recommandé de ne pas stocker d'informations hautement confidentielles ou sensibles sur la plateforme pour le moment. Vos données vous appartiennent et ne seront jamais exploitées sans votre consentement.",
       image: "saul_pensif.jpg",
       read: false
     },

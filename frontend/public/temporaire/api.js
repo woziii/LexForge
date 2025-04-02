@@ -29,9 +29,7 @@ export const analyzeProject = async (description) => {
 
 export const previewContract = async (contractData) => {
   try {
-    console.log('Sending preview request with data:', JSON.stringify(contractData));
     const response = await api.post('/preview', contractData);
-    console.log('Preview response:', response.data);
     return response.data;
   } catch (error) {
     console.error('Error previewing contract:', error);
@@ -63,15 +61,9 @@ export const generatePdf = async (contractData, filename) => {
 
 // Nouvelles fonctions pour la gestion des contrats
 
-export const saveContract = async (contractData, title, id = null, isDraft = false, fromStep6 = false) => {
+export const saveContract = async (contractData, title, id = null) => {
   try {
-    const response = await api.post('/contracts', { 
-      contractData, 
-      title, 
-      id,
-      isDraft,
-      fromStep6
-    });
+    const response = await api.post('/contracts', { contractData, title, id });
     return response.data;
   } catch (error) {
     console.error('Error saving contract:', error);
@@ -315,16 +307,6 @@ export const deleteClient = async (clientId) => {
   }
 };
 
-export const accessFinalizationStep = async (contractId) => {
-  try {
-    const response = await api.get(`/contracts/${contractId}/finalize`);
-    return response.data;
-  } catch (error) {
-    console.error('Error accessing finalization step:', error);
-    throw error;
-  }
-};
-
 // Corriger l'avertissement ESLint en créant une variable pour l'export par défaut
 const apiService = {
   analyzeProject,
@@ -344,8 +326,7 @@ const apiService = {
   getClients,
   saveClient,
   updateClient,
-  deleteClient,
-  accessFinalizationStep
+  deleteClient
 };
 
 export default apiService;

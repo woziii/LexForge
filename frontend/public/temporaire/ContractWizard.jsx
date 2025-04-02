@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Check, ArrowRight, ArrowLeft, FileText, Sparkles, RotateCcw } from 'lucide-react';
-import { useAuth } from '@clerk/clerk-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { Check, ArrowRight, ArrowLeft, FileText, Sparkles } from 'lucide-react';
 import PreviewPanel from '../components/PreviewPanel';
 import Step1ProjectDescription from '../components/steps/Step1ProjectDescription';
 import Step2CessionMode from '../components/steps/Step2CessionMode';
@@ -28,12 +26,7 @@ const ContractWizard = () => {
   const [contractPreview, setContractPreview] = useState('');
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [isCheckingProfile, setIsCheckingProfile] = useState(true);
-  const [businessInfoRequired, setBusinessInfoRequired] = useState(false);
-  const { isLoaded: authLoaded, isSignedIn } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
-  
-  const initialContractData = {
+  const [contractData, setContractData] = useState({
     type_contrat: [],
     type_cession: "Gratuite",
     droits_cedes: [],
@@ -43,87 +36,40 @@ const ContractWizard = () => {
     description_oeuvre: "",
     description_image: "",
     supports: [],
-    remuneration: "",
-    entreprise_info: {}
-  };
-  
-  const [contractData, setContractData] = useState(initialContractData);
+    remuneration: ""
+  });
   
   const totalSteps = STEPS.length;
   
-  // Vérifier si l'utilisateur est authentifié et a un profil configuré
+  // Vérifier si le profil est configuré
   useEffect(() => {
     const checkUserProfile = async () => {
       try {
         setIsCheckingProfile(true);
+        const profile = await getUserProfile();
         
-        // Vérifier si l'utilisateur vient du Dashboard après avoir rempli ses informations
-        const fromDashboard = new URLSearchParams(location.search).get('fromDashboard') === 'true';
+        const hasPhysicalPerson = profile?.physical_person?.is_configured;
+        const hasLegalEntity = profile?.legal_entity?.is_configured;
         
-        // Si l'utilisateur ne vient pas du Dashboard, le rediriger pour remplir ses informations
-        if (!fromDashboard) {
-          setBusinessInfoRequired(true);
-          navigate('/dashboard?redirectTo=wizard', { replace: true });
-          return;
-        }
-        
-        // Pour les utilisateurs authentifiés uniquement, récupérer leurs informations de profil
-        if (authLoaded && isSignedIn) {
-          // Pour utilisateur authentifié
-          const profile = await getUserProfile();
-          
-          const hasPhysicalPerson = profile?.physical_person?.is_configured;
-          const hasLegalEntity = profile?.legal_entity?.is_configured;
-          
-          if (!hasPhysicalPerson && !hasLegalEntity) {
-            setShowProfileModal(true);
-          } else {
-            // Préremplir les informations d'entreprise depuis le profil de l'utilisateur
-            if (hasLegalEntity && profile.legal_entity) {
-              setContractData(prevData => ({
-                ...prevData,
-                entreprise_info: {
-                  nom: profile.legal_entity.nom || '',
-                  forme_juridique: profile.legal_entity.forme_juridique || '',
-                  siren: profile.legal_entity.siren || '',
-                  adresse: profile.legal_entity.adresse || '',
-                  code_postal: profile.legal_entity.code_postal || '',
-                  ville: profile.legal_entity.ville || '',
-                  email: profile.legal_entity.email || '',
-                  telephone: profile.legal_entity.telephone || ''
-                }
-              }));
-            } else if (hasPhysicalPerson && profile.physical_person) {
-              setContractData(prevData => ({
-                ...prevData,
-                entreprise_info: {
-                  nom: `${profile.physical_person.prenom || ''} ${profile.physical_person.nom || ''}`,
-                  forme_juridique: 'Entreprise individuelle',
-                  adresse: profile.physical_person.adresse || '',
-                  code_postal: profile.physical_person.code_postal || '',
-                  ville: profile.physical_person.ville || '',
-                  email: profile.physical_person.email || '',
-                  telephone: profile.physical_person.telephone || ''
-                }
-              }));
-            }
-          }
+        if (!hasPhysicalPerson && !hasLegalEntity) {
+          setShowProfileModal(true);
+        } else if (profile?.selected_entity_type) {
+          // Utiliser les informations de l'entité sélectionnée comme cessionnaire
+          // Cette logique serait implémentée dans le backend
         }
       } catch (error) {
         console.error('Error checking user profile:', error);
-        if (authLoaded && isSignedIn) {
-          setShowProfileModal(true);
-        }
+        setShowProfileModal(true);
       } finally {
         setIsCheckingProfile(false);
       }
     };
     
     checkUserProfile();
-  }, [authLoaded, isSignedIn, navigate, location.search]);
+  }, []);
   
   // Calculer la progression
-  const progress = ((activeStep - 1) / (totalSteps - 1)) * 100;
+  const progress = (activeStep / totalSteps) * 100;
   
   // Navigation
   const handleNextStep = () => {
@@ -157,45 +103,11 @@ const ContractWizard = () => {
       if (contractData.type_contrat.length === 0) {
         return;
       }
-
+      
       try {
         setIsPreviewLoading(true);
-        
-        // S'assurer que entreprise_info est correctement formaté pour la prévisualisation
-        const entrepriseInfo = contractData.entreprise_info;
-        if (entrepriseInfo && Object.keys(entrepriseInfo).length > 0) {
-          // Vérifier que tous les champs essentiels existent
-          const previewData = {...contractData};
-          
-          // Pour une personne physique (identifiée par la présence de prenom)
-          if (entrepriseInfo.prenom && entrepriseInfo.nom) {
-            previewData.entreprise_info = {
-              ...entrepriseInfo,
-              adresse: entrepriseInfo.adresse || formatAddress(entrepriseInfo),
-              siege: entrepriseInfo.siege || formatAddress(entrepriseInfo),
-              type: 'physical_person',
-              capital: entrepriseInfo.capital || '',
-              forme_juridique: entrepriseInfo.forme_juridique || 'Entreprise individuelle'
-            };
-          } 
-          // Pour une personne morale
-          else if (entrepriseInfo.nom && entrepriseInfo.forme_juridique) {
-            previewData.entreprise_info = {
-              ...entrepriseInfo,
-              siege: entrepriseInfo.siege || formatAddress(entrepriseInfo),
-              type: 'legal_entity',
-              capital: entrepriseInfo.capital || '1000 €'
-            };
-          }
-          
-          console.log("Données envoyées pour prévisualisation:", JSON.stringify(previewData));
-          const response = await previewContract(previewData);
-          setContractPreview(response.preview);
-        } else {
-          console.log("Données envoyées pour prévisualisation:", JSON.stringify(contractData));
-          const response = await previewContract(contractData);
-          setContractPreview(response.preview);
-        }
+        const response = await previewContract(contractData);
+        setContractPreview(response.preview);
       } catch (error) {
         console.error('Error fetching preview:', error);
       } finally {
@@ -205,35 +117,6 @@ const ContractWizard = () => {
     
     fetchPreview();
   }, [contractData]);
-  
-  // Fonction utilitaire pour formater l'adresse
-  const formatAddress = (data) => {
-    const parts = [];
-    
-    if (data.adresse) {
-      parts.push(data.adresse);
-    }
-    
-    let cityPart = '';
-    if (data.code_postal) cityPart += data.code_postal;
-    if (data.ville) {
-      if (cityPart) cityPart += ' ';
-      cityPart += data.ville;
-    }
-    
-    if (cityPart) parts.push(cityPart);
-    
-    return parts.length > 0 ? parts.join(', ') : '';
-  };
-  
-  // Fonction pour réinitialiser les données du contrat
-  const resetContractData = () => {
-    if (window.confirm("Êtes-vous sûr de vouloir réinitialiser toutes les informations du contrat ?")) {
-      setContractData(initialContractData);
-      setActiveStep(1);
-      window.scrollTo(0, 0);
-    }
-  };
   
   // Sélectionner le composant à afficher en fonction de l'étape active
   const renderStepContent = () => {
@@ -274,7 +157,7 @@ const ContractWizard = () => {
   };
   
   // Afficher un indicateur de chargement pendant la vérification du profil
-  if (isCheckingProfile || businessInfoRequired) {
+  if (isCheckingProfile) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-white via-blue-50 to-indigo-50">
         <div className="animate-spin h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full"></div>
@@ -294,20 +177,10 @@ const ContractWizard = () => {
       <div className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="py-4">
-            <div className="flex justify-between items-center">
-              <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center">
-                <FileText className="mr-2 text-blue-600" size={20} />
-                Création de contrat
-              </h1>
-              
-              <button
-                onClick={resetContractData}
-                className="flex items-center text-sm text-gray-500 hover:text-blue-600 transition-colors"
-              >
-                <RotateCcw size={16} className="mr-1" />
-                Réinitialiser
-              </button>
-            </div>
+            <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center">
+              <FileText className="mr-2 text-blue-600" size={20} />
+              Création de contrat
+            </h1>
             
             {/* Barre de progression */}
             <div className="mt-4 relative">
@@ -373,37 +246,65 @@ const ContractWizard = () => {
               {renderStepContent()}
             </div>
             
-            {/* Boutons de navigation - Ne pas afficher pour l'étape 6 */}
-            {activeStep !== 6 && (
-              <div className="flex justify-between pt-4 border-t border-gray-100">
-                <button
-                  onClick={handlePrevStep}
-                  className={`px-4 py-2 border border-gray-300 rounded-md text-gray-700 flex items-center ${
-                    activeStep > 1 ? 'hover:bg-gray-100' : 'opacity-50 cursor-not-allowed'
-                  }`}
-                  disabled={activeStep <= 1}
-                >
-                  <ArrowLeft size={16} className="mr-1" />
-                  <span>Précédent</span>
-                </button>
-                
-                <button
-                  onClick={handleNextStep}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md flex items-center"
-                >
-                  <span>Suivant</span>
-                  <ArrowRight size={16} className="ml-1" />
-                </button>
-              </div>
-            )}
+            {/* Boutons de navigation */}
+            <div className="flex justify-between pt-4 border-t border-gray-100">
+              <button
+                type="button"
+                onClick={handlePrevStep}
+                disabled={activeStep === 1}
+                className={`flex items-center px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  activeStep === 1 
+                  ? 'text-gray-400 cursor-not-allowed' 
+                  : 'text-gray-700 hover:bg-gray-100 hover:shadow-sm'
+                }`}
+              >
+                <ArrowLeft size={16} className="mr-1" />
+                <span className="hidden xs:inline">Précédent</span>
+              </button>
+              
+              <button
+                type="button"
+                onClick={handleNextStep}
+                disabled={activeStep === totalSteps}
+                className={`flex items-center px-3 sm:px-5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  activeStep === totalSteps
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:shadow-md hover:scale-105'
+                }`}
+              >
+                <span className="hidden xs:inline">{activeStep === totalSteps ? 'Terminé' : 'Suivant'}</span>
+                <span className="xs:hidden">{activeStep === totalSteps ? 'Fin' : 'Suivant'}</span>
+                {activeStep !== totalSteps && <ArrowRight size={16} className="ml-1" />}
+              </button>
+            </div>
           </div>
           
-          {/* Prévisualisation */}
-          <div className="lg:block">
+          {/* Prévisualisation - Cachée par défaut sur mobile mais accessible via un bouton */}
+          <div className="hidden lg:block bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
             <PreviewPanel 
-              preview={contractPreview}
-              isLoading={isPreviewLoading}
+              contractPreview={contractPreview} 
+              isLoading={isPreviewLoading} 
             />
+          </div>
+          
+          {/* Bouton pour afficher la prévisualisation sur mobile */}
+          <div className="lg:hidden mt-4">
+            <button
+              onClick={() => {
+                document.getElementById('mobilePreview').classList.toggle('hidden');
+              }}
+              className="w-full bg-white py-3 px-4 rounded-xl shadow-sm border border-gray-100 text-center text-blue-600 font-medium flex items-center justify-center"
+            >
+              <FileText className="mr-2" size={18} />
+              Afficher/Masquer l'aperçu
+            </button>
+            
+            <div id="mobilePreview" className="hidden mt-4 bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
+              <PreviewPanel 
+                contractPreview={contractPreview} 
+                isLoading={isPreviewLoading} 
+              />
+            </div>
           </div>
         </div>
       </div>

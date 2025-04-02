@@ -110,6 +110,7 @@ def preview():
     Endpoint pour prévisualiser le contrat.
     """
     contract_data = request.json
+    print(f"Données reçues dans preview: {json.dumps(contract_data, indent=2)}")
     
     try:
         # Si l'utilisateur a un profil configuré, utiliser ces informations
@@ -118,23 +119,64 @@ def preview():
             with open(USER_PROFILE_FILE, 'r') as f:
                 user_profile = json.load(f)
         
-        # Si un type d'entité est sélectionné, utiliser ses informations comme cessionnaire
-        if user_profile.get('selected_entity_type') == 'physical_person' and user_profile['physical_person']['is_configured']:
+        # 1. Vérifier si entreprise_info est fourni dans les données du contrat et l'utiliser en priorité
+        entreprise_info = contract_data.get('entreprise_info')
+        print(f"entreprise_info trouvé: {json.dumps(entreprise_info, indent=2) if entreprise_info else 'Non'}")
+        
+        if entreprise_info and isinstance(entreprise_info, dict) and any(entreprise_info.values()):
+            # Si entreprise_info contient des données, l'utiliser comme cessionnaire_info
+            cessionnaire_info = entreprise_info
+            print("Utilisation de entreprise_info comme cessionnaire_info")
+            
+            # S'assurer que les champs nécessaires pour la prévisualisation sont présents
+            if 'prenom' in cessionnaire_info and 'nom' in cessionnaire_info:
+                # Pour personne physique
+                if not cessionnaire_info.get('adresse') and (cessionnaire_info.get('code_postal') or cessionnaire_info.get('ville')):
+                    # Construire une adresse complète si nécessaire
+                    address_parts = []
+                    if cessionnaire_info.get('code_postal'):
+                        address_parts.append(cessionnaire_info.get('code_postal'))
+                    if cessionnaire_info.get('ville'):
+                        address_parts.append(cessionnaire_info.get('ville'))
+                    if address_parts:
+                        cessionnaire_info['adresse'] = ', '.join(address_parts)
+            else:
+                # Pour personne morale
+                if not cessionnaire_info.get('siege') and (cessionnaire_info.get('adresse') or cessionnaire_info.get('code_postal') or cessionnaire_info.get('ville')):
+                    # Construire un siège social si nécessaire
+                    address_parts = []
+                    if cessionnaire_info.get('adresse'):
+                        address_parts.append(cessionnaire_info.get('adresse'))
+                    if cessionnaire_info.get('code_postal'):
+                        address_parts.append(cessionnaire_info.get('code_postal'))
+                    if cessionnaire_info.get('ville'):
+                        address_parts.append(cessionnaire_info.get('ville'))
+                    if address_parts:
+                        cessionnaire_info['siege'] = ' '.join(address_parts)
+        
+        # 2. Sinon utiliser le profil utilisateur
+        elif user_profile.get('selected_entity_type') == 'physical_person' and user_profile['physical_person']['is_configured']:
             cessionnaire_info = user_profile['physical_person']
+            print("Utilisation du profil physical_person comme cessionnaire_info")
         elif user_profile.get('selected_entity_type') == 'legal_entity' and user_profile['legal_entity']['is_configured']:
             cessionnaire_info = user_profile['legal_entity']
+            print("Utilisation du profil legal_entity comme cessionnaire_info")
         else:
-            # Utiliser les informations par défaut de Tellers
+            # 3. Utiliser les informations par défaut de Tellers
             cessionnaire_info = TELLERS_INFO
+            print("Utilisation des informations par défaut Tellers comme cessionnaire_info")
         
         # Ajouter les informations du cessionnaire aux données du contrat
         contract_data['cessionnaire_info'] = cessionnaire_info
+        print(f"cessionnaire_info final: {json.dumps(cessionnaire_info, indent=2)}")
         
         # Utiliser la nouvelle fonction generate_contract_preview
         preview_text = generate_contract_preview(contract_data)
         return jsonify({'preview': preview_text})
     except Exception as e:
         print(f"Erreur lors de la génération de l'aperçu: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'preview': "Une erreur est survenue lors de la génération de l'aperçu.", 'error': str(e)})
 
 @app.route('/api/generate-pdf', methods=['POST'])
@@ -195,6 +237,8 @@ def save_contract():
     data = request.json
     contract_data = data.get('contractData', {})
     title = data.get('title', 'Contrat sans titre')
+    is_draft = data.get('isDraft', False)  # Nouveau champ pour indiquer si c'est un brouillon
+    from_step6 = data.get('fromStep6', False)  # Nouveau champ pour indiquer si ça vient de l'étape 6
     
     # Générer un ID unique pour le contrat s'il n'existe pas
     contract_id = data.get('id')
@@ -207,15 +251,24 @@ def save_contract():
         'title': title,
         'created_at': datetime.now().isoformat(),
         'updated_at': datetime.now().isoformat(),
-        'data': contract_data
+        'data': contract_data,
+        'is_draft': is_draft,
+        'from_step6': from_step6,
+        'form_data': contract_data  # Stockage des données complètes du formulaire
     }
     
-    # Sauvegarder le contrat dans un fichier JSON
-    file_path = os.path.join(CONTRACTS_DIR, f"{contract_id}.json")
-    with open(file_path, 'w', encoding='utf-8') as f:
-        json.dump(contract, f, ensure_ascii=False, indent=2)
+    # Chemin du fichier pour sauvegarder le contrat
+    contract_file = os.path.join(CONTRACTS_DIR, f"{contract_id}.json")
     
-    return jsonify({'id': contract_id, 'title': title})
+    # Sauvegarder dans un fichier JSON
+    with open(contract_file, 'w') as f:
+        json.dump(contract, f, indent=2)
+    
+    return jsonify({
+        'id': contract_id,
+        'message': 'Contract saved successfully',
+        'title': title
+    })
 
 @app.route('/api/contracts', methods=['GET'])
 def get_contracts():
@@ -224,22 +277,29 @@ def get_contracts():
     """
     contracts = []
     
-    # Parcourir tous les fichiers dans le répertoire des contrats
+    # Parcourir les fichiers dans le répertoire des contrats
     for filename in os.listdir(CONTRACTS_DIR):
         if filename.endswith('.json'):
             file_path = os.path.join(CONTRACTS_DIR, filename)
-            with open(file_path, 'r', encoding='utf-8') as f:
-                contract = json.load(f)
-                # Ne renvoyer que les métadonnées, pas les données complètes
-                contracts.append({
-                    'id': contract['id'],
-                    'title': contract['title'],
-                    'created_at': contract['created_at'],
-                    'updated_at': contract['updated_at']
-                })
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    contract = json.load(f)
+                    
+                    # Filtrer les informations à renvoyer
+                    contract_info = {
+                        'id': contract.get('id'),
+                        'title': contract.get('title', 'Contrat sans titre'),
+                        'created_at': contract.get('created_at'),
+                        'updated_at': contract.get('updated_at'),
+                        'is_draft': contract.get('is_draft', False),  # Inclure le statut de brouillon
+                        'from_step6': contract.get('from_step6', False)  # Inclure l'info si vient de l'étape 6
+                    }
+                    contracts.append(contract_info)
+            except Exception as e:
+                print(f"Error reading contract file {filename}: {e}")
     
-    # Trier les contrats par date de mise à jour (plus récent d'abord)
-    contracts.sort(key=lambda x: x['updated_at'], reverse=True)
+    # Trier les contrats par date de mise à jour (du plus récent au plus ancien)
+    contracts.sort(key=lambda x: x.get('updated_at', ''), reverse=True)
     
     return jsonify({'contracts': contracts})
 
@@ -536,6 +596,43 @@ def update_user_profile():
         
         return jsonify({'success': True, 'message': 'Profil mis à jour avec succès'})
     except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/contracts/<contract_id>/finalize', methods=['GET'])
+def access_finalization_step(contract_id):
+    """
+    Endpoint pour accéder à l'étape de finalisation (étape 6) d'un contrat existant.
+    Renvoie les données du formulaire du contrat qui sont nécessaires pour l'étape 6.
+    """
+    # Vérifier si le contrat existe
+    contract_file = os.path.join(CONTRACTS_DIR, f"{contract_id}.json")
+    if not os.path.exists(contract_file):
+        return jsonify({'error': 'Contract not found'}), 404
+    
+    try:
+        with open(contract_file, 'r', encoding='utf-8') as f:
+            contract = json.load(f)
+        
+        # Récupérer les données du formulaire
+        form_data = contract.get('form_data', contract.get('data', {}))
+        
+        # Mettre à jour le statut de "from_step6" à True pour indiquer que ce contrat est passé par l'étape 6
+        contract['from_step6'] = True
+        contract['updated_at'] = datetime.now().isoformat()
+        
+        # Sauvegarder les modifications
+        with open(contract_file, 'w', encoding='utf-8') as f:
+            json.dump(contract, f, ensure_ascii=False, indent=2)
+        
+        return jsonify({
+            'form_data': form_data,
+            'title': contract.get('title', 'Contrat sans titre'),
+            'id': contract_id,
+            'message': 'Successfully retrieved form data for finalization step'
+        })
+    
+    except Exception as e:
+        print(f"Error accessing finalization step for contract {contract_id}: {e}")
         return jsonify({'error': str(e)}), 500
 
 # Pour le développement local

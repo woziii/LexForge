@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@clerk/clerk-react": "^5.25.5",
     "@phosphor-icons/react": "^2.1.7",
     "@tabler/icons-react": "^2.40.0",
     "@testing-library/jest-dom": "^5.17.0",

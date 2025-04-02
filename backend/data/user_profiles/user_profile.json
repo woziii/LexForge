@@ -11,13 +11,16 @@
     "siege": ""
   },
   "physical_person": {
-    "adresse": "",
+    "adresse": "104 avenue de versailles",
+    "code_postal": "75016",
     "date_naissance": "",
-    "gentille": "",
-    "is_configured": false,
+    "email": "maurici.lucas@proton.me",
+    "gentille": "M.",
+    "is_configured": true,
     "nationalite": "",
-    "nom": "",
-    "prenom": ""
+    "nom": "MAURICI",
+    "prenom": "Lucas",
+    "ville": "Paris"
   },
-  "selected_entity_type": ""
+  "selected_entity_type": "physical_person"
 }

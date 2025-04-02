@@ -17,11 +17,13 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { getUserProfile } from '../services/api';
+import ProfileRequiredModal from '../components/ui/ProfileRequiredModal';
 
 const HomePage = () => {
   const [isProfileConfigured, setIsProfileConfigured] = useState(null);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedbackText, setFeedbackText] = useState('');
+  const [showProfileModal, setShowProfileModal] = useState(false);
   
   useEffect(() => {
     const checkUserProfile = async () => {
@@ -52,6 +54,12 @@ const HomePage = () => {
   
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-white via-blue-50 to-indigo-50">
+      {/* Modal pour la configuration du profil */}
+      <ProfileRequiredModal 
+        isOpen={showProfileModal} 
+        onClose={() => setShowProfileModal(false)} 
+      />
+      
       {/* Section principale avec titre central dominant */}
       <main className="flex-grow flex flex-col items-center justify-center px-4 py-16 sm:py-28">
         <div className="w-full max-w-6xl mx-auto text-center px-4">
@@ -93,7 +101,7 @@ const HomePage = () => {
           <div className="max-w-md mx-auto mb-8 flex items-center rounded-xl pl-4 pr-4 py-3.5 bg-gradient-to-r from-amber-50 to-amber-100 border border-amber-200 shadow-sm">
             <AlertCircle size={16} className="text-amber-500 flex-shrink-0 mr-3" />
             <p className="text-xs text-amber-700">
-              <span className="font-medium">Note technique :</span> Le serveur peut nécessiter jusqu'à 50 secondes pour s'activer après une période d'inactivité. Pendant ce temps, certaines fonctionnalités peuvent être temporairement indisponibles.
+              <span className="font-medium">Information importante :</span> LexForge est actuellement en version bêta. Bien que nous prenions la sécurité au sérieux, nous ne pouvons garantir une protection complète de vos données à ce stade. Nous vous recommandons de ne pas stocker d'informations hautement confidentielles sur la plateforme.
             </p>
           </div>
           
@@ -103,13 +111,13 @@ const HomePage = () => {
               <p className="text-xs text-gray-700 mb-3 sm:mb-0">
                 <span className="text-blue-600 font-medium">Conseil :</span> Configurez votre profil pour personnaliser vos contrats
               </p>
-              <Link 
-                to="/dashboard" 
+              <button 
+                onClick={() => setShowProfileModal(true)} 
                 className="w-full sm:w-auto inline-flex items-center justify-center text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 transition rounded-md sm:rounded-full px-4 py-2"
               >
                 Configurer
                 <ArrowRight size={12} className="ml-1.5" />
-              </Link>
+              </button>
             </div>
           )}
           
@@ -117,10 +125,16 @@ const HomePage = () => {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-6">
             <Link 
               to="/wizard" 
-              className="inline-flex items-center px-6 sm:px-8 py-3.5 sm:py-4 border border-transparent text-base font-medium rounded-xl shadow-md text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transform transition-all duration-200 hover:scale-105 hover:shadow-lg"
+              className="group relative inline-flex items-center px-6 sm:px-8 py-3.5 sm:py-4 border border-transparent text-base font-medium rounded-xl shadow-md text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transform transition-all duration-300 hover:scale-105 hover:shadow-lg overflow-hidden animate-pulse-slow"
             >
-              Créer un contrat
-              <ArrowRight size={18} className="ml-2 animate-pulse" />
+              <span className="relative z-10 flex items-center">
+                <span className="mr-2">Créer un contrat</span>
+                <ArrowRight size={18} className="transform group-hover:translate-x-1 transition-transform duration-300" />
+              </span>
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-indigo-400 opacity-0 group-hover:opacity-20 transition-opacity duration-300 animate-shimmer"></div>
+              <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(255,255,255,0.1),rgba(255,255,255,0))] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </Link>
           </div>
         </div>
