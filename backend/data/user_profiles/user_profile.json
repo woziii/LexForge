@@ -1,31 +1,25 @@
 {
   "clients": [],
   "legal_entity": {
-    "adresse": "",
     "capital": "",
-    "code_postal": "",
-    "email": "",
     "forme_juridique": "",
     "is_configured": false,
     "nom": "",
     "qualite_representant": "",
+    "rcs": "",
     "representant": "",
-    "siege": "",
-    "siren": "",
-    "telephone": "",
-    "ville": ""
+    "siege": ""
   },
   "physical_person": {
     "adresse": "104 avenue de versailles",
     "code_postal": "75016",
     "date_naissance": "",
-    "email": "lucas.maurici@aol.com",
+    "email": "maurici.lucas@proton.me",
     "gentille": "M.",
     "is_configured": true,
     "nationalite": "",
-    "nom": "Maurici",
+    "nom": "MAURICI",
     "prenom": "Lucas",
-    "telephone": "",
     "ville": "Paris"
   },
   "selected_entity_type": "physical_person"

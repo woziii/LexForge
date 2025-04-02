@@ -1,36 +1,23 @@
 {
-  "id": "9fe38850-b8f8-475d-8c47-b0c5f04341a4",
-  "title": "Contrat 1743586895689",
-  "created_at": "2025-04-02T11:41:35.696160",
-  "updated_at": "2025-04-02T11:41:37.750029",
+  "id": "4124f334-995b-4468-97cb-bc125be2e7ed",
+  "title": "ContratTest",
+  "created_at": "2025-04-02T12:12:43.363603",
+  "updated_at": "2025-04-02T12:21:47.004575",
   "data": {
     "auteur_info": {
-      "adresse": "eaze",
-      "date_naissance": "2025-04-26",
+      "adresse": "dada",
+      "date_naissance": "1999-12-24",
       "gentille": "M.",
-      "nationalite": "eaze",
-      "nom": "MAURICI",
-      "prenom": "Lucas",
+      "nationalite": "Française",
+      "nom": "zadazd",
+      "prenom": "dazdaz",
       "saveToClients": false
     },
     "auteur_type": "Personne physique",
-    "description_image": "aez",
-    "description_oeuvre": "aze",
+    "description_image": "dza",
+    "description_oeuvre": "dazd",
     "droits_cedes": [],
-    "entreprise_info": {
-      "adresse": "104 avenue de versailles",
-      "capital": "",
-      "code_postal": "75016",
-      "email": "lucas.maurici@aol.com",
-      "forme_juridique": "Entreprise individuelle",
-      "gentille": "M.",
-      "nom": "Maurici",
-      "prenom": "Lucas",
-      "siege": "104 avenue de versailles, 75016 Paris",
-      "telephone": "",
-      "type": "physical_person",
-      "ville": "Paris"
-    },
+    "entreprise_info": {},
     "exclusivite": false,
     "remuneration": "",
     "supports": [],
@@ -44,32 +31,19 @@
   "from_step6": true,
   "form_data": {
     "auteur_info": {
-      "adresse": "eaze",
-      "date_naissance": "2025-04-26",
+      "adresse": "dada",
+      "date_naissance": "1999-12-24",
       "gentille": "M.",
-      "nationalite": "eaze",
-      "nom": "MAURICI",
-      "prenom": "Lucas",
+      "nationalite": "Française",
+      "nom": "zadazd",
+      "prenom": "dazdaz",
       "saveToClients": false
     },
     "auteur_type": "Personne physique",
-    "description_image": "aez",
-    "description_oeuvre": "aze",
+    "description_image": "dza",
+    "description_oeuvre": "dazd",
     "droits_cedes": [],
-    "entreprise_info": {
-      "adresse": "104 avenue de versailles",
-      "capital": "",
-      "code_postal": "75016",
-      "email": "lucas.maurici@aol.com",
-      "forme_juridique": "Entreprise individuelle",
-      "gentille": "M.",
-      "nom": "Maurici",
-      "prenom": "Lucas",
-      "siege": "104 avenue de versailles, 75016 Paris",
-      "telephone": "",
-      "type": "physical_person",
-      "ville": "Paris"
-    },
+    "entreprise_info": {},
     "exclusivite": false,
     "remuneration": "",
     "supports": [],
@@ -101,7 +75,7 @@
     {
       "type": "paragraph",
       "style": "ContractText",
-      "text": "M. Lucas MAURICI, né(e) le 2025-04-26, de nationalité eaze, domicilié(e) au eaze, ci-après dénommé(e) \"l'Auteur et le Modèle\","
+      "text": "M. dazdaz zadazd, né(e) le 1999-12-24, de nationalité Française, domicilié(e) au dada, ci-après dénommé(e) \"l'Auteur et le Modèle\","
     },
     {
       "type": "spacer",
@@ -110,7 +84,7 @@
     {
       "type": "paragraph",
       "style": "ContractText",
-      "text": "M. Lucas Maurici, domicilié(e) au 104 avenue de versailles, ci-après dénommée \"le Cessionnaire\","
+      "text": "M. Lucas MAURICI, domicilié(e) au 104 avenue de versailles, ci-après dénommée \"le Cessionnaire\","
     },
     {
       "type": "spacer",
@@ -191,7 +165,7 @@
     {
       "type": "paragraph",
       "style": "ContractText",
-      "text": "aze"
+      "text": "dazd"
     },
     {
       "type": "spacer",
@@ -227,7 +201,7 @@
     {
       "type": "paragraph",
       "style": "ContractText",
-      "text": "aez"
+      "text": "dza"
     },
     {
       "type": "spacer",

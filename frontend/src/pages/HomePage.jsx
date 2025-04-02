@@ -17,11 +17,13 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { getUserProfile } from '../services/api';
+import ProfileRequiredModal from '../components/ui/ProfileRequiredModal';
 
 const HomePage = () => {
   const [isProfileConfigured, setIsProfileConfigured] = useState(null);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedbackText, setFeedbackText] = useState('');
+  const [showProfileModal, setShowProfileModal] = useState(false);
   
   useEffect(() => {
     const checkUserProfile = async () => {
@@ -52,6 +54,12 @@ const HomePage = () => {
   
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-white via-blue-50 to-indigo-50">
+      {/* Modal pour la configuration du profil */}
+      <ProfileRequiredModal 
+        isOpen={showProfileModal} 
+        onClose={() => setShowProfileModal(false)} 
+      />
+      
       {/* Section principale avec titre central dominant */}
       <main className="flex-grow flex flex-col items-center justify-center px-4 py-16 sm:py-28">
         <div className="w-full max-w-6xl mx-auto text-center px-4">
@@ -103,13 +111,13 @@ const HomePage = () => {
               <p className="text-xs text-gray-700 mb-3 sm:mb-0">
                 <span className="text-blue-600 font-medium">Conseil :</span> Configurez votre profil pour personnaliser vos contrats
               </p>
-              <Link 
-                to="/dashboard" 
+              <button 
+                onClick={() => setShowProfileModal(true)} 
                 className="w-full sm:w-auto inline-flex items-center justify-center text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 transition rounded-md sm:rounded-full px-4 py-2"
               >
                 Configurer
                 <ArrowRight size={12} className="ml-1.5" />
-              </Link>
+              </button>
             </div>
           )}
           

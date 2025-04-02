@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Check, ArrowRight, ArrowLeft, FileText, Sparkles } from 'lucide-react';
+import { Check, ArrowRight, ArrowLeft, FileText, Sparkles, RotateCcw } from 'lucide-react';
 import { useAuth } from '@clerk/clerk-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import PreviewPanel from '../components/PreviewPanel';
@@ -33,7 +33,7 @@ const ContractWizard = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  const [contractData, setContractData] = useState({
+  const initialContractData = {
     type_contrat: [],
     type_cession: "Gratuite",
     droits_cedes: [],
@@ -45,7 +45,9 @@ const ContractWizard = () => {
     supports: [],
     remuneration: "",
     entreprise_info: {}
-  });
+  };
+  
+  const [contractData, setContractData] = useState(initialContractData);
   
   const totalSteps = STEPS.length;
   
@@ -65,30 +67,8 @@ const ContractWizard = () => {
           return;
         }
         
-        // Si l'utilisateur vient du Dashboard, récupérer les informations
-        if (!authLoaded || !isSignedIn) {
-          // Pour utilisateur non authentifié
-          const tempBusinessInfo = sessionStorage.getItem('tempBusinessInfo');
-          if (tempBusinessInfo) {
-            const parsedData = JSON.parse(tempBusinessInfo);
-            
-            // S'assurer que toutes les propriétés nécessaires pour la prévisualisation sont présentes
-            const entrepriseInfo = {
-              ...parsedData,
-              // Garantir que ces champs critiques sont présents pour la prévisualisation
-              siege: parsedData.siege || formatAddress(parsedData),
-              capital: parsedData.capital || (parsedData.type === 'legal_entity' ? '1000 €' : ''),
-              forme_juridique: parsedData.forme_juridique || 'Entreprise individuelle'
-            };
-            
-            console.log("Données de prévisualisation formatées:", entrepriseInfo);
-            
-            setContractData(prevData => ({
-              ...prevData,
-              entreprise_info: entrepriseInfo
-            }));
-          }
-        } else {
+        // Pour les utilisateurs authentifiés uniquement, récupérer leurs informations de profil
+        if (authLoaded && isSignedIn) {
           // Pour utilisateur authentifié
           const profile = await getUserProfile();
           
@@ -246,6 +226,15 @@ const ContractWizard = () => {
     return parts.length > 0 ? parts.join(', ') : '';
   };
   
+  // Fonction pour réinitialiser les données du contrat
+  const resetContractData = () => {
+    if (window.confirm("Êtes-vous sûr de vouloir réinitialiser toutes les informations du contrat ?")) {
+      setContractData(initialContractData);
+      setActiveStep(1);
+      window.scrollTo(0, 0);
+    }
+  };
+  
   // Sélectionner le composant à afficher en fonction de l'étape active
   const renderStepContent = () => {
     switch(activeStep) {
@@ -305,10 +294,20 @@ const ContractWizard = () => {
       <div className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="py-4">
-            <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center">
-              <FileText className="mr-2 text-blue-600" size={20} />
-              Création de contrat
-            </h1>
+            <div className="flex justify-between items-center">
+              <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center">
+                <FileText className="mr-2 text-blue-600" size={20} />
+                Création de contrat
+              </h1>
+              
+              <button
+                onClick={resetContractData}
+                className="flex items-center text-sm text-gray-500 hover:text-blue-600 transition-colors"
+              >
+                <RotateCcw size={16} className="mr-1" />
+                Réinitialiser
+              </button>
+            </div>
             
             {/* Barre de progression */}
             <div className="mt-4 relative">

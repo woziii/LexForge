@@ -498,6 +498,7 @@ const Step6Finalization = ({ contractData, updateContractData }) => {
             <>
               <Edit size={18} className="mr-2" />
               <span>Accéder à l'éditeur</span>
+              <span className="ml-2 text-xs bg-blue-100 text-blue-800 py-0.5 px-1.5 rounded-md">Beta</span>
             </>
           )}
         </button>
