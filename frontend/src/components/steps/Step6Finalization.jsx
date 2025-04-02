@@ -16,6 +16,7 @@ const Step6Finalization = ({ contractData, updateContractData }) => {
   const [clientError, setClientError] = useState('');
   const [tempContractData, setTempContractData] = useState(null);
   const [authRedirectAction, setAuthRedirectAction] = useState(null);
+  const [showRecoveryMessage, setShowRecoveryMessage] = useState(false);
   
   const navigate = useNavigate();
   const { isLoaded: authLoaded, isSignedIn } = useAuth();
@@ -73,6 +74,14 @@ const Step6Finalization = ({ contractData, updateContractData }) => {
       const urlParams = new URLSearchParams(window.location.search);
       const redirectAction = urlParams.get('redirectAction');
       console.log('Action trouvée dans les paramètres d\'URL:', redirectAction);
+      
+      // Si des données à récupérer existent, montrer le message de récupération
+      if ((draftContractId && (savedAction || redirectAction)) || 
+          (savedData && (savedAction || redirectAction))) {
+        setShowRecoveryMessage(true);
+        // Cacher le message après 5 secondes
+        setTimeout(() => setShowRecoveryMessage(false), 5000);
+      }
       
       // Privilégier la récupération depuis le brouillon enregistré
       if (draftContractId && (savedAction || redirectAction)) {
@@ -329,6 +338,15 @@ const Step6Finalization = ({ contractData, updateContractData }) => {
   return (
     <div className="space-y-6">
       <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-6">Finalisation du contrat</h2>
+      
+      {showRecoveryMessage && (
+        <div className="mb-4 p-3 bg-green-50 border-l-4 border-green-400 rounded-md flex items-start animate-fadeIn">
+          <CheckCircle className="w-5 h-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+          <p className="text-green-700">
+            Votre travail a été récupéré avec succès ! Vous pouvez maintenant continuer où vous vous étiez arrêté.
+          </p>
+        </div>
+      )}
       
       {!isSignedIn && (
         <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-400 rounded-md flex items-start">
