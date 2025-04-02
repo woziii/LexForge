@@ -1,26 +1,33 @@
 {
+  "physical_person": {
+    "is_configured": true,
+    "gentille": "M.",
+    "nom": "MAURICI",
+    "prenom": "Lucas",
+    "date_naissance": "",
+    "nationalite": "",
+    "adresse": "104 avenue de versailles",
+    "code_postal": "75016zefezfezf",
+    "ville": "Paris",
+    "email": "zefzefezfzefzefezf",
+    "telephone": ""
+  },
   "legal_entity": {
-    "capital": "",
-    "forme_juridique": "",
     "is_configured": false,
     "nom": "",
-    "qualite_representant": "",
-    "rcs": "",
+    "forme_juridique": "",
+    "capital": "",
+    "siren": "",
+    "siege": "",
+    "adresse": "",
+    "code_postal": "",
+    "ville": "",
+    "email": "",
+    "telephone": "",
     "representant": "",
-    "siege": ""
-  },
-  "physical_person": {
-    "adresse": "104 Avenue de Versailles",
-    "code_postal": "75016",
-    "date_naissance": "",
-    "email": "lucas.maurici@aol.com",
-    "gentille": "Mme",
-    "is_configured": true,
-    "nationalite": "",
-    "nom": "Astruc",
-    "prenom": "Florine",
-    "ville": "Paris"
+    "qualite_representant": ""
   },
   "selected_entity_type": "physical_person",
+  "clients": [],
   "user_id": "user_2vB3pVJhCstiBi41Kpt19iWOzDN"
 }

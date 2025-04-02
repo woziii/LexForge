@@ -34,7 +34,8 @@ export const clearAllTempData = () => {
     'tempBusinessInfo',
     'tempContractData',
     'draftContractId',
-    'authRedirectAction'
+    'authRedirectAction',
+    'tempDashboardData' // Ajouter les données du dashboard
   ];
   
   // Nettoyer sessionStorage

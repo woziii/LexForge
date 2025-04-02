@@ -53,28 +53,101 @@ const DashboardPage = () => {
 
   // Récupérer le paramètre de redirection
   const redirectTo = new URLSearchParams(location.search).get('redirectTo') || '';
+  const [currentUserId, setCurrentUserId] = useState(getCurrentUserId());
 
   useEffect(() => {
-    // Charger les données du profil utilisateur depuis le backend
-    const loadProfile = async () => {
-      try {
-        setIsLoading(true);
-        const data = await getUserProfile();
+    // Si l'utilisateur n'est pas authentifié, vérifier s'il y a des données temporaires en sessionStorage
+    if (authLoaded && !isSignedIn) {
+      const tempData = sessionStorage.getItem('tempDashboardData');
+      if (tempData) {
+        try {
+          // Charger les données temporaires
+          const parsedData = JSON.parse(tempData);
+          console.log('Données temporaires chargées depuis sessionStorage');
+          setProfileData({
+            ...parsedData,
+            user_id: getCurrentUserId()
+          });
+        } catch (error) {
+          console.error('Erreur lors du chargement des données temporaires:', error);
+        }
+      }
+    }
+  }, [authLoaded, isSignedIn]);
+
+  // Effet pour gérer les changements d'authentification
+  useEffect(() => {
+    // Surveiller les changements d'ID utilisateur (connexion/déconnexion)
+    const checkUserId = () => {
+      const newId = getCurrentUserId();
+      if (newId !== currentUserId) {
+        console.log('ID utilisateur modifié, rechargement du profil...');
+        setCurrentUserId(newId);
         
+        // Si le nouvel ID est anonyme, réinitialiser le profil et effacer les données temporaires
+        if (newId.startsWith('anon_')) {
+          console.log('Utilisateur non authentifié détecté, réinitialisation du profil');
+          sessionStorage.removeItem('tempDashboardData');
+          setProfileData({
+            ...initialProfileData,
+            user_id: newId
+          });
+        } else {
+          // Pour un utilisateur authentifié, charger son profil depuis le serveur
+          loadProfile(newId);
+        }
+      }
+    };
+    
+    // Vérifier périodiquement l'ID utilisateur
+    const interval = setInterval(checkUserId, 1000);
+    
+    // Nettoyer l'intervalle lors du démontage du composant
+    return () => clearInterval(interval);
+  }, [currentUserId]);
+
+  useEffect(() => {
+    // Charger les données du profil utilisateur
+    const initializeProfile = async () => {
+      if (authLoaded) {
+        if (isSignedIn) {
+          // Utilisateur authentifié: charger depuis le backend
+          await loadProfile(currentUserId);
+        } else {
+          // Utilisateur non authentifié: vérifier si déjà des données en session
+          if (!sessionStorage.getItem('tempDashboardData')) {
+            // Si pas de données en session, initialiser avec les valeurs par défaut
+            setProfileData({
+              ...initialProfileData,
+              user_id: currentUserId
+            });
+          }
+        }
+      }
+    };
+    
+    initializeProfile();
+  }, [authLoaded, isSignedIn]);
+
+  // Fonction de chargement du profil extraite pour pouvoir être appelée plusieurs fois
+  const loadProfile = async (userId) => {
+    try {
+      setIsLoading(true);
+      // Charger le profil depuis le backend uniquement pour les utilisateurs authentifiés
+      if (!userId.startsWith('anon_')) {
+        const data = await getUserProfile();
         // S'assurer que l'ID utilisateur est toujours inclus
         setProfileData({
           ...data,
-          user_id: getCurrentUserId()
+          user_id: userId
         });
-      } catch (error) {
-        setErrorMessage('Impossible de charger votre profil. Veuillez réessayer.');
-      } finally {
-        setIsLoading(false);
       }
-    };
-
-    loadProfile();
-  }, []);
+    } catch (error) {
+      setErrorMessage('Impossible de charger votre profil. Veuillez réessayer.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Formater l'adresse complète pour la prévisualisation
   const formatAddress = (data) => {
@@ -185,15 +258,25 @@ const DashboardPage = () => {
       const entityData = profileData[entityType];
       const formattedData = formatBusinessDataForStorage(entityType, entityData);
       
-      // Assurer que l'ID utilisateur est inclus
-      const dataToSave = {
-        ...profileData,
-        user_id: getCurrentUserId()
-      };
-      
-      // Sauvegarder dans la base de données
-      await updateUserProfile(dataToSave);
-      setSuccessMessage('Vos informations ont été enregistrées avec succès.');
+      // Pour les utilisateurs non authentifiés, stocker dans sessionStorage
+      if (currentUserId.startsWith('anon_')) {
+        // Stocker les données complètes dans sessionStorage pour le dashboard
+        sessionStorage.setItem('tempDashboardData', JSON.stringify(profileData));
+        
+        // Stocker aussi dans tempBusinessInfo pour la prévisualisation (utilisé par d'autres composants)
+        sessionStorage.setItem('tempBusinessInfo', JSON.stringify(formattedData));
+        
+        setSuccessMessage('Vos informations ont été enregistrées temporairement pour cette session.');
+      } else {
+        // Pour les utilisateurs authentifiés, sauvegarder dans la base de données
+        const dataToSave = {
+          ...profileData,
+          user_id: getCurrentUserId()
+        };
+        
+        await updateUserProfile(dataToSave);
+        setSuccessMessage('Vos informations ont été enregistrées avec succès.');
+      }
       
       // Rediriger si nécessaire
       if (redirectTo) {

@@ -57,9 +57,28 @@ const Layout = () => {
   
   // Gestionnaire de déconnexion personnalisé
   const handleSignOut = async () => {
+    // Nettoyer explicitement toutes les données de session avant la déconnexion
+    sessionStorage.removeItem('tempDashboardData');
+    sessionStorage.removeItem('tempBusinessInfo');
+    sessionStorage.removeItem('tempContractData');
+    sessionStorage.removeItem('draftContractId');
+    sessionStorage.removeItem('authRedirectAction');
+    
     // Supprimer toutes les données temporaires lors de la déconnexion
     clearAllTempData();
+    
+    // Supprimer l'ID Clerk du localStorage
+    localStorage.removeItem('clerkUserId');
+    
+    // Générer un nouvel ID anonyme pour éviter de garder des références aux anciennes données
+    const newAnonymousId = 'anon_' + Math.random().toString(36).substring(2, 15) + '_' + Date.now().toString(36);
+    sessionStorage.setItem('anonymousUserId', newAnonymousId);
+    
+    // Effectuer la déconnexion
     await signOut();
+    
+    // Forcer un rafraîchissement complet de la page pour réinitialiser tous les états
+    window.location.href = "/";
   };
   
   return (

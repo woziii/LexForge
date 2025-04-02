@@ -20,8 +20,19 @@ window.addEventListener('beforeunload', () => {
   const clerkId = localStorage.getItem('clerkUserId');
   if (!clerkId || clerkId.startsWith('anon_')) {
     console.log('Nettoyage des données temporaires de l\'utilisateur non authentifié');
-    // On garde l'ID en localStorage pour permettre la continuité si l'utilisateur revient
-    // mais on efface celui de la session, qui sera recréé via le fallback
+    
+    // Nettoyer toutes les données de sessionStorage sauf l'ID anonyme
+    const keysToRemove = [
+      'tempBusinessInfo',
+      'tempContractData',
+      'draftContractId',
+      'authRedirectAction',
+      'tempDashboardData'  // Ajouter les données du dashboard
+    ];
+    
+    keysToRemove.forEach(key => {
+      sessionStorage.removeItem(key);
+    });
   }
 });
 

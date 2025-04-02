@@ -93,7 +93,14 @@ export const previewContract = async (contractData) => {
 
 export const generatePdf = async (contractData, filename) => {
   try {
-    const response = await api.post('/generate-pdf', { contractData, filename }, {
+    // Ajouter l'ID utilisateur
+    const userId = getCurrentUserId();
+    
+    const response = await api.post('/generate-pdf', {
+      contractData,
+      filename,
+      user_id: userId
+    }, {
       responseType: 'blob',
     });
     
@@ -274,6 +281,24 @@ export const testCors = async () => {
 export const getUserProfile = async () => {
   try {
     const userId = getCurrentUserId();
+    
+    // Pour les utilisateurs non authentifiés, vérifier d'abord si nous avons des données en sessionStorage
+    if (userId.startsWith('anon_')) {
+      // Essayer de récupérer depuis sessionStorage d'abord
+      const tempData = sessionStorage.getItem('tempDashboardData');
+      if (tempData) {
+        try {
+          const parsedData = JSON.parse(tempData);
+          console.log('Profil temporaire chargé depuis sessionStorage');
+          return parsedData;
+        } catch (error) {
+          console.error('Erreur de parsing des données temporaires:', error);
+          // Continuer avec l'appel API si le parsing échoue
+        }
+      }
+    }
+    
+    // Si aucune donnée temporaire n'est trouvée ou pour les utilisateurs authentifiés
     const response = await api.get('/user-profile', {
       params: { user_id: userId }
     });
