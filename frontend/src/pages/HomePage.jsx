@@ -101,7 +101,7 @@ const HomePage = () => {
           <div className="max-w-md mx-auto mb-8 flex items-center rounded-xl pl-4 pr-4 py-3.5 bg-gradient-to-r from-amber-50 to-amber-100 border border-amber-200 shadow-sm">
             <AlertCircle size={16} className="text-amber-500 flex-shrink-0 mr-3" />
             <p className="text-xs text-amber-700">
-              <span className="font-medium">Note technique :</span> Le serveur peut nécessiter jusqu'à 50 secondes pour s'activer après une période d'inactivité. Pendant ce temps, certaines fonctionnalités peuvent être temporairement indisponibles.
+              <span className="font-medium">Information importante :</span> LexForge est actuellement en version bêta. Bien que nous prenions la sécurité au sérieux, nous ne pouvons garantir une protection complète de vos données à ce stade. Nous vous recommandons de ne pas stocker d'informations hautement confidentielles sur la plateforme.
             </p>
           </div>
           

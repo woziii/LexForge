@@ -39,7 +39,7 @@ const AboutPage = () => {
             Notez que cette version Bêta peut être soumise à des évolutions. Le niveau de sécurité n'est pas encore optimal, et il est fortement déconseillé, pour le moment, de laisser des documents sensibles sur la plateforme.
           </p>
           <p className="text-gray-600">
-            Important : L'instance actuelle de Render "s'éteint" en cas d'inactivité, ce qui peut retarder les requêtes d'environ 50 secondes. Les serveurs s'activent dès votre arrivée sur LexForge et prennent environ 50 secondes à démarrer. Pendant ce temps, les informations stockées en backend ne sont pas accessibles (mais le seront après cette période d'activation).
+            Important : LexForge est en constante évolution. Bien que nos serveurs soient désormais opérationnels en permanence pour une meilleure expérience utilisateur, nous tenons à souligner que notre plateforme est toujours en phase bêta. En tant qu'utilisateur, vous devez être conscient que la sécurité de vos données n'est pas encore garantie à 100%. Nous vous recommandons donc de faire preuve de prudence et d'éviter de partager des informations hautement confidentielles jusqu'à la sortie de notre version stable.
           </p>
         </div>
         <div className="bg-white p-6 rounded-lg shadow-md">
