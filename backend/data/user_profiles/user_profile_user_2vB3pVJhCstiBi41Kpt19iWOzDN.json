@@ -1,0 +1,26 @@
+{
+  "legal_entity": {
+    "capital": "",
+    "forme_juridique": "",
+    "is_configured": false,
+    "nom": "",
+    "qualite_representant": "",
+    "rcs": "",
+    "representant": "",
+    "siege": ""
+  },
+  "physical_person": {
+    "adresse": "104 Avenue de Versailles",
+    "code_postal": "75016",
+    "date_naissance": "",
+    "email": "lucas.maurici@aol.com",
+    "gentille": "Mme",
+    "is_configured": true,
+    "nationalite": "",
+    "nom": "Astruc",
+    "prenom": "Florine",
+    "ville": "Paris"
+  },
+  "selected_entity_type": "physical_person",
+  "user_id": "user_2vB3pVJhCstiBi41Kpt19iWOzDN"
+}

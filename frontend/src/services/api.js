@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { useAuth } from '@clerk/clerk-react';
 
 // Déterminer l'URL de l'API en fonction de l'environnement
 const API_URL = process.env.REACT_APP_API_URL || 
@@ -9,7 +8,6 @@ const API_URL = process.env.REACT_APP_API_URL ||
 
 console.log('Using API URL:', API_URL);
 
-// Créer une instance d'axios pour les requêtes non authentifiées
 const api = axios.create({
   baseURL: API_URL,
   headers: {
@@ -19,39 +17,54 @@ const api = axios.create({
   withCredentials: false,
 });
 
-// Fonction pour obtenir une instance d'API authentifiée avec l'ID utilisateur
-export const getAuthenticatedApi = (userId) => {
-  return axios.create({
-    baseURL: API_URL,
-    headers: {
-      'Content-Type': 'application/json',
-      'X-User-Id': userId || 'anonymous'
-    },
-    withCredentials: false,
-  });
-};
-
-// Hook pour obtenir l'API authentifiée
-export const useApi = () => {
-  const { userId, isSignedIn } = useAuth();
-  return isSignedIn ? getAuthenticatedApi(userId) : api;
-};
-
-// Fonctions d'API avec authentification
-const makeAuthenticatedRequest = async (requestFn) => {
-  // Obtenir l'authentification actuelle via Clerk
-  const auth = useAuth();
-  const userId = auth?.userId;
+// Fonction pour récupérer l'ID utilisateur actuel
+export const getCurrentUserId = () => {
+  // Si l'utilisateur est connecté avec Clerk, récupérer son ID depuis le localStorage
+  let userId = localStorage.getItem('clerkUserId');
   
-  // Utiliser l'API authentifiée si un utilisateur est connecté
-  const apiInstance = userId ? getAuthenticatedApi(userId) : api;
+  // Si nous avons un ID Clerk stocké, le retourner
+  if (userId && !userId.startsWith('anon_')) {
+    return userId;
+  }
   
-  return requestFn(apiInstance);
+  // Vérifier si l'objet window.Clerk est disponible (utilisateur connecté)
+  try {
+    if (window.Clerk && window.Clerk.user) {
+      const clerkId = window.Clerk.user.id;
+      // Stocker l'ID Clerk dans localStorage pour référence future
+      localStorage.setItem('clerkUserId', clerkId);
+      return clerkId;
+    }
+  } catch (error) {
+    console.error('Erreur lors de la récupération de l\'ID utilisateur depuis Clerk:', error);
+  }
+  
+  // Pour les utilisateurs non authentifiés, priorité à sessionStorage, puis fallback sur localStorage
+  // pour assurer la compatibilité avec les données existantes
+  let anonymousId = sessionStorage.getItem('anonymousUserId');
+  
+  // Si on n'a pas d'ID en sessionStorage, vérifier en localStorage (pour rétrocompatibilité)
+  if (!anonymousId) {
+    anonymousId = localStorage.getItem('anonymousUserId');
+    
+    // Si on a trouvé un ID en localStorage, le copier en sessionStorage et le garder en localStorage
+    // pour cette session uniquement (compatibilité avec données existantes)
+    if (anonymousId) {
+      sessionStorage.setItem('anonymousUserId', anonymousId);
+      console.log('ID anonyme migré de localStorage vers sessionStorage');
+    } else {
+      // Générer un nouvel ID si aucun n'existe
+      anonymousId = 'anon_' + Math.random().toString(36).substring(2, 15) + '_' + Date.now().toString(36);
+      sessionStorage.setItem('anonymousUserId', anonymousId);
+      // On ne stocke plus dans localStorage pour les nouveaux utilisateurs
+    }
+  }
+  
+  return anonymousId;
 };
 
 export const analyzeProject = async (description) => {
   try {
-    // Cette fonction ne nécessite pas d'authentification
     const response = await api.post('/analyze', { description });
     return response.data;
   } catch (error) {
@@ -62,13 +75,16 @@ export const analyzeProject = async (description) => {
 
 export const previewContract = async (contractData) => {
   try {
-    console.log('Sending preview request with data:', JSON.stringify(contractData));
+    // Ajouter l'ID utilisateur aux données du contrat
+    const dataWithUserId = {
+      ...contractData,
+      user_id: getCurrentUserId()
+    };
     
-    return await makeAuthenticatedRequest(async (apiInstance) => {
-      const response = await apiInstance.post('/preview', contractData);
-      console.log('Preview response:', response.data);
-      return response.data;
-    });
+    console.log('Sending preview request with data:', JSON.stringify(dataWithUserId));
+    const response = await api.post('/preview', dataWithUserId);
+    console.log('Preview response:', response.data);
+    return response.data;
   } catch (error) {
     console.error('Error previewing contract:', error);
     throw error;
@@ -77,22 +93,20 @@ export const previewContract = async (contractData) => {
 
 export const generatePdf = async (contractData, filename) => {
   try {
-    return await makeAuthenticatedRequest(async (apiInstance) => {
-      const response = await apiInstance.post('/generate-pdf', { contractData, filename }, {
-        responseType: 'blob',
-      });
-      
-      // Créer un URL pour le blob et déclencher le téléchargement
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `${filename || 'contrat'}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      
-      return true;
+    const response = await api.post('/generate-pdf', { contractData, filename }, {
+      responseType: 'blob',
     });
+    
+    // Créer un URL pour le blob et déclencher le téléchargement
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `${filename || 'contrat'}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    
+    return true;
   } catch (error) {
     console.error('Error generating PDF:', error);
     throw error;
@@ -103,16 +117,16 @@ export const generatePdf = async (contractData, filename) => {
 
 export const saveContract = async (contractData, title, id = null, isDraft = false, fromStep6 = false) => {
   try {
-    return await makeAuthenticatedRequest(async (apiInstance) => {
-      const response = await apiInstance.post('/contracts', { 
-        contractData, 
-        title, 
-        id,
-        isDraft,
-        fromStep6
-      });
-      return response.data;
+    const userId = getCurrentUserId();
+    const response = await api.post('/contracts', { 
+      contractData, 
+      title, 
+      id,
+      isDraft,
+      fromStep6,
+      user_id: userId
     });
+    return response.data;
   } catch (error) {
     console.error('Error saving contract:', error);
     throw error;
@@ -121,10 +135,11 @@ export const saveContract = async (contractData, title, id = null, isDraft = fal
 
 export const getContracts = async () => {
   try {
-    return await makeAuthenticatedRequest(async (apiInstance) => {
-      const response = await apiInstance.get('/contracts');
-      return response.data.contracts;
+    const userId = getCurrentUserId();
+    const response = await api.get('/contracts', {
+      params: { user_id: userId }
     });
+    return response.data.contracts;
   } catch (error) {
     console.error('Error fetching contracts:', error);
     throw error;
@@ -133,10 +148,11 @@ export const getContracts = async () => {
 
 export const getContractById = async (contractId) => {
   try {
-    return await makeAuthenticatedRequest(async (apiInstance) => {
-      const response = await apiInstance.get(`/contracts/${contractId}`);
-      return response.data;
+    const userId = getCurrentUserId();
+    const response = await api.get(`/contracts/${contractId}`, {
+      params: { user_id: userId }
     });
+    return response.data;
   } catch (error) {
     console.error('Error fetching contract:', error);
     throw error;
@@ -145,10 +161,11 @@ export const getContractById = async (contractId) => {
 
 export const getContractElements = async (contractId) => {
   try {
-    return await makeAuthenticatedRequest(async (apiInstance) => {
-      const response = await apiInstance.get(`/contracts/${contractId}/elements`);
-      return response.data;
+    const userId = getCurrentUserId();
+    const response = await api.get(`/contracts/${contractId}/elements`, {
+      params: { user_id: userId }
     });
+    return response.data;
   } catch (error) {
     console.error('Error fetching contract elements:', error);
     throw error;
@@ -157,10 +174,12 @@ export const getContractElements = async (contractId) => {
 
 export const updateContract = async (contractId, updates) => {
   try {
-    return await makeAuthenticatedRequest(async (apiInstance) => {
-      const response = await apiInstance.put(`/contracts/${contractId}`, updates);
-      return response.data;
+    const userId = getCurrentUserId();
+    const response = await api.put(`/contracts/${contractId}`, {
+      ...updates,
+      user_id: userId
     });
+    return response.data;
   } catch (error) {
     console.error('Error updating contract:', error);
     throw error;
@@ -169,10 +188,11 @@ export const updateContract = async (contractId, updates) => {
 
 export const deleteContract = async (contractId) => {
   try {
-    return await makeAuthenticatedRequest(async (apiInstance) => {
-      const response = await apiInstance.delete(`/contracts/${contractId}`);
-      return response.data;
+    const userId = getCurrentUserId();
+    const response = await api.delete(`/contracts/${contractId}`, {
+      params: { user_id: userId }
     });
+    return response.data;
   } catch (error) {
     console.error('Error deleting contract:', error);
     throw error;
@@ -181,30 +201,28 @@ export const deleteContract = async (contractId) => {
 
 export const exportContract = async (contractId, filename = null) => {
   try {
-    return await makeAuthenticatedRequest(async (apiInstance) => {
-      const response = await apiInstance.get(`/contracts/export/${contractId}`, {
-        responseType: 'blob',
-      });
-      
-      // Créer un URL pour le blob et déclencher le téléchargement
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      
-      // Utiliser le nom de fichier personnalisé s'il est fourni, sinon utiliser le nom par défaut
-      const downloadFilename = filename || `lexforge_contract_${contractId}`;
-      // S'assurer que le nom se termine par .json
-      const finalFilename = downloadFilename.endsWith('.json') 
-        ? downloadFilename 
-        : `${downloadFilename}.json`;
-        
-      link.setAttribute('download', finalFilename);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      
-      return { success: true };
+    const response = await api.get(`/contracts/export/${contractId}`, {
+      responseType: 'blob',
     });
+    
+    // Créer un URL pour le blob et déclencher le téléchargement
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    
+    // Utiliser le nom de fichier personnalisé s'il est fourni, sinon utiliser le nom par défaut
+    const downloadFilename = filename || `lexforge_contract_${contractId}`;
+    // S'assurer que le nom se termine par .json
+    const finalFilename = downloadFilename.endsWith('.json') 
+      ? downloadFilename 
+      : `${downloadFilename}.json`;
+      
+    link.setAttribute('download', finalFilename);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    
+    return { success: true };
   } catch (error) {
     console.error('Error exporting contract:', error);
     throw error;
@@ -213,21 +231,23 @@ export const exportContract = async (contractId, filename = null) => {
 
 export const importContract = async (file) => {
   try {
-    return await makeAuthenticatedRequest(async (apiInstance) => {
-      // Créer un FormData pour envoyer le fichier
-      const formData = new FormData();
-      formData.append('file', file);
-      
-      // Configuration spécifique pour envoyer un fichier
-      const config = {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      };
-      
-      const response = await apiInstance.post('/contracts/import', formData, config);
-      return response.data;
-    });
+    // Créer un FormData pour envoyer le fichier
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    // Ajouter l'ID utilisateur
+    const userId = getCurrentUserId();
+    formData.append('user_id', userId);
+    
+    // Configuration spécifique pour envoyer un fichier
+    const config = {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    };
+    
+    const response = await api.post('/contracts/import', formData, config);
+    return response.data;
   } catch (error) {
     console.error('Error importing contract:', error);
     throw error;
@@ -253,10 +273,11 @@ export const testCors = async () => {
 
 export const getUserProfile = async () => {
   try {
-    return await makeAuthenticatedRequest(async (apiInstance) => {
-      const response = await apiInstance.get('/user-profile');
-      return response.data;
+    const userId = getCurrentUserId();
+    const response = await api.get('/user-profile', {
+      params: { user_id: userId }
     });
+    return response.data;
   } catch (error) {
     console.error('Error fetching user profile:', error);
     throw error;
@@ -265,10 +286,12 @@ export const getUserProfile = async () => {
 
 export const updateUserProfile = async (profileData) => {
   try {
-    return await makeAuthenticatedRequest(async (apiInstance) => {
-      const response = await apiInstance.post('/user-profile', profileData);
-      return response.data;
+    const userId = getCurrentUserId();
+    const response = await api.post('/user-profile', {
+      ...profileData,
+      user_id: userId
     });
+    return response.data;
   } catch (error) {
     console.error('Error updating user profile:', error);
     throw error;
@@ -375,13 +398,44 @@ export const deleteClient = async (clientId) => {
 
 export const accessFinalizationStep = async (contractId) => {
   try {
-    return await makeAuthenticatedRequest(async (apiInstance) => {
-      const response = await apiInstance.get(`/contracts/${contractId}/finalize`);
-      return response.data;
-    });
+    const response = await api.get(`/contracts/${contractId}/finalize`);
+    return response.data;
   } catch (error) {
     console.error('Error accessing finalization step:', error);
     throw error;
+  }
+};
+
+/**
+ * Fonction pour migrer les données d'un utilisateur anonyme vers un compte authentifié
+ * À appeler lorsqu'un utilisateur s'authentifie après avoir utilisé l'application en anonyme
+ */
+export const migrateAnonymousUserData = async (newUserId) => {
+  try {
+    // Récupérer l'ID anonyme de l'utilisateur avant qu'il ne se connecte
+    const anonymousId = localStorage.getItem('anonymousUserId');
+    
+    if (!anonymousId) {
+      console.log('Aucun ID anonyme trouvé, rien à migrer.');
+      return { success: false, message: 'Aucune donnée anonyme à migrer' };
+    }
+    
+    // Envoyer une requête pour migrer les données
+    const response = await api.post('/migrate-user-data', {
+      anonymous_id: anonymousId,
+      authenticated_id: newUserId
+    });
+    
+    // Si la migration réussit, supprimer l'ID anonyme
+    if (response.data.success) {
+      localStorage.removeItem('anonymousUserId');
+      console.log('Migration des données réussie, ID anonyme supprimé.');
+    }
+    
+    return response.data;
+  } catch (error) {
+    console.error('Erreur lors de la migration des données:', error);
+    return { success: false, error: error.message };
   }
 };
 
@@ -405,7 +459,8 @@ const apiService = {
   saveClient,
   updateClient,
   deleteClient,
-  accessFinalizationStep
+  accessFinalizationStep,
+  migrateAnonymousUserData
 };
 
 export default apiService;

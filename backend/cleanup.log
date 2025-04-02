@@ -1,0 +1,42 @@
+2025-04-02 15:58:46,637 - werkzeug - WARNING -  * Debugger is active!
+2025-04-02 15:58:46,643 - werkzeug - INFO -  * Debugger PIN: 727-911-376
+2025-04-02 15:58:59,106 - werkzeug - INFO - 127.0.0.1 - - [02/Apr/2025 15:58:59] "GET /api/user-profile?user_id=anon_jry1je3g7g HTTP/1.1" 200 -
+2025-04-02 15:59:18,943 - werkzeug - INFO -  * Detected change in '/Users/lucasmaurici/LexForge/LexForge/backend/app.py', reloading
+2025-04-02 15:59:19,246 - werkzeug - WARNING -  * Debugger is active!
+2025-04-02 15:59:19,253 - werkzeug - INFO -  * Debugger PIN: 727-911-376
+2025-04-02 15:59:59,113 - werkzeug - INFO - 127.0.0.1 - - [02/Apr/2025 15:59:59] "GET /api/user-profile?user_id=anon_jry1je3g7g HTTP/1.1" 200 -
+2025-04-02 15:59:59,115 - werkzeug - INFO - 127.0.0.1 - - [02/Apr/2025 15:59:59] "GET /api/user-profile?user_id=anon_jry1je3g7g HTTP/1.1" 200 -
+2025-04-02 16:00:12,110 - werkzeug - INFO - 127.0.0.1 - - [02/Apr/2025 16:00:12] "GET /api/user-profile?user_id=anon_jry1je3g7g HTTP/1.1" 200 -
+2025-04-02 16:00:24,800 - werkzeug - INFO -  * Detected change in '/Users/lucasmaurici/LexForge/LexForge/backend/cleanup_scheduler.py', reloading
+2025-04-02 16:00:25,124 - werkzeug - WARNING -  * Debugger is active!
+2025-04-02 16:00:25,131 - werkzeug - INFO -  * Debugger PIN: 727-911-376
+2025-04-02 16:01:25,687 - werkzeug - INFO -  * Detected change in '/Users/lucasmaurici/LexForge/LexForge/backend/app.py', reloading
+2025-04-02 16:01:26,090 - werkzeug - WARNING -  * Debugger is active!
+2025-04-02 16:01:26,096 - werkzeug - INFO -  * Debugger PIN: 727-911-376
+2025-04-02 16:03:35,352 - werkzeug - INFO -  * Detected change in '/Users/lucasmaurici/LexForge/LexForge/backend/app.py', reloading
+2025-04-02 16:03:35,700 - werkzeug - WARNING -  * Debugger is active!
+2025-04-02 16:03:35,707 - werkzeug - INFO -  * Debugger PIN: 727-911-376
+2025-04-02 16:03:55,111 - werkzeug - INFO - 127.0.0.1 - - [02/Apr/2025 16:03:55] "GET /api/user-profile?user_id=anon_jry1je3g7g HTTP/1.1" 200 -
+2025-04-02 16:04:01,942 - werkzeug - INFO - 127.0.0.1 - - [02/Apr/2025 16:04:01] "GET /api/user-profile?user_id=anon_jry1je3g7g HTTP/1.1" 200 -
+2025-04-02 16:04:01,944 - werkzeug - INFO - 127.0.0.1 - - [02/Apr/2025 16:04:01] "GET /api/user-profile?user_id=anon_jry1je3g7g HTTP/1.1" 200 -
+2025-04-02 16:04:02,464 - werkzeug - INFO - 127.0.0.1 - - [02/Apr/2025 16:04:02] "GET /api/user-profile?user_id=anon_jry1je3g7g HTTP/1.1" 200 -
+2025-04-02 16:04:02,467 - werkzeug - INFO - 127.0.0.1 - - [02/Apr/2025 16:04:02] "GET /api/user-profile?user_id=anon_jry1je3g7g HTTP/1.1" 200 -
+2025-04-02 16:04:49,496 - werkzeug - INFO -  * Detected change in '/Users/lucasmaurici/LexForge/LexForge/backend/app.py', reloading
+2025-04-02 16:04:50,774 - werkzeug - WARNING -  * Debugger is active!
+2025-04-02 16:04:50,784 - werkzeug - INFO -  * Debugger PIN: 727-911-376
+2025-04-02 16:04:51,116 - werkzeug - INFO - 127.0.0.1 - - [02/Apr/2025 16:04:51] "GET /api/user-profile?user_id=anon_jry1je3g7g HTTP/1.1" 200 -
+2025-04-02 16:05:04,935 - werkzeug - INFO -  * Detected change in '/Users/lucasmaurici/LexForge/LexForge/backend/app.py', reloading
+2025-04-02 16:05:24,967 - werkzeug - WARNING -  * Debugger is active!
+2025-04-02 16:05:24,973 - werkzeug - INFO -  * Debugger PIN: 727-911-376
+2025-04-02 16:08:01,570 - werkzeug - INFO -  * Detected change in '/Users/lucasmaurici/LexForge/LexForge/backend/app.py', reloading
+2025-04-02 16:09:24,089 - werkzeug - WARNING -  * Debugger is active!
+2025-04-02 16:09:24,100 - werkzeug - INFO -  * Debugger PIN: 727-911-376
+2025-04-02 16:09:24,116 - werkzeug - INFO - 127.0.0.1 - - [02/Apr/2025 16:09:24] "GET /api/user-profile?user_id=anon_jry1je3g7g HTTP/1.1" 200 -
+2025-04-02 16:09:24,119 - werkzeug - INFO - 127.0.0.1 - - [02/Apr/2025 16:09:24] "GET /api/user-profile?user_id=anon_jry1je3g7g HTTP/1.1" 200 -
+2025-04-02 16:10:25,663 - werkzeug - INFO -  * Detected change in '/Users/lucasmaurici/LexForge/LexForge/backend/app.py', reloading
+2025-04-02 16:11:25,768 - werkzeug - WARNING -  * Debugger is active!
+2025-04-02 16:11:25,774 - werkzeug - INFO -  * Debugger PIN: 727-911-376
+2025-04-02 16:11:26,119 - werkzeug - INFO - 127.0.0.1 - - [02/Apr/2025 16:11:26] "GET /api/user-profile?user_id=anon_jry1je3g7g HTTP/1.1" 200 -
+2025-04-02 16:11:26,790 - werkzeug - INFO -  * Detected change in '/Users/lucasmaurici/LexForge/LexForge/backend/cleanup_scheduler.py', reloading
+2025-04-02 16:11:27,065 - werkzeug - WARNING -  * Debugger is active!
+2025-04-02 16:11:27,071 - werkzeug - INFO -  * Debugger PIN: 727-911-376

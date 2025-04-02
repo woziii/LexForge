@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '@clerk/clerk-react';
 import { Building2, User, Save, AlertCircle, Check, HelpCircle, Briefcase, Shield, Users, RotateCcw } from 'lucide-react';
-import { getUserProfile, updateUserProfile } from '../services/api';
+import { getUserProfile, updateUserProfile, getCurrentUserId } from '../services/api';
 import { AUTHOR_TYPES, CIVILITY_OPTIONS } from '../utils/constants';
+import { clearTempBusinessInfo } from '../utils/clearTempData';
 import ClientsTab from '../components/clients/ClientsTab';
 
 const DashboardPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { isLoaded: authLoaded, isSignedIn } = useAuth();
   const [activeTab, setActiveTab] = useState('company');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -43,7 +46,8 @@ const DashboardPage = () => {
       qualite_representant: '',
     },
     selected_entity_type: '', // 'physical_person' ou 'legal_entity'
-    clients: [] // Tableau de clients
+    clients: [], // Tableau de clients
+    user_id: getCurrentUserId() // Inclure l'ID utilisateur
   };
   const [profileData, setProfileData] = useState(initialProfileData);
 
@@ -56,7 +60,12 @@ const DashboardPage = () => {
       try {
         setIsLoading(true);
         const data = await getUserProfile();
-        setProfileData(data);
+        
+        // S'assurer que l'ID utilisateur est toujours inclus
+        setProfileData({
+          ...data,
+          user_id: getCurrentUserId()
+        });
       } catch (error) {
         setErrorMessage('Impossible de charger votre profil. Veuillez réessayer.');
       } finally {
@@ -175,10 +184,15 @@ const DashboardPage = () => {
       const entityType = profileData.selected_entity_type;
       const entityData = profileData[entityType];
       const formattedData = formatBusinessDataForStorage(entityType, entityData);
-      sessionStorage.setItem('tempBusinessInfo', JSON.stringify(formattedData));
+      
+      // Assurer que l'ID utilisateur est inclus
+      const dataToSave = {
+        ...profileData,
+        user_id: getCurrentUserId()
+      };
       
       // Sauvegarder dans la base de données
-      await updateUserProfile(profileData);
+      await updateUserProfile(dataToSave);
       setSuccessMessage('Vos informations ont été enregistrées avec succès.');
       
       // Rediriger si nécessaire

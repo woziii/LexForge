@@ -47,21 +47,8 @@ USER_PROFILES_DIR = os.path.join(DATA_DIR, 'user_profiles')
 os.makedirs(CONTRACTS_DIR, exist_ok=True)
 os.makedirs(USER_PROFILES_DIR, exist_ok=True)
 
-# Fonction pour obtenir le fichier de profil utilisateur en fonction de l'ID utilisateur
-def get_user_profile_path(user_id=None):
-    if user_id:
-        return os.path.join(USER_PROFILES_DIR, f'user_profile_{user_id}.json')
-    else:
-        return os.path.join(USER_PROFILES_DIR, 'user_profile.json')
-
-# Fonction pour obtenir le répertoire des contrats pour un utilisateur spécifique
-def get_user_contracts_dir(user_id=None):
-    if user_id:
-        user_contracts_dir = os.path.join(CONTRACTS_DIR, user_id)
-        os.makedirs(user_contracts_dir, exist_ok=True)
-        return user_contracts_dir
-    else:
-        return CONTRACTS_DIR
+# Chemin du fichier de profil utilisateur (pour simplifier, un seul utilisateur)
+USER_PROFILE_FILE = os.path.join(USER_PROFILES_DIR, 'user_profile.json')
 
 # Structure par défaut pour un nouveau profil
 DEFAULT_PROFILE = {
@@ -84,7 +71,8 @@ DEFAULT_PROFILE = {
         "representant": "",
         "qualite_representant": ""
     },
-    "selected_entity_type": ""
+    "selected_entity_type": "",
+    "user_id": ""  # Nouvel attribut pour stocker l'ID utilisateur
 }
 
 @app.route('/api', methods=['GET'])
@@ -126,13 +114,14 @@ def preview():
     print(f"Données reçues dans preview: {json.dumps(contract_data, indent=2)}")
     
     try:
-        # Récupérer l'ID utilisateur depuis les headers
-        user_id = request.headers.get('X-User-Id')
+        # Récupérer l'ID utilisateur
+        user_id = contract_data.get('user_id', 'anonymous')
         
         # Si l'utilisateur a un profil configuré, utiliser ces informations
         user_profile = {}
-        if user_id and os.path.exists(get_user_profile_path(user_id)):
-            with open(get_user_profile_path(user_id), 'r') as f:
+        USER_PROFILE_FILE_WITH_ID = os.path.join(USER_PROFILES_DIR, f'user_profile_{user_id}.json')
+        if os.path.exists(USER_PROFILE_FILE_WITH_ID):
+            with open(USER_PROFILE_FILE_WITH_ID, 'r') as f:
                 user_profile = json.load(f)
         
         # 1. Vérifier si entreprise_info est fourni dans les données du contrat et l'utiliser en priorité
@@ -203,9 +192,7 @@ def create_pdf():
     data = request.json
     contract_data = data.get('contractData', {})
     filename = data.get('filename', 'contrat')
-    
-    # Récupérer l'ID utilisateur depuis les headers
-    user_id = request.headers.get('X-User-Id')
+    user_id = data.get('user_id', 'anonymous')  # Récupérer l'ID utilisateur
     
     # Extraire les données du contrat
     contract_type = contract_data.get('type_contrat', [])
@@ -219,28 +206,23 @@ def create_pdf():
     remuneration = contract_data.get('remuneration', '')
     is_exclusive = contract_data.get('exclusivite', False)
     
-    # Si l'utilisateur a un profil configuré, utiliser ces informations comme cessionnaire
+    # Récupérer les informations du cessionnaire depuis le profil utilisateur spécifique
     cessionnaire_info = None
-    if user_id and os.path.exists(get_user_profile_path(user_id)):
-        with open(get_user_profile_path(user_id), 'r') as f:
+    USER_PROFILE_FILE_WITH_ID = os.path.join(USER_PROFILES_DIR, f'user_profile_{user_id}.json')
+    if os.path.exists(USER_PROFILE_FILE_WITH_ID):
+        with open(USER_PROFILE_FILE_WITH_ID, 'r') as f:
             user_profile = json.load(f)
         
-        # Utiliser le profil selon le type d'entité sélectionné
+        # Si un type d'entité est sélectionné, utiliser ses informations comme cessionnaire
         if user_profile.get('selected_entity_type') == 'physical_person' and user_profile['physical_person']['is_configured']:
             cessionnaire_info = user_profile['physical_person']
         elif user_profile.get('selected_entity_type') == 'legal_entity' and user_profile['legal_entity']['is_configured']:
             cessionnaire_info = user_profile['legal_entity']
         else:
-            # Fallback aux informations par défaut
+            # Utiliser les informations par défaut de Tellers
             cessionnaire_info = TELLERS_INFO
     else:
-        # Utiliser les informations par défaut
         cessionnaire_info = TELLERS_INFO
-    
-    # Vérifier si des informations d'entreprise sont fournies directement dans les données du contrat
-    entreprise_info = contract_data.get('entreprise_info')
-    if entreprise_info and isinstance(entreprise_info, dict) and any(entreprise_info.values()):
-        cessionnaire_info = entreprise_info
     
     # Générer le PDF
     pdf_path = generate_pdf(
@@ -264,9 +246,7 @@ def save_contract():
     title = data.get('title', 'Contrat sans titre')
     is_draft = data.get('isDraft', False)  # Nouveau champ pour indiquer si c'est un brouillon
     from_step6 = data.get('fromStep6', False)  # Nouveau champ pour indiquer si ça vient de l'étape 6
-    
-    # Récupérer l'ID utilisateur depuis les headers
-    user_id = request.headers.get('X-User-Id')
+    user_id = data.get('user_id', 'anonymous')  # Récupérer l'ID utilisateur, utiliser 'anonymous' par défaut
     
     # Générer un ID unique pour le contrat s'il n'existe pas
     contract_id = data.get('id')
@@ -276,26 +256,21 @@ def save_contract():
     # Créer le contrat avec métadonnées
     contract = {
         'id': contract_id,
-        'user_id': user_id,  # Stocker l'ID utilisateur dans le contrat
         'title': title,
-        'created_at': datetime.now().isoformat(),
-        'updated_at': datetime.now().isoformat(),
         'data': contract_data,
         'is_draft': is_draft,
         'from_step6': from_step6,
-        'form_data': contract_data  # Stockage des données complètes du formulaire
+        'user_id': user_id,  # Ajouter l'ID utilisateur au contrat
+        'created_at': datetime.now().isoformat(),
+        'updated_at': datetime.now().isoformat()
     }
     
-    # Chemin du fichier pour sauvegarder le contrat
-    contract_file = os.path.join(get_user_contracts_dir(user_id), f"{contract_id}.json")
-    
-    # Sauvegarder dans un fichier JSON
-    with open(contract_file, 'w') as f:
-        json.dump(contract, f, indent=2)
+    # Sauvegarder le contrat
+    with open(os.path.join(CONTRACTS_DIR, f"{contract_id}.json"), 'w', encoding='utf-8') as f:
+        json.dump(contract, f, ensure_ascii=False, indent=2)
     
     return jsonify({
         'id': contract_id,
-        'message': 'Contract saved successfully',
         'title': title
     })
 
@@ -304,33 +279,31 @@ def get_contracts():
     """
     Endpoint pour récupérer la liste des contrats.
     """
-    # Récupérer l'ID utilisateur depuis les headers
-    user_id = request.headers.get('X-User-Id')
+    # Récupérer l'ID utilisateur de la requête
+    user_id = request.args.get('user_id', 'anonymous')
+    
     contracts = []
     
-    # Vérifier si le répertoire des contrats de l'utilisateur existe
-    user_contracts_dir = get_user_contracts_dir(user_id)
-    if not os.path.exists(user_contracts_dir):
-        return jsonify({'contracts': []})
-    
-    # Parcourir les fichiers dans le répertoire des contrats de l'utilisateur
-    for filename in os.listdir(user_contracts_dir):
+    # Parcourir les fichiers dans le répertoire des contrats
+    for filename in os.listdir(CONTRACTS_DIR):
         if filename.endswith('.json'):
-            file_path = os.path.join(user_contracts_dir, filename)
+            file_path = os.path.join(CONTRACTS_DIR, filename)
             try:
                 with open(file_path, 'r', encoding='utf-8') as f:
                     contract = json.load(f)
                     
-                    # Filtrer les informations à renvoyer
-                    contract_info = {
-                        'id': contract.get('id'),
-                        'title': contract.get('title', 'Contrat sans titre'),
-                        'created_at': contract.get('created_at'),
-                        'updated_at': contract.get('updated_at'),
-                        'is_draft': contract.get('is_draft', False),  # Inclure le statut de brouillon
-                        'from_step6': contract.get('from_step6', False)  # Inclure l'info si vient de l'étape 6
-                    }
-                    contracts.append(contract_info)
+                    # Ne renvoyer que les contrats de l'utilisateur actuel
+                    if contract.get('user_id', 'anonymous') == user_id:
+                        # Filtrer les informations à renvoyer
+                        contract_info = {
+                            'id': contract.get('id'),
+                            'title': contract.get('title', 'Contrat sans titre'),
+                            'created_at': contract.get('created_at'),
+                            'updated_at': contract.get('updated_at'),
+                            'is_draft': contract.get('is_draft', False),  # Inclure le statut de brouillon
+                            'from_step6': contract.get('from_step6', False)  # Inclure l'info si vient de l'étape 6
+                        }
+                        contracts.append(contract_info)
             except Exception as e:
                 print(f"Error reading contract file {filename}: {e}")
     
@@ -344,16 +317,20 @@ def get_contract(contract_id):
     """
     Endpoint pour récupérer un contrat spécifique.
     """
-    # Récupérer l'ID utilisateur depuis les headers
-    user_id = request.headers.get('X-User-Id')
-    
-    file_path = os.path.join(get_user_contracts_dir(user_id), f"{contract_id}.json")
+    file_path = os.path.join(CONTRACTS_DIR, f"{contract_id}.json")
     
     if not os.path.exists(file_path):
         return jsonify({'error': 'Contract not found'}), 404
     
     with open(file_path, 'r', encoding='utf-8') as f:
         contract = json.load(f)
+    
+    # Récupérer l'ID utilisateur de la requête
+    user_id = request.args.get('user_id', 'anonymous')
+    
+    # Vérifier que l'utilisateur a accès à ce contrat
+    if contract.get('user_id', 'anonymous') != user_id and user_id != 'anonymous':
+        return jsonify({'error': 'Unauthorized access to contract'}), 403
     
     return jsonify(contract)
 
@@ -362,22 +339,26 @@ def update_contract(contract_id):
     """
     Endpoint pour mettre à jour un contrat.
     """
-    # Récupérer l'ID utilisateur depuis les headers
-    user_id = request.headers.get('X-User-Id')
-    
-    file_path = os.path.join(get_user_contracts_dir(user_id), f"{contract_id}.json")
+    file_path = os.path.join(CONTRACTS_DIR, f"{contract_id}.json")
     
     if not os.path.exists(file_path):
         return jsonify({'error': 'Contract not found'}), 404
+    
+    # Charger le contrat existant
+    with open(file_path, 'r', encoding='utf-8') as f:
+        contract = json.load(f)
+    
+    # Récupérer l'ID utilisateur de la requête
+    user_id = request.json.get('user_id', 'anonymous')
+    
+    # Vérifier que l'utilisateur a accès à ce contrat
+    if contract.get('user_id', 'anonymous') != user_id and user_id != 'anonymous':
+        return jsonify({'error': 'Unauthorized access to contract'}), 403
     
     data = request.json
     title = data.get('title')
     updated_elements = data.get('updatedElements', {})
     comments = data.get('comments', [])
-    
-    # Charger le contrat existant
-    with open(file_path, 'r', encoding='utf-8') as f:
-        contract = json.load(f)
     
     # Mettre à jour le titre si fourni
     if title:
@@ -409,13 +390,21 @@ def delete_contract(contract_id):
     """
     Endpoint pour supprimer un contrat.
     """
-    # Récupérer l'ID utilisateur depuis les headers
-    user_id = request.headers.get('X-User-Id')
-    
-    file_path = os.path.join(get_user_contracts_dir(user_id), f"{contract_id}.json")
+    file_path = os.path.join(CONTRACTS_DIR, f"{contract_id}.json")
     
     if not os.path.exists(file_path):
         return jsonify({'error': 'Contract not found'}), 404
+    
+    # Charger le contrat pour vérifier l'accès
+    with open(file_path, 'r', encoding='utf-8') as f:
+        contract = json.load(f)
+    
+    # Récupérer l'ID utilisateur de la requête
+    user_id = request.args.get('user_id', 'anonymous')
+    
+    # Vérifier que l'utilisateur a accès à ce contrat
+    if contract.get('user_id', 'anonymous') != user_id and user_id != 'anonymous':
+        return jsonify({'error': 'Unauthorized access to contract'}), 403
     
     # Supprimer le fichier
     os.remove(file_path)
@@ -427,16 +416,20 @@ def get_contract_elements(contract_id):
     """
     Endpoint pour récupérer les éléments du contrat pour l'éditeur.
     """
-    # Récupérer l'ID utilisateur depuis les headers
-    user_id = request.headers.get('X-User-Id')
-    
-    file_path = os.path.join(get_user_contracts_dir(user_id), f"{contract_id}.json")
+    file_path = os.path.join(CONTRACTS_DIR, f"{contract_id}.json")
     
     if not os.path.exists(file_path):
         return jsonify({'error': 'Contract not found'}), 404
     
     with open(file_path, 'r', encoding='utf-8') as f:
         contract = json.load(f)
+    
+    # Récupérer l'ID utilisateur de la requête pour vérifier l'accès
+    user_id = request.args.get('user_id', 'anonymous')
+    
+    # Vérifier que l'utilisateur a accès à ce contrat
+    if contract.get('user_id', 'anonymous') != user_id and user_id != 'anonymous':
+        return jsonify({'error': 'Unauthorized access to contract'}), 403
     
     # Vérifier si le contrat a déjà des éléments stockés
     if 'elements' in contract:
@@ -460,8 +453,9 @@ def get_contract_elements(contract_id):
     
     # Récupérer les informations du cessionnaire depuis le profil utilisateur
     cessionnaire_info = None
-    if os.path.exists(get_user_profile_path(user_id)):
-        with open(get_user_profile_path(user_id), 'r') as f:
+    USER_PROFILE_FILE_WITH_ID = os.path.join(USER_PROFILES_DIR, f'user_profile_{contract.get("user_id", "anonymous")}.json')
+    if os.path.exists(USER_PROFILE_FILE_WITH_ID):
+        with open(USER_PROFILE_FILE_WITH_ID, 'r') as f:
             user_profile = json.load(f)
         
         # Si un type d'entité est sélectionné, utiliser ses informations comme cessionnaire
@@ -515,87 +509,82 @@ def get_contract_elements(contract_id):
 @app.route('/api/contracts/export/<contract_id>', methods=['GET'])
 def export_contract(contract_id):
     """
+    Endpoint pour exporter un contrat au format JSON.
     Retourne le contrat complet dans un format qui préserve toutes les données et le formatage.
     """
-    # Récupérer l'ID utilisateur depuis les headers
-    user_id = request.headers.get('X-User-Id')
-    
-    file_path = os.path.join(get_user_contracts_dir(user_id), f"{contract_id}.json")
+    file_path = os.path.join(CONTRACTS_DIR, f"{contract_id}.json")
     
     if not os.path.exists(file_path):
         return jsonify({'error': 'Contract not found'}), 404
     
-    # Lire le fichier du contrat
+    # Lire le contrat complet depuis le fichier
     with open(file_path, 'r', encoding='utf-8') as f:
-        contract_data = json.load(f)
+        contract = json.load(f)
     
-    # Retourner le contrat sous forme de fichier JSON téléchargeable
-    return jsonify(contract_data)
+    # Ajouter des métadonnées d'exportation
+    contract['export_info'] = {
+        'exported_at': datetime.now().isoformat(),
+        'version': '1.0',
+        'application': 'LexForge'
+    }
+    
+    # Définir les en-têtes pour le téléchargement du fichier
+    response = jsonify(contract)
+    response.headers.set('Content-Disposition', f'attachment; filename=lexforge_contract_{contract_id}.json')
+    return response
 
 @app.route('/api/contracts/import', methods=['POST'])
 def import_contract():
     """
-    Importe un contrat à partir d'un fichier JSON.
+    Endpoint pour importer un contrat au format JSON.
     """
-    # Récupérer l'ID utilisateur depuis les headers
-    user_id = request.headers.get('X-User-Id')
-    
-    # Vérifier si un fichier a été envoyé
     if 'file' not in request.files:
-        return jsonify({'error': 'No file part in the request'}), 400
+        return jsonify({'error': 'No file provided'}), 400
     
     file = request.files['file']
-    
-    # Vérifier si le fichier est vide
     if file.filename == '':
-        return jsonify({'error': 'No file selected for uploading'}), 400
+        return jsonify({'error': 'No file selected'}), 400
     
-    # Vérifier si le fichier est au format JSON
     if not file.filename.endswith('.json'):
-        return jsonify({'error': 'Only JSON files are allowed'}), 400
+        return jsonify({'error': 'File must be a JSON file'}), 400
+    
+    # Récupérer l'ID utilisateur à partir des données de formulaire
+    user_id = request.form.get('user_id', 'anonymous')
     
     try:
-        # Charger le contenu du fichier JSON
+        # Lire le contenu du fichier JSON
         contract_data = json.loads(file.read().decode('utf-8'))
         
-        # Valider le contenu minimal attendu
-        if 'id' not in contract_data and 'data' not in contract_data:
+        # Validation basique pour vérifier qu'il s'agit bien d'un fichier de contrat LexForge
+        if 'id' not in contract_data or 'data' not in contract_data or 'title' not in contract_data:
             return jsonify({'error': 'Invalid contract format'}), 400
         
-        # Générer un nouvel ID pour le contrat importé
-        original_id = contract_data.get('id')
+        # Générer un nouvel ID pour éviter les doublons
         new_id = str(uuid.uuid4())
-        
-        # Mettre à jour l'ID et ajouter des métadonnées d'importation
-        contract_data['original_id'] = original_id
         contract_data['id'] = new_id
-        contract_data['user_id'] = user_id
-        contract_data['import_info'] = {
-            'imported_at': datetime.now().isoformat(),
-            'original_id': original_id
-        }
         
-        # Mettre à jour les timestamps
+        # Mettre à jour les dates de création et de modification
+        contract_data['created_at'] = datetime.now().isoformat()
         contract_data['updated_at'] = datetime.now().isoformat()
-        if 'created_at' not in contract_data:
-            contract_data['created_at'] = datetime.now().isoformat()
         
-        # Sauvegarder le contrat importé
-        file_path = os.path.join(get_user_contracts_dir(user_id), f"{new_id}.json")
+        # Associer le contrat à l'utilisateur actuel
+        contract_data['user_id'] = user_id
+        
+        # Sauvegarder le contrat
+        file_path = os.path.join(CONTRACTS_DIR, f"{new_id}.json")
         with open(file_path, 'w', encoding='utf-8') as f:
             json.dump(contract_data, f, ensure_ascii=False, indent=2)
         
         return jsonify({
             'success': True,
+            'message': 'Contract imported successfully',
             'id': new_id,
-            'title': contract_data.get('title', 'Contrat importé'),
-            'message': 'Contract imported successfully'
+            'title': contract_data.get('title', 'Imported Contract')
         })
-        
     except json.JSONDecodeError:
-        return jsonify({'error': 'Invalid JSON file'}), 400
+        return jsonify({'error': 'Invalid JSON format'}), 400
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': f'Error importing contract: {str(e)}'}), 500
 
 @app.route('/api/cors-test', methods=['GET', 'POST', 'OPTIONS'])
 def cors_test():
@@ -622,18 +611,38 @@ def cors_test():
 def get_user_profile():
     """Récupère le profil de l'utilisateur."""
     try:
-        # Récupérer l'ID utilisateur depuis les headers
-        user_id = request.headers.get('X-User-Id')
+        # Récupérer l'ID utilisateur de la requête
+        user_id = request.args.get('user_id', 'anonymous')
+        
+        # Créer un fichier de profil spécifique à l'utilisateur
+        USER_PROFILE_FILE_WITH_ID = os.path.join(USER_PROFILES_DIR, f'user_profile_{user_id}.json')
         
         # Si le fichier de profil n'existe pas, créer un profil par défaut
-        if not os.path.exists(get_user_profile_path(user_id)):
-            with open(get_user_profile_path(user_id), 'w') as f:
-                json.dump(DEFAULT_PROFILE, f, indent=2)
-            return jsonify(DEFAULT_PROFILE)
+        if not os.path.exists(USER_PROFILE_FILE_WITH_ID):
+            default_profile = DEFAULT_PROFILE.copy()
+            default_profile['user_id'] = user_id
+            
+            # Ajouter un indicateur de données temporaires pour les utilisateurs anonymes
+            if user_id.startswith('anon_'):
+                default_profile['is_temporary'] = True
+                default_profile['created_at'] = datetime.now().isoformat()
+            
+            with open(USER_PROFILE_FILE_WITH_ID, 'w') as f:
+                json.dump(default_profile, f, indent=2)
+            return jsonify(default_profile)
         
         # Lire et retourner le profil
-        with open(get_user_profile_path(user_id), 'r') as f:
+        with open(USER_PROFILE_FILE_WITH_ID, 'r') as f:
             profile = json.load(f)
+            
+            # Assurer que le flag de données temporaires est présent pour les utilisateurs anonymes
+            if user_id.startswith('anon_') and not profile.get('is_temporary'):
+                profile['is_temporary'] = True
+                profile['updated_at'] = datetime.now().isoformat()
+                # Sauvegarder le profil mis à jour
+                with open(USER_PROFILE_FILE_WITH_ID, 'w') as f:
+                    json.dump(profile, f, indent=2)
+            
             return jsonify(profile)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -643,9 +652,6 @@ def get_user_profile():
 def update_user_profile():
     """Met à jour le profil de l'utilisateur."""
     try:
-        # Récupérer l'ID utilisateur depuis les headers
-        user_id = request.headers.get('X-User-Id')
-        
         # Récupérer les données du profil depuis la requête
         profile_data = request.json
         
@@ -653,8 +659,14 @@ def update_user_profile():
         if not profile_data:
             return jsonify({'error': 'Aucune donnée fournie'}), 400
         
+        # Récupérer l'ID utilisateur
+        user_id = profile_data.get('user_id', 'anonymous')
+        
+        # Créer un fichier de profil spécifique à l'utilisateur
+        USER_PROFILE_FILE_WITH_ID = os.path.join(USER_PROFILES_DIR, f'user_profile_{user_id}.json')
+        
         # Sauvegarder le profil
-        with open(get_user_profile_path(user_id), 'w') as f:
+        with open(USER_PROFILE_FILE_WITH_ID, 'w') as f:
             json.dump(profile_data, f, indent=2)
         
         return jsonify({'success': True, 'message': 'Profil mis à jour avec succès'})
@@ -667,17 +679,21 @@ def access_finalization_step(contract_id):
     Endpoint pour accéder à l'étape de finalisation (étape 6) d'un contrat existant.
     Renvoie les données du formulaire du contrat qui sont nécessaires pour l'étape 6.
     """
-    # Récupérer l'ID utilisateur depuis les headers
-    user_id = request.headers.get('X-User-Id')
+    # Récupérer l'ID utilisateur de la requête
+    user_id = request.args.get('user_id', 'anonymous')
     
     # Vérifier si le contrat existe
-    contract_file = os.path.join(get_user_contracts_dir(user_id), f"{contract_id}.json")
+    contract_file = os.path.join(CONTRACTS_DIR, f"{contract_id}.json")
     if not os.path.exists(contract_file):
         return jsonify({'error': 'Contract not found'}), 404
     
     try:
         with open(contract_file, 'r', encoding='utf-8') as f:
             contract = json.load(f)
+        
+        # Vérifier que l'utilisateur a accès à ce contrat
+        if contract.get('user_id', 'anonymous') != user_id and user_id != 'anonymous':
+            return jsonify({'error': 'Unauthorized access to contract'}), 403
         
         # Récupérer les données du formulaire
         form_data = contract.get('form_data', contract.get('data', {}))
@@ -700,6 +716,96 @@ def access_finalization_step(contract_id):
     except Exception as e:
         print(f"Error accessing finalization step for contract {contract_id}: {e}")
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/migrate-user-data', methods=['POST'])
+def migrate_user_data():
+    """
+    Endpoint pour migrer les données d'un utilisateur anonyme vers un utilisateur authentifié.
+    """
+    data = request.json
+    anonymous_id = data.get('anonymous_id')
+    authenticated_id = data.get('authenticated_id')
+    
+    if not anonymous_id or not authenticated_id:
+        return jsonify({'success': False, 'error': 'IDs manquants'}), 400
+    
+    if not anonymous_id.startswith('anon_'):
+        return jsonify({'success': False, 'error': 'ID anonyme invalide'}), 400
+    
+    try:
+        migrated_contracts = 0
+        
+        # 1. Récupérer le profil anonyme s'il existe
+        anonymous_profile_path = os.path.join(USER_PROFILES_DIR, f'user_profile_{anonymous_id}.json')
+        authenticated_profile_path = os.path.join(USER_PROFILES_DIR, f'user_profile_{authenticated_id}.json')
+        
+        anonymous_profile = None
+        if os.path.exists(anonymous_profile_path):
+            with open(anonymous_profile_path, 'r', encoding='utf-8') as f:
+                anonymous_profile = json.load(f)
+        
+        # 2. Créer ou mettre à jour le profil authentifié
+        if anonymous_profile:
+            # Si le profil authentifié existe déjà, le charger
+            authenticated_profile = DEFAULT_PROFILE.copy()
+            if os.path.exists(authenticated_profile_path):
+                with open(authenticated_profile_path, 'r', encoding='utf-8') as f:
+                    authenticated_profile = json.load(f)
+            
+            # Mise à jour du profil authentifié avec les données du profil anonyme
+            # On ne remplace que si le profil authentifié n'est pas déjà configuré
+            if anonymous_profile.get('selected_entity_type') and not authenticated_profile.get('selected_entity_type'):
+                authenticated_profile['selected_entity_type'] = anonymous_profile['selected_entity_type']
+            
+            entity_type = anonymous_profile.get('selected_entity_type')
+            if entity_type in ['physical_person', 'legal_entity']:
+                if anonymous_profile[entity_type]['is_configured'] and not authenticated_profile[entity_type]['is_configured']:
+                    authenticated_profile[entity_type] = anonymous_profile[entity_type]
+            
+            # Mise à jour de l'ID utilisateur
+            authenticated_profile['user_id'] = authenticated_id
+            
+            # Sauvegarde du profil authentifié
+            with open(authenticated_profile_path, 'w', encoding='utf-8') as f:
+                json.dump(authenticated_profile, f, ensure_ascii=False, indent=2)
+        
+        # 3. Mettre à jour les contrats associés à l'utilisateur anonyme
+        for filename in os.listdir(CONTRACTS_DIR):
+            if not filename.endswith('.json'):
+                continue
+            
+            contract_path = os.path.join(CONTRACTS_DIR, filename)
+            try:
+                with open(contract_path, 'r', encoding='utf-8') as f:
+                    contract = json.load(f)
+                
+                # Vérifier si le contrat appartient à l'utilisateur anonyme
+                if contract.get('user_id') == anonymous_id:
+                    # Mettre à jour l'ID utilisateur
+                    contract['user_id'] = authenticated_id
+                    contract['updated_at'] = datetime.now().isoformat()
+                    
+                    # Sauvegarder le contrat mis à jour
+                    with open(contract_path, 'w', encoding='utf-8') as f:
+                        json.dump(contract, f, ensure_ascii=False, indent=2)
+                    
+                    migrated_contracts += 1
+            except Exception as e:
+                print(f"Erreur lors de la migration du contrat {filename}: {e}")
+        
+        # 4. Supprimer le profil anonyme après migration
+        if os.path.exists(anonymous_profile_path):
+            os.remove(anonymous_profile_path)
+        
+        return jsonify({
+            'success': True,
+            'message': f'Migration réussie: {migrated_contracts} contrats migrés',
+            'migrated_contracts': migrated_contracts
+        })
+    
+    except Exception as e:
+        print(f"Error during user data migration: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 # Pour le développement local
 if __name__ == '__main__':

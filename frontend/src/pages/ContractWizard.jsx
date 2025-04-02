@@ -10,7 +10,7 @@ import Step4WorkDescription from '../components/steps/Step4WorkDescription';
 import Step5Supports from '../components/steps/Step5Supports';
 import Step6Finalization from '../components/steps/Step6Finalization';
 import ProfileRequiredModal from '../components/ui/ProfileRequiredModal';
-import { previewContract, getUserProfile } from '../services/api';
+import { previewContract, getUserProfile, getCurrentUserId } from '../services/api';
 
 // Définition des étapes
 const STEPS = [
@@ -44,7 +44,8 @@ const ContractWizard = () => {
     description_image: "",
     supports: [],
     remuneration: "",
-    entreprise_info: {}
+    entreprise_info: {},
+    user_id: getCurrentUserId()
   };
   
   const [contractData, setContractData] = useState(initialContractData);
@@ -146,7 +147,8 @@ const ContractWizard = () => {
   const updateContractData = (newData) => {
     setContractData(prevData => ({
       ...prevData,
-      ...newData
+      ...newData,
+      user_id: getCurrentUserId()
     }));
   };
   
@@ -161,39 +163,31 @@ const ContractWizard = () => {
       try {
         setIsPreviewLoading(true);
         
+        // Ajouter l'ID utilisateur aux données pour la prévisualisation
+        const previewData = {
+          ...contractData,
+          user_id: getCurrentUserId()
+        };
+        
         // S'assurer que entreprise_info est correctement formaté pour la prévisualisation
         const entrepriseInfo = contractData.entreprise_info;
         if (entrepriseInfo && Object.keys(entrepriseInfo).length > 0) {
           // Vérifier que tous les champs essentiels existent
-          const previewData = {...contractData};
-          
-          // Pour une personne physique (identifiée par la présence de prenom)
-          if (entrepriseInfo.prenom && entrepriseInfo.nom) {
-            previewData.entreprise_info = {
-              ...entrepriseInfo,
-              adresse: entrepriseInfo.adresse || formatAddress(entrepriseInfo),
-              siege: entrepriseInfo.siege || formatAddress(entrepriseInfo),
-              type: 'physical_person',
-              capital: entrepriseInfo.capital || '',
-              forme_juridique: entrepriseInfo.forme_juridique || 'Entreprise individuelle'
-            };
-          } 
-          // Pour une personne morale
-          else if (entrepriseInfo.nom && entrepriseInfo.forme_juridique) {
-            previewData.entreprise_info = {
-              ...entrepriseInfo,
-              siege: entrepriseInfo.siege || formatAddress(entrepriseInfo),
-              type: 'legal_entity',
-              capital: entrepriseInfo.capital || '1000 €'
-            };
-          }
+          previewData.entreprise_info = {
+            ...entrepriseInfo,
+            adresse: entrepriseInfo.adresse || formatAddress(entrepriseInfo),
+            siege: entrepriseInfo.siege || formatAddress(entrepriseInfo),
+            type: 'physical_person',
+            capital: entrepriseInfo.capital || '',
+            forme_juridique: entrepriseInfo.forme_juridique || 'Entreprise individuelle'
+          };
           
           console.log("Données envoyées pour prévisualisation:", JSON.stringify(previewData));
           const response = await previewContract(previewData);
           setContractPreview(response.preview);
         } else {
-          console.log("Données envoyées pour prévisualisation:", JSON.stringify(contractData));
-          const response = await previewContract(contractData);
+          console.log("Données envoyées pour prévisualisation:", JSON.stringify(previewData));
+          const response = await previewContract(previewData);
           setContractPreview(response.preview);
         }
       } catch (error) {

@@ -13,6 +13,18 @@ if (!PUBLISHABLE_KEY) {
   throw new Error("Clé publique Clerk manquante");
 }
 
+// Écouteur pour nettoyer les données temporaires lors de la fermeture de la page
+// Note: cet événement n'est pas toujours déclenché de manière fiable dans tous les navigateurs
+window.addEventListener('beforeunload', () => {
+  // Si l'utilisateur n'est pas connecté (pas d'ID Clerk en localStorage), on nettoie la session
+  const clerkId = localStorage.getItem('clerkUserId');
+  if (!clerkId || clerkId.startsWith('anon_')) {
+    console.log('Nettoyage des données temporaires de l\'utilisateur non authentifié');
+    // On garde l'ID en localStorage pour permettre la continuité si l'utilisateur revient
+    // mais on efface celui de la session, qui sera recréé via le fallback
+  }
+});
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
