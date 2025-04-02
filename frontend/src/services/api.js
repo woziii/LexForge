@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { useAuth } from '@clerk/clerk-react';
 
 // Déterminer l'URL de l'API en fonction de l'environnement
 const API_URL = process.env.REACT_APP_API_URL || 
@@ -8,6 +9,7 @@ const API_URL = process.env.REACT_APP_API_URL ||
 
 console.log('Using API URL:', API_URL);
 
+// Créer une instance d'axios pour les requêtes non authentifiées
 const api = axios.create({
   baseURL: API_URL,
   headers: {
@@ -17,8 +19,39 @@ const api = axios.create({
   withCredentials: false,
 });
 
+// Fonction pour obtenir une instance d'API authentifiée avec l'ID utilisateur
+export const getAuthenticatedApi = (userId) => {
+  return axios.create({
+    baseURL: API_URL,
+    headers: {
+      'Content-Type': 'application/json',
+      'X-User-Id': userId || 'anonymous'
+    },
+    withCredentials: false,
+  });
+};
+
+// Hook pour obtenir l'API authentifiée
+export const useApi = () => {
+  const { userId, isSignedIn } = useAuth();
+  return isSignedIn ? getAuthenticatedApi(userId) : api;
+};
+
+// Fonctions d'API avec authentification
+const makeAuthenticatedRequest = async (requestFn) => {
+  // Obtenir l'authentification actuelle via Clerk
+  const auth = useAuth();
+  const userId = auth?.userId;
+  
+  // Utiliser l'API authentifiée si un utilisateur est connecté
+  const apiInstance = userId ? getAuthenticatedApi(userId) : api;
+  
+  return requestFn(apiInstance);
+};
+
 export const analyzeProject = async (description) => {
   try {
+    // Cette fonction ne nécessite pas d'authentification
     const response = await api.post('/analyze', { description });
     return response.data;
   } catch (error) {
@@ -30,9 +63,12 @@ export const analyzeProject = async (description) => {
 export const previewContract = async (contractData) => {
   try {
     console.log('Sending preview request with data:', JSON.stringify(contractData));
-    const response = await api.post('/preview', contractData);
-    console.log('Preview response:', response.data);
-    return response.data;
+    
+    return await makeAuthenticatedRequest(async (apiInstance) => {
+      const response = await apiInstance.post('/preview', contractData);
+      console.log('Preview response:', response.data);
+      return response.data;
+    });
   } catch (error) {
     console.error('Error previewing contract:', error);
     throw error;
@@ -41,20 +77,22 @@ export const previewContract = async (contractData) => {
 
 export const generatePdf = async (contractData, filename) => {
   try {
-    const response = await api.post('/generate-pdf', { contractData, filename }, {
-      responseType: 'blob',
+    return await makeAuthenticatedRequest(async (apiInstance) => {
+      const response = await apiInstance.post('/generate-pdf', { contractData, filename }, {
+        responseType: 'blob',
+      });
+      
+      // Créer un URL pour le blob et déclencher le téléchargement
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${filename || 'contrat'}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      
+      return true;
     });
-    
-    // Créer un URL pour le blob et déclencher le téléchargement
-    const url = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `${filename || 'contrat'}.pdf`);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    
-    return true;
   } catch (error) {
     console.error('Error generating PDF:', error);
     throw error;
@@ -65,14 +103,16 @@ export const generatePdf = async (contractData, filename) => {
 
 export const saveContract = async (contractData, title, id = null, isDraft = false, fromStep6 = false) => {
   try {
-    const response = await api.post('/contracts', { 
-      contractData, 
-      title, 
-      id,
-      isDraft,
-      fromStep6
+    return await makeAuthenticatedRequest(async (apiInstance) => {
+      const response = await apiInstance.post('/contracts', { 
+        contractData, 
+        title, 
+        id,
+        isDraft,
+        fromStep6
+      });
+      return response.data;
     });
-    return response.data;
   } catch (error) {
     console.error('Error saving contract:', error);
     throw error;
@@ -81,8 +121,10 @@ export const saveContract = async (contractData, title, id = null, isDraft = fal
 
 export const getContracts = async () => {
   try {
-    const response = await api.get('/contracts');
-    return response.data.contracts;
+    return await makeAuthenticatedRequest(async (apiInstance) => {
+      const response = await apiInstance.get('/contracts');
+      return response.data.contracts;
+    });
   } catch (error) {
     console.error('Error fetching contracts:', error);
     throw error;
@@ -91,8 +133,10 @@ export const getContracts = async () => {
 
 export const getContractById = async (contractId) => {
   try {
-    const response = await api.get(`/contracts/${contractId}`);
-    return response.data;
+    return await makeAuthenticatedRequest(async (apiInstance) => {
+      const response = await apiInstance.get(`/contracts/${contractId}`);
+      return response.data;
+    });
   } catch (error) {
     console.error('Error fetching contract:', error);
     throw error;
@@ -101,8 +145,10 @@ export const getContractById = async (contractId) => {
 
 export const getContractElements = async (contractId) => {
   try {
-    const response = await api.get(`/contracts/${contractId}/elements`);
-    return response.data;
+    return await makeAuthenticatedRequest(async (apiInstance) => {
+      const response = await apiInstance.get(`/contracts/${contractId}/elements`);
+      return response.data;
+    });
   } catch (error) {
     console.error('Error fetching contract elements:', error);
     throw error;
@@ -111,8 +157,10 @@ export const getContractElements = async (contractId) => {
 
 export const updateContract = async (contractId, updates) => {
   try {
-    const response = await api.put(`/contracts/${contractId}`, updates);
-    return response.data;
+    return await makeAuthenticatedRequest(async (apiInstance) => {
+      const response = await apiInstance.put(`/contracts/${contractId}`, updates);
+      return response.data;
+    });
   } catch (error) {
     console.error('Error updating contract:', error);
     throw error;
@@ -121,8 +169,10 @@ export const updateContract = async (contractId, updates) => {
 
 export const deleteContract = async (contractId) => {
   try {
-    const response = await api.delete(`/contracts/${contractId}`);
-    return response.data;
+    return await makeAuthenticatedRequest(async (apiInstance) => {
+      const response = await apiInstance.delete(`/contracts/${contractId}`);
+      return response.data;
+    });
   } catch (error) {
     console.error('Error deleting contract:', error);
     throw error;
@@ -131,28 +181,30 @@ export const deleteContract = async (contractId) => {
 
 export const exportContract = async (contractId, filename = null) => {
   try {
-    const response = await api.get(`/contracts/export/${contractId}`, {
-      responseType: 'blob',
-    });
-    
-    // Créer un URL pour le blob et déclencher le téléchargement
-    const url = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement('a');
-    link.href = url;
-    
-    // Utiliser le nom de fichier personnalisé s'il est fourni, sinon utiliser le nom par défaut
-    const downloadFilename = filename || `lexforge_contract_${contractId}`;
-    // S'assurer que le nom se termine par .json
-    const finalFilename = downloadFilename.endsWith('.json') 
-      ? downloadFilename 
-      : `${downloadFilename}.json`;
+    return await makeAuthenticatedRequest(async (apiInstance) => {
+      const response = await apiInstance.get(`/contracts/export/${contractId}`, {
+        responseType: 'blob',
+      });
       
-    link.setAttribute('download', finalFilename);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    
-    return { success: true };
+      // Créer un URL pour le blob et déclencher le téléchargement
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Utiliser le nom de fichier personnalisé s'il est fourni, sinon utiliser le nom par défaut
+      const downloadFilename = filename || `lexforge_contract_${contractId}`;
+      // S'assurer que le nom se termine par .json
+      const finalFilename = downloadFilename.endsWith('.json') 
+        ? downloadFilename 
+        : `${downloadFilename}.json`;
+        
+      link.setAttribute('download', finalFilename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      
+      return { success: true };
+    });
   } catch (error) {
     console.error('Error exporting contract:', error);
     throw error;
@@ -161,19 +213,21 @@ export const exportContract = async (contractId, filename = null) => {
 
 export const importContract = async (file) => {
   try {
-    // Créer un FormData pour envoyer le fichier
-    const formData = new FormData();
-    formData.append('file', file);
-    
-    // Configuration spécifique pour envoyer un fichier
-    const config = {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    };
-    
-    const response = await api.post('/contracts/import', formData, config);
-    return response.data;
+    return await makeAuthenticatedRequest(async (apiInstance) => {
+      // Créer un FormData pour envoyer le fichier
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      // Configuration spécifique pour envoyer un fichier
+      const config = {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      };
+      
+      const response = await apiInstance.post('/contracts/import', formData, config);
+      return response.data;
+    });
   } catch (error) {
     console.error('Error importing contract:', error);
     throw error;
@@ -199,8 +253,10 @@ export const testCors = async () => {
 
 export const getUserProfile = async () => {
   try {
-    const response = await api.get('/user-profile');
-    return response.data;
+    return await makeAuthenticatedRequest(async (apiInstance) => {
+      const response = await apiInstance.get('/user-profile');
+      return response.data;
+    });
   } catch (error) {
     console.error('Error fetching user profile:', error);
     throw error;
@@ -209,8 +265,10 @@ export const getUserProfile = async () => {
 
 export const updateUserProfile = async (profileData) => {
   try {
-    const response = await api.post('/user-profile', profileData);
-    return response.data;
+    return await makeAuthenticatedRequest(async (apiInstance) => {
+      const response = await apiInstance.post('/user-profile', profileData);
+      return response.data;
+    });
   } catch (error) {
     console.error('Error updating user profile:', error);
     throw error;
@@ -317,8 +375,10 @@ export const deleteClient = async (clientId) => {
 
 export const accessFinalizationStep = async (contractId) => {
   try {
-    const response = await api.get(`/contracts/${contractId}/finalize`);
-    return response.data;
+    return await makeAuthenticatedRequest(async (apiInstance) => {
+      const response = await apiInstance.get(`/contracts/${contractId}/finalize`);
+      return response.data;
+    });
   } catch (error) {
     console.error('Error accessing finalization step:', error);
     throw error;
