@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FileText, Edit, Trash2, Plus, Clock, Calendar, FileUp } from 'lucide-react';
+import { FileText, Edit, Trash2, Plus, Clock, Calendar, FileUp, FileCheck } from 'lucide-react';
 import { getContracts, deleteContract, exportContract } from '../services/api';
 import ContractSharePanel from '../components/ContractSharePanel';
 import ExportModal from '../components/ExportModal';
@@ -37,6 +37,10 @@ const ContractsPage = () => {
   
   const handleEdit = (contractId) => {
     navigate(`/editor/${contractId}`);
+  };
+  
+  const handleFinalize = (contractId) => {
+    navigate(`/wizard/finalize/${contractId}`);
   };
   
   const confirmDelete = (contract) => {
@@ -231,18 +235,33 @@ const ContractsPage = () => {
                         <button
                           onClick={() => handleEdit(contract.id)}
                           className="flex items-center text-xs text-blue-600 hover:text-blue-900"
+                          title="Modifier dans l'éditeur"
                         >
                           <Edit className="h-4 w-4 mr-1" />
                         </button>
+                        
+                        {contract.from_step6 && (
+                          <button
+                            onClick={() => handleFinalize(contract.id)}
+                            className="flex items-center text-xs text-green-600 hover:text-green-900"
+                            title="Finaliser le contrat"
+                          >
+                            <FileCheck className="h-4 w-4" />
+                          </button>
+                        )}
+                        
                         <button
                           onClick={(e) => handleExportClick(contract, e)}
                           className="flex items-center text-xs text-indigo-600 hover:text-indigo-800"
+                          title="Exporter le contrat"
                         >
                           <FileUp className="h-4 w-4" />
                         </button>
+                        
                         <button
                           onClick={() => confirmDelete(contract)}
                           className="flex items-center text-xs text-red-600 hover:text-red-900"
+                          title="Supprimer le contrat"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -253,66 +272,89 @@ const ContractsPage = () => {
               </div>
               
               {/* Vue desktop (tableau) */}
-              <div className="hidden sm:block overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Titre
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Date de création
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Dernière modification
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {contracts.map((contract) => (
-                      <tr key={contract.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <FileText className="flex-shrink-0 h-5 w-5 text-gray-400" />
-                            <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">{contract.title}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {formatDate(contract.created_at)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {formatDate(contract.updated_at)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <button
-                            onClick={() => handleEdit(contract.id)}
-                            className="text-blue-600 hover:text-blue-900 px-2"
-                          >
-                            <Edit className="inline h-5 w-5" />
-                          </button>
-                          <button
-                            onClick={(e) => handleExportClick(contract, e)}
-                            className="text-indigo-600 hover:text-indigo-800 px-2"
-                            id="contract-export-button"
-                          >
-                            <FileUp className="inline h-5 w-5" />
-                          </button>
-                          <button
-                            onClick={() => confirmDelete(contract)}
-                            className="text-red-600 hover:text-red-900 px-2"
-                          >
-                            <Trash2 className="inline h-5 w-5" />
-                          </button>
-                        </td>
+              <div className="hidden sm:block">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full bg-white">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Titre
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Création
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Dernière modification
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Actions
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {contracts.map((contract) => (
+                        <tr key={contract.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <FileText className="flex-shrink-0 h-5 w-5 text-blue-500 mr-3" />
+                              <div className="text-sm font-medium text-gray-900 truncate max-w-xs">
+                                {contract.title}
+                                {contract.is_draft && (
+                                  <span className="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                    Brouillon
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {formatDate(contract.created_at)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {formatDate(contract.updated_at)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div className="flex items-center justify-end space-x-3">
+                              <button
+                                onClick={() => handleEdit(contract.id)}
+                                className="text-blue-600 hover:text-blue-900"
+                                title="Modifier dans l'éditeur"
+                              >
+                                <Edit className="h-5 w-5" />
+                              </button>
+                              
+                              {contract.from_step6 && (
+                                <button
+                                  onClick={() => handleFinalize(contract.id)}
+                                  className="text-green-600 hover:text-green-900"
+                                  title="Finaliser le contrat"
+                                >
+                                  <FileCheck className="h-5 w-5" />
+                                </button>
+                              )}
+                              
+                              <button
+                                onClick={(e) => handleExportClick(contract, e)}
+                                className="text-indigo-600 hover:text-indigo-800"
+                                title="Exporter le contrat"
+                              >
+                                <FileUp className="h-5 w-5" />
+                              </button>
+                              
+                              <button
+                                onClick={() => confirmDelete(contract)}
+                                className="text-red-600 hover:text-red-900"
+                                title="Supprimer le contrat"
+                              >
+                                <Trash2 className="h-5 w-5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </>
           )}

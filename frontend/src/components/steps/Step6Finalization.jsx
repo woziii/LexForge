@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Download, Check, Edit, CheckCircle, AlertCircle, Info } from 'lucide-react';
-import { generatePdf, saveContract, saveClient } from '../../services/api';
-import { useAuth, useSignIn } from '@clerk/clerk-react';
+import { generatePdf, saveContract, saveClient, accessFinalizationStep } from '../../services/api';
+import { useAuth, useClerk } from '@clerk/clerk-react';
 
 const Step6Finalization = ({ contractData, updateContractData }) => {
   const [filename, setFilename] = useState('');
@@ -19,33 +19,143 @@ const Step6Finalization = ({ contractData, updateContractData }) => {
   
   const navigate = useNavigate();
   const { isLoaded: authLoaded, isSignedIn } = useAuth();
-  const { openSignIn } = useSignIn();
+  const clerk = useClerk();
+  
+  // Fonction pour sauvegarder temporairement les données avant authentification
+  const sauvegarderTemporairement = async (data, action) => {
+    console.log('Sauvegarde temporaire des données:', data);
+    console.log('Action à effectuer après authentification:', action);
+    
+    try {
+      // Sauvegarder le contrat comme brouillon dans la base de données
+      const defaultTitle = `Brouillon - ${new Date().toLocaleString()}`;
+      const savedContract = await saveContract(
+        data,
+        title || defaultTitle,
+        null,  // id
+        true,  // isDraft
+        true   // fromStep6
+      );
+      
+      // Sauvegarder l'ID du contrat et l'action dans sessionStorage
+      sessionStorage.setItem('draftContractId', savedContract.id);
+      sessionStorage.setItem('authRedirectAction', action);
+      
+      console.log('Contrat sauvegardé comme brouillon avec ID:', savedContract.id);
+      
+      // Mémoriser l'ID et l'action en état local également
+      setSavedContractId(savedContract.id);
+      setAuthRedirectAction(action);
+      
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde temporaire:', error);
+      // En cas d'erreur, utiliser l'ancien mécanisme de sauvegarde dans sessionStorage
+      sessionStorage.setItem('tempContractData', JSON.stringify(data));
+      sessionStorage.setItem('authRedirectAction', action);
+      setTempContractData(data);
+      setAuthRedirectAction(action);
+    }
+  };
   
   // Récupérer les données temporaires après authentification
   useEffect(() => {
     if (authLoaded && isSignedIn) {
+      console.log('Authentification complète, vérification des données sauvegardées');
+      
+      const draftContractId = sessionStorage.getItem('draftContractId');
+      const savedAction = sessionStorage.getItem('authRedirectAction');
+      const savedData = sessionStorage.getItem('tempContractData');
+      
+      console.log('ID du contrat brouillon:', draftContractId);
+      console.log('Action trouvée dans sessionStorage:', savedAction);
+      
+      // Vérifier les paramètres d'URL pour l'action de redirection
+      const urlParams = new URLSearchParams(window.location.search);
+      const redirectAction = urlParams.get('redirectAction');
+      console.log('Action trouvée dans les paramètres d\'URL:', redirectAction);
+      
+      // Privilégier la récupération depuis le brouillon enregistré
+      if (draftContractId && (savedAction || redirectAction)) {
+        // Récupérer les données du contrat brouillon
+        accessFinalizationStep(draftContractId)
+          .then(response => {
+            console.log('Données récupérées du brouillon:', response.form_data);
+            
+            // Mettre à jour les données du contrat
+            updateContractData(response.form_data);
+            
+            // Effectuer l'action appropriée après l'authentification
+            const actionToPerform = redirectAction || savedAction;
+            
+            if (actionToPerform === 'downloadPdf') {
+              handleGeneratePdf(false);
+            } else if (actionToPerform === 'accessEditor') {
+              handleAccessEditor(false, draftContractId);
+            }
+            
+            // Nettoyer le stockage temporaire
+            sessionStorage.removeItem('draftContractId');
+            sessionStorage.removeItem('authRedirectAction');
+            
+            // Nettoyer tous les paramètres d'URL spécifiques à la redirection
+            if (urlParams.has('redirectAction') || urlParams.has('fromDashboard')) {
+              const newUrl = new URL(window.location.href);
+              newUrl.searchParams.delete('redirectAction');
+              newUrl.searchParams.delete('fromDashboard');
+              window.history.replaceState({}, '', newUrl.toString());
+            }
+          })
+          .catch(error => {
+            console.error('Erreur lors de la récupération du brouillon:', error);
+            // En cas d'erreur, essayer de récupérer depuis le sessionStorage
+            handleFallbackRestore();
+          });
+      } 
+      // Fallback vers l'ancien mécanisme
+      else if (savedData && (savedAction || redirectAction)) {
+        handleFallbackRestore();
+      }
+    }
+    
+    // Fonction pour gérer la restauration via l'ancien mécanisme
+    const handleFallbackRestore = () => {
       const savedData = sessionStorage.getItem('tempContractData');
       const savedAction = sessionStorage.getItem('authRedirectAction');
+      const urlParams = new URLSearchParams(window.location.search);
+      const redirectAction = urlParams.get('redirectAction');
       
-      if (savedData && savedAction) {
+      if (savedData) {
         const parsedData = JSON.parse(savedData);
+        console.log('Données parsées depuis sessionStorage:', parsedData);
         
         // Mettre à jour les données du contrat
         updateContractData(parsedData);
         
         // Effectuer l'action appropriée après l'authentification
-        if (savedAction === 'downloadPdf') {
+        const actionToPerform = redirectAction || savedAction;
+        
+        if (actionToPerform === 'downloadPdf') {
           handleGeneratePdf(false);
-        } else if (savedAction === 'accessEditor') {
+        } else if (actionToPerform === 'accessEditor') {
           handleAccessEditor(false);
         }
         
         // Nettoyer le stockage temporaire
         sessionStorage.removeItem('tempContractData');
         sessionStorage.removeItem('authRedirectAction');
+        
+        // Nettoyer tous les paramètres d'URL spécifiques à la redirection
+        if (urlParams.has('redirectAction') || urlParams.has('fromDashboard')) {
+          const newUrl = new URL(window.location.href);
+          newUrl.searchParams.delete('redirectAction');
+          newUrl.searchParams.delete('fromDashboard');
+          window.history.replaceState({}, '', newUrl.toString());
+        }
       }
-    }
-  }, [authLoaded, isSignedIn]);
+    };
+    
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoaded, isSignedIn, updateContractData]);
   
   const handleFilenameChange = (e) => {
     setFilename(e.target.value);
@@ -55,21 +165,20 @@ const Step6Finalization = ({ contractData, updateContractData }) => {
     setTitle(e.target.value);
   };
   
-  // Fonction pour sauvegarder temporairement les données avant authentification
-  const sauvegarderTemporairement = (data, action) => {
-    sessionStorage.setItem('tempContractData', JSON.stringify(data));
-    sessionStorage.setItem('authRedirectAction', action);
-    setTempContractData(data);
-    setAuthRedirectAction(action);
-  };
-  
   const handleGeneratePdf = async (checkAuth = true) => {
     // Si vérification d'authentification requise et utilisateur non authentifié
     if (checkAuth && authLoaded && !isSignedIn) {
       // Sauvegarder les données et rediriger vers l'authentification
       sauvegarderTemporairement(contractData, 'downloadPdf');
-      openSignIn({
-        redirectUrl: window.location.href, // Rediriger vers la même page
+      
+      // Utiliser une URL absolue avec window.location.origin
+      const currentUrl = new URL(window.location.href);
+      // Préserver tous les paramètres d'URL existants
+      currentUrl.searchParams.set('redirectAction', 'downloadPdf');
+      currentUrl.searchParams.set('fromDashboard', 'true');
+      
+      clerk.openSignIn({
+        redirectUrl: currentUrl.toString()
       });
       return;
     }
@@ -95,13 +204,20 @@ const Step6Finalization = ({ contractData, updateContractData }) => {
     }
   };
   
-  const handleAccessEditor = async (checkAuth = true) => {
+  const handleAccessEditor = async (checkAuth = true, draftContractId = null) => {
     // Si vérification d'authentification requise et utilisateur non authentifié
     if (checkAuth && authLoaded && !isSignedIn) {
       // Sauvegarder les données et rediriger vers l'authentification
       sauvegarderTemporairement(contractData, 'accessEditor');
-      openSignIn({
-        redirectUrl: window.location.href, // Rediriger vers la même page
+      
+      // Utiliser une URL absolue avec window.location.origin
+      const currentUrl = new URL(window.location.href);
+      // Préserver tous les paramètres d'URL existants
+      currentUrl.searchParams.set('redirectAction', 'accessEditor');
+      currentUrl.searchParams.set('fromDashboard', 'true');
+      
+      clerk.openSignIn({
+        redirectUrl: currentUrl.toString()
       });
       return;
     }
@@ -118,8 +234,26 @@ const Step6Finalization = ({ contractData, updateContractData }) => {
       // Préparer un titre pour le contrat
       const contractTitle = title || `Contrat ${Date.now()}`;
       
-      // Sauvegarder le contrat en brouillon
-      const savedContract = await saveContract(contractData, contractTitle);
+      // Si un ID de brouillon est fourni, utiliser cet ID pour la mise à jour
+      let savedContract;
+      if (draftContractId) {
+        savedContract = await saveContract(
+          contractData,
+          contractTitle,
+          draftContractId,
+          false, // Marquer comme non brouillon
+          true   // Marquer comme venant de l'étape 6
+        );
+      } else {
+        // Sauvegarder comme nouveau contrat
+        savedContract = await saveContract(
+          contractData,
+          contractTitle,
+          null,
+          false, // Marquer comme non brouillon
+          true   // Marquer comme venant de l'étape 6
+        );
+      }
       
       // Rediriger vers l'éditeur avec l'ID du contrat
       if (savedContract && savedContract.id) {
