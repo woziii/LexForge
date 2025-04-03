@@ -204,6 +204,57 @@ def create_pdf():
     contract_data = data.get('contractData', {})
     filename = data.get('filename', 'contrat')
     user_id = data.get('user_id', 'anonymous')  # Récupérer l'ID utilisateur
+    contract_id = data.get('contractId')  # ID du contrat s'il s'agit d'un contrat sauvegardé
+    
+    # Fonction pour normaliser les données entre l'étape 3 et le dashboard
+    def normalize_data(data):
+        normalized = data.copy() if data else {}
+        
+        # Mapping entre les noms de champs potentiellement différents
+        field_mappings = {
+            'rcs': 'siren',
+            'siege': 'adresse',
+            'representant': 'representant_nom',
+        }
+        
+        # Appliquer les mappings
+        for old_field, new_field in field_mappings.items():
+            if old_field in normalized and not normalized.get(new_field):
+                normalized[new_field] = normalized[old_field]
+                
+        # Assurer que l'adresse complète est extraite des composants si nécessaire
+        if 'adresse' in normalized and 'code_postal' in normalized and 'ville' in normalized:
+            address_parts = []
+            if normalized.get('adresse'):
+                address_parts.append(normalized['adresse'])
+            
+            city_part = ''
+            if normalized.get('code_postal'):
+                city_part += normalized['code_postal'] 
+            if normalized.get('ville'):
+                if city_part:
+                    city_part += ' '
+                city_part += normalized['ville']
+            
+            if city_part:
+                address_parts.append(city_part)
+            
+            if address_parts:
+                normalized['adresse_complete'] = ', '.join(address_parts)
+        
+        return normalized
+    
+    # Si on a un ID de contrat et que le contract_data est vide, charger les données du contrat
+    if contract_id and not contract_data:
+        contract_file = os.path.join(CONTRACTS_DIR, f"{contract_id}.json")
+        if os.path.exists(contract_file):
+            try:
+                with open(contract_file, 'r', encoding='utf-8') as f:
+                    contract = json.load(f)
+                contract_data = contract.get('data', {})
+                print(f"PDF: Données du contrat {contract_id} chargées")
+            except Exception as e:
+                print(f"PDF: Erreur lors du chargement du contrat {contract_id}: {str(e)}")
     
     # Extraire les données du contrat
     contract_type = contract_data.get('type_contrat', [])
@@ -217,23 +268,44 @@ def create_pdf():
     remuneration = contract_data.get('remuneration', '')
     is_exclusive = contract_data.get('exclusivite', False)
     
-    # Récupérer les informations du cessionnaire depuis le profil utilisateur spécifique
-    cessionnaire_info = None
-    USER_PROFILE_FILE_WITH_ID = os.path.join(USER_PROFILES_DIR, f'user_profile_{user_id}.json')
-    if os.path.exists(USER_PROFILE_FILE_WITH_ID):
-        with open(USER_PROFILE_FILE_WITH_ID, 'r') as f:
-            user_profile = json.load(f)
-        
-        # Si un type d'entité est sélectionné, utiliser ses informations comme cessionnaire
-        if user_profile.get('selected_entity_type') == 'physical_person' and user_profile['physical_person']['is_configured']:
-            cessionnaire_info = user_profile['physical_person']
-        elif user_profile.get('selected_entity_type') == 'legal_entity' and user_profile['legal_entity']['is_configured']:
-            cessionnaire_info = user_profile['legal_entity']
-        else:
-            # Utiliser les informations par défaut de Tellers
-            cessionnaire_info = TELLERS_INFO
+    # Vérifier si des informations de cessionnaire sont déjà présentes dans les données du contrat
+    cessionnaire_info = contract_data.get('cessionnaire_info')
+    if cessionnaire_info:
+        cessionnaire_info = normalize_data(cessionnaire_info)
+        print(f"PDF: cessionnaire_info trouvé dans le contrat et normalisé")
     else:
-        cessionnaire_info = TELLERS_INFO
+        # 1. Vérifier si entreprise_info est fourni dans les données du contrat et l'utiliser en priorité
+        entreprise_info = contract_data.get('entreprise_info')
+        if entreprise_info:
+            cessionnaire_info = normalize_data(entreprise_info)
+            print(f"PDF: entreprise_info trouvé et normalisé: {json.dumps(cessionnaire_info, indent=2)}")
+        else:
+            # Récupérer les informations du cessionnaire depuis le profil utilisateur spécifique
+            USER_PROFILE_FILE_WITH_ID = os.path.join(USER_PROFILES_DIR, f'user_profile_{user_id}.json')
+            if os.path.exists(USER_PROFILE_FILE_WITH_ID):
+                with open(USER_PROFILE_FILE_WITH_ID, 'r') as f:
+                    user_profile = json.load(f)
+                
+                # Si un type d'entité est sélectionné, utiliser ses informations comme cessionnaire
+                if user_profile.get('selected_entity_type') == 'physical_person' and user_profile['physical_person']['is_configured']:
+                    cessionnaire_info = user_profile['physical_person']
+                    cessionnaire_info = normalize_data(cessionnaire_info)
+                    print("PDF: Utilisation du profil physical_person comme cessionnaire_info")
+                elif user_profile.get('selected_entity_type') == 'legal_entity' and user_profile['legal_entity']['is_configured']:
+                    cessionnaire_info = user_profile['legal_entity']
+                    cessionnaire_info = normalize_data(cessionnaire_info)
+                    print("PDF: Utilisation du profil legal_entity comme cessionnaire_info")
+                else:
+                    # Utiliser les informations par défaut de Tellers
+                    cessionnaire_info = TELLERS_INFO
+                    print("PDF: Utilisation des informations par défaut Tellers comme cessionnaire_info")
+            else:
+                cessionnaire_info = TELLERS_INFO
+                print("PDF: Profil utilisateur non trouvé, utilisation des informations par défaut Tellers")
+    
+    # Normaliser également les informations sur l'auteur
+    if author_info:
+        author_info = normalize_data(author_info)
     
     # Générer le PDF
     pdf_path = generate_pdf(

@@ -401,8 +401,8 @@ def _format_author_name(author_type, author_info):
     if author_type == "Personne physique":
         civility = author_info.get('gentille', '')
         first_name = author_info.get('prenom', '')
-        last_name = author_info.get('nom', '')
-        return f"{civility} {first_name} {last_name}".strip()
+        last_name = author_info.get('nom', '').upper()
+        return f"{civility} {last_name} {first_name}".strip()
     else:  # Personne morale
         company_name = author_info.get('nom', '')
         return f"{company_name}".strip()
@@ -412,36 +412,90 @@ def _format_author_details(author_type, author_info):
     if author_type == "Personne physique":
         nationality = author_info.get('nationalite', '')
         birthdate = author_info.get('date_naissance', '')
-        address = author_info.get('adresse', '')
+        birthplace = author_info.get('lieu_naissance', '')
+        adresse = author_info.get('adresse', '')
+        code_postal = author_info.get('code_postal', '')
+        ville = author_info.get('ville', '')
         
         details = []
+        
+        # Date et lieu de naissance
+        birth_info = ""
+        if birthdate:
+            birth_info = f"né(e) le {birthdate}"
+            if birthplace:
+                birth_info += f" à {birthplace}"
+            details.append(birth_info)
+        
+        # Nationalité
         if nationality:
             details.append(f"de nationalité {nationality}")
-        if birthdate:
-            details.append(f"né(e) le {birthdate}")
-        if address:
-            details.append(f"domicilié(e) {address}")
+        
+        # Adresse complète
+        adresse_complete = adresse
+        if code_postal or ville:
+            if adresse_complete:
+                adresse_complete += ", "
+            if code_postal:
+                adresse_complete += f"{code_postal}"
+            if ville:
+                if code_postal:
+                    adresse_complete += f" {ville}"
+                else:
+                    adresse_complete += ville
+                    
+        if adresse_complete:
+            details.append(f"domicilié(e) au {adresse_complete}")
         
         return ", ".join(details)
     else:  # Personne morale
         legal_form = author_info.get('forme_juridique', '')
         capital = author_info.get('capital', '')
-        rcs = author_info.get('rcs', '')
-        hq = author_info.get('siege', '')
-        rep = author_info.get('representant', '')
-        rep_title = author_info.get('qualite_representant', '')
+        siren = author_info.get('siren', '')
+        if not siren:
+            siren = author_info.get('rcs', '')
+        rcs_ville = author_info.get('rcs_ville', '')
+        adresse = author_info.get('adresse', '')
+        code_postal = author_info.get('code_postal', '')
+        ville = author_info.get('ville', '')
+        representant_civilite = author_info.get('representant_civilite', 'M.')
+        representant_nom = author_info.get('representant_nom', '').upper()
+        representant_prenom = author_info.get('representant_prenom', '')
+        qualite_representant = author_info.get('qualite_representant', '')
         
         details = []
         if legal_form:
             details.append(legal_form)
+        
         if capital:
             details.append(f"au capital de {capital}")
-        if rcs:
-            details.append(f"immatriculée sous le numéro {rcs}")
-        if hq:
-            details.append(f"dont le siège social est situé {hq}")
-        if rep and rep_title:
-            details.append(f"représentée par {rep} en sa qualité de {rep_title}")
+        
+        if siren:
+            if rcs_ville:
+                details.append(f"immatriculé sous le numéro {siren} R.C.S {rcs_ville}")
+            else:
+                details.append(f"immatriculé sous le numéro {siren}")
+        
+        # Adresse complète
+        adresse_complete = adresse
+        if code_postal or ville:
+            if adresse_complete:
+                adresse_complete += ", "
+            if code_postal:
+                adresse_complete += f"{code_postal}"
+            if ville:
+                if code_postal:
+                    adresse_complete += f" {ville}"
+                else:
+                    adresse_complete += ville
+                    
+        if adresse_complete:
+            details.append(f"dont le siège social est situé au {adresse_complete}")
+        
+        # Représentant légal
+        if (representant_nom or representant_prenom) and qualite_representant:
+            representant = f"{representant_civilite} {representant_nom} {representant_prenom}".strip()
+            details.append(f"représentée par {representant}, en sa qualité de {qualite_representant}")
         
         return ", ".join(details)
 
@@ -451,8 +505,8 @@ def _format_cessionnaire(cessionnaire_info):
     # Pour une personne physique (détection basée sur la présence de 'prenom')
     if 'prenom' in cessionnaire_info:
         civilite = cessionnaire_info.get('gentille', 'M.')
+        nom = cessionnaire_info.get('nom', '').upper()
         prenom = cessionnaire_info.get('prenom', '')
-        nom = cessionnaire_info.get('nom', '')
         date_naissance = cessionnaire_info.get('date_naissance', '')
         lieu_naissance = cessionnaire_info.get('lieu_naissance', '')
         nationalite = cessionnaire_info.get('nationalite', '')
@@ -489,11 +543,11 @@ def _format_cessionnaire(cessionnaire_info):
             
         return result.strip()
     
-    # Pour une personne morale (cas le plus courant)
+    # Pour une personne morale
     nom = cessionnaire_info.get('nom', '')
     forme_juridique = cessionnaire_info.get('forme_juridique', '')
     capital = cessionnaire_info.get('capital', '')
-    siren = cessionnaire_info.get('siren', '')  # Utiliser siren d'abord s'il existe
+    siren = cessionnaire_info.get('siren', '')
     if not siren:
         siren = cessionnaire_info.get('rcs', '')
     
@@ -501,7 +555,7 @@ def _format_cessionnaire(cessionnaire_info):
     code_postal = cessionnaire_info.get('code_postal', '')
     ville = cessionnaire_info.get('ville', '')
     representant_civilite = cessionnaire_info.get('representant_civilite', 'M.')
-    representant_nom = cessionnaire_info.get('representant_nom', '')
+    representant_nom = cessionnaire_info.get('representant_nom', '').upper()
     representant_prenom = cessionnaire_info.get('representant_prenom', '')
     qualite_representant = cessionnaire_info.get('qualite_representant', '')
     
@@ -517,9 +571,9 @@ def _format_cessionnaire(cessionnaire_info):
         # Ajouter la ville où est situé le RCS si disponible
         rcs_ville = cessionnaire_info.get('rcs_ville', ville)
         if rcs_ville:
-            result += f", immatriculée sous le numéro {siren} R.C.S. {rcs_ville}"
+            result += f", immatriculé sous le numéro {siren} R.C.S {rcs_ville}"
         else:
-            result += f", immatriculée sous le numéro {siren}"
+            result += f", immatriculé sous le numéro {siren}"
     
     # Construire l'adresse complète
     adresse_complete = adresse

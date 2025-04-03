@@ -48,30 +48,97 @@ class ContractTemplates:
         # Informations sur l'auteur/modèle
         if author_type == "Personne physique":
             gentille = author_info.get("gentille", "M.")
-            nom = author_info.get("nom", "")
+            nom = author_info.get("nom", "").upper()
             prenom = author_info.get("prenom", "")
             date_naissance = author_info.get("date_naissance", "")
+            lieu_naissance = author_info.get("lieu_naissance", "")
             nationalite = author_info.get("nationalite", "")
             adresse = author_info.get("adresse", "")
+            code_postal = author_info.get("code_postal", "")
+            ville = author_info.get("ville", "")
             contact = author_info.get("contact", "")
             
-            preamble += f"{gentille} {prenom} {nom}"
+            preamble += f"{gentille} {nom} {prenom}"
+            
             if date_naissance:
                 preamble += f", né(e) le {date_naissance}"
+                if lieu_naissance:
+                    preamble += f" à {lieu_naissance}"
+                    
             if nationalite:
                 preamble += f", de nationalité {nationalite}"
-            preamble += f", domicilié(e) au {adresse}"
+                
+            # Construire l'adresse complète
+            adresse_complete = adresse
+            if code_postal or ville:
+                if adresse_complete:
+                    adresse_complete += ", "
+                if code_postal:
+                    adresse_complete += f"{code_postal}"
+                if ville:
+                    if code_postal:
+                        adresse_complete += f" {ville}"
+                    else:
+                        adresse_complete += ville
+                        
+            if adresse_complete:
+                preamble += f", domicilié(e) au {adresse_complete}"
+                
             if contact:
                 preamble += f", joignable à {contact}"
         else:
             # Personne morale
-            nom_societe = author_info.get("nom_societe", "")
-            statut = author_info.get("statut", "")
-            rcs = author_info.get("rcs", "")
-            siege = author_info.get("siege", "")
+            nom = author_info.get("nom_societe", "") or author_info.get("nom", "")
+            forme_juridique = author_info.get("statut", "") or author_info.get("forme_juridique", "")
+            capital = author_info.get("capital", "")
+            siren = author_info.get("siren", "")
+            if not siren:
+                siren = author_info.get("rcs", "")
+            rcs_ville = author_info.get("rcs_ville", "")
+            adresse = author_info.get("adresse", "") or author_info.get("siege", "")
+            code_postal = author_info.get("code_postal", "")
+            ville = author_info.get("ville", "")
+            representant_civilite = author_info.get("representant_civilite", "M.")
+            representant_nom = author_info.get("representant_nom", "").upper() or author_info.get("representant", "").upper()
+            representant_prenom = author_info.get("representant_prenom", "")
+            qualite_representant = author_info.get("qualite_representant", "")
             contact = author_info.get("contact", "")
             
-            preamble += f"La société {nom_societe}, {statut}, immatriculée sous le numéro {rcs} au Registre du Commerce et des Sociétés, dont le siège social est situé {siege}"
+            preamble += f"La société {nom}"
+            
+            if forme_juridique:
+                preamble += f", {forme_juridique}"
+                
+            if capital:
+                preamble += f", au capital de {capital}"
+                
+            if siren:
+                if rcs_ville:
+                    preamble += f", immatriculée sous le numéro {siren} R.C.S {rcs_ville}"
+                else:
+                    preamble += f", immatriculée sous le numéro {siren} au Registre du Commerce et des Sociétés"
+            
+            # Construire l'adresse complète
+            adresse_complete = adresse
+            if code_postal or ville:
+                if adresse_complete:
+                    adresse_complete += ", "
+                if code_postal:
+                    adresse_complete += f"{code_postal}"
+                if ville:
+                    if code_postal:
+                        adresse_complete += f" {ville}"
+                    else:
+                        adresse_complete += ville
+                        
+            if adresse_complete:
+                preamble += f", dont le siège social est situé au {adresse_complete}"
+                
+            # Ajouter les informations du représentant si disponibles
+            if (representant_nom or representant_prenom) and qualite_representant:
+                representant = f"{representant_civilite} {representant_nom} {representant_prenom}".strip()
+                preamble += f", représentée par {representant}, en sa qualité de {qualite_representant}"
+                
             if contact:
                 preamble += f", joignable à {contact}"
         
@@ -89,7 +156,7 @@ class ContractTemplates:
             if 'prenom' in cessionnaire_info:
                 civilite = cessionnaire_info.get('gentille', 'M.')
                 prenom = cessionnaire_info.get('prenom', '')
-                nom = cessionnaire_info.get('nom', '')
+                nom = cessionnaire_info.get('nom', '').upper()
                 date_naissance = cessionnaire_info.get('date_naissance', '')
                 lieu_naissance = cessionnaire_info.get('lieu_naissance', '')
                 nationalite = cessionnaire_info.get('nationalite', '')
@@ -136,7 +203,7 @@ class ContractTemplates:
                 code_postal = cessionnaire_info.get('code_postal', '')
                 ville = cessionnaire_info.get('ville', '')
                 representant_civilite = cessionnaire_info.get('representant_civilite', 'M.')
-                representant_nom = cessionnaire_info.get('representant_nom', '')
+                representant_nom = cessionnaire_info.get('representant_nom', '').upper()
                 representant_prenom = cessionnaire_info.get('representant_prenom', '')
                 qualite_representant = cessionnaire_info.get('qualite_representant', '')
                 
@@ -152,9 +219,9 @@ class ContractTemplates:
                     # Ajouter la ville où est situé le RCS si disponible
                     rcs_ville = cessionnaire_info.get('rcs_ville', ville)
                     if rcs_ville:
-                        preamble += f", immatriculée sous le numéro {siren} R.C.S. {rcs_ville}"
+                        preamble += f", immatriculé sous le numéro {siren} R.C.S {rcs_ville}"
                     else:
-                        preamble += f", immatriculée sous le numéro {siren}"
+                        preamble += f", immatriculé sous le numéro {siren}"
                 
                 # Construire l'adresse complète
                 adresse_complete = adresse
