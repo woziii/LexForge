@@ -164,6 +164,7 @@ def preview():
         if entreprise_info:
             entreprise_info = normalize_data(entreprise_info)
             print(f"entreprise_info trouvé et normalisé: {json.dumps(entreprise_info, indent=2)}")
+            print(f"IMPORTANT - Type détecté: {entreprise_info.get('type')}, prenom présent: {'prenom' in entreprise_info}")
             cessionnaire_info = entreprise_info
         elif user_profile.get('selected_entity_type') == 'physical_person' and user_profile['physical_person']['is_configured']:
             cessionnaire_info = user_profile['physical_person']

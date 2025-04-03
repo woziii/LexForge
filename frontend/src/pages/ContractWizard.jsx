@@ -84,6 +84,7 @@ const ContractWizard = () => {
               setContractData(prevData => ({
                 ...prevData,
                 entreprise_info: {
+                  type: 'legal_entity',
                   nom: profile.legal_entity.nom || '',
                   forme_juridique: profile.legal_entity.forme_juridique || '',
                   siren: profile.legal_entity.siren || '',
@@ -91,20 +92,32 @@ const ContractWizard = () => {
                   code_postal: profile.legal_entity.code_postal || '',
                   ville: profile.legal_entity.ville || '',
                   email: profile.legal_entity.email || '',
-                  telephone: profile.legal_entity.telephone || ''
+                  telephone: profile.legal_entity.telephone || '',
+                  capital: profile.legal_entity.capital || '',
+                  representant_civilite: profile.legal_entity.representant_civilite || 'M.',
+                  representant_nom: profile.legal_entity.representant_nom || '',
+                  representant_prenom: profile.legal_entity.representant_prenom || '',
+                  qualite_representant: profile.legal_entity.qualite_representant || ''
                 }
               }));
             } else if (hasPhysicalPerson && profile.physical_person) {
+              // Pour une personne physique, ne pas ajouter 'Entreprise individuelle'
+              const physicalPerson = profile.physical_person;
               setContractData(prevData => ({
                 ...prevData,
                 entreprise_info: {
-                  nom: `${profile.physical_person.prenom || ''} ${profile.physical_person.nom || ''}`,
-                  forme_juridique: 'Entreprise individuelle',
-                  adresse: profile.physical_person.adresse || '',
-                  code_postal: profile.physical_person.code_postal || '',
-                  ville: profile.physical_person.ville || '',
-                  email: profile.physical_person.email || '',
-                  telephone: profile.physical_person.telephone || ''
+                  type: 'physical_person',
+                  gentille: physicalPerson.gentille || '',
+                  nom: physicalPerson.nom || '',
+                  prenom: physicalPerson.prenom || '',
+                  date_naissance: physicalPerson.date_naissance || '',
+                  lieu_naissance: physicalPerson.lieu_naissance || '',
+                  nationalite: physicalPerson.nationalite || '',
+                  adresse: physicalPerson.adresse || '',
+                  code_postal: physicalPerson.code_postal || '',
+                  ville: physicalPerson.ville || '',
+                  email: physicalPerson.email || '',
+                  telephone: physicalPerson.telephone || ''
                 }
               }));
             }
@@ -172,15 +185,30 @@ const ContractWizard = () => {
         // S'assurer que entreprise_info est correctement formaté pour la prévisualisation
         const entrepriseInfo = contractData.entreprise_info;
         if (entrepriseInfo && Object.keys(entrepriseInfo).length > 0) {
-          // Vérifier que tous les champs essentiels existent
-          previewData.entreprise_info = {
-            ...entrepriseInfo,
-            adresse: entrepriseInfo.adresse || formatAddress(entrepriseInfo),
-            siege: entrepriseInfo.siege || formatAddress(entrepriseInfo),
-            type: 'physical_person',
-            capital: entrepriseInfo.capital || '',
-            forme_juridique: entrepriseInfo.forme_juridique || 'Entreprise individuelle'
-          };
+          // Vérifier le type d'entité pour appliquer le formatage approprié
+          if (entrepriseInfo.type === 'physical_person' || entrepriseInfo.prenom) {
+            // Pour une personne physique
+            previewData.entreprise_info = {
+              ...entrepriseInfo,
+              adresse: entrepriseInfo.adresse || formatAddress(entrepriseInfo),
+              siege: entrepriseInfo.siege || formatAddress(entrepriseInfo),
+              type: 'physical_person'
+            };
+          } else {
+            // Pour une personne morale
+            previewData.entreprise_info = {
+              ...entrepriseInfo,
+              adresse: entrepriseInfo.adresse || formatAddress(entrepriseInfo),
+              siege: entrepriseInfo.siege || formatAddress(entrepriseInfo),
+              type: 'legal_entity',
+              capital: entrepriseInfo.capital || '',
+              forme_juridique: entrepriseInfo.forme_juridique || '',
+              representant_civilite: entrepriseInfo.representant_civilite || 'M.',
+              representant_nom: entrepriseInfo.representant_nom || '',
+              representant_prenom: entrepriseInfo.representant_prenom || '',
+              qualite_representant: entrepriseInfo.qualite_representant || ''
+            };
+          }
           
           console.log("Données envoyées pour prévisualisation:", JSON.stringify(previewData));
           const response = await previewContract(previewData);

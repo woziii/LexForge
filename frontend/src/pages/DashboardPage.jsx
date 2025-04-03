@@ -133,8 +133,9 @@ const DashboardPage = () => {
         email: entityData.email || '',
         telephone: entityData.telephone || '',
         siege: adresseComplete,
-        capital: '',
-        forme_juridique: 'Entreprise individuelle'
+        date_naissance: entityData.date_naissance || '',
+        lieu_naissance: entityData.lieu_naissance || '',
+        nationalite: entityData.nationalite || ''
       };
     } else {
       return {
@@ -148,7 +149,11 @@ const DashboardPage = () => {
         email: entityData.email || '',
         telephone: entityData.telephone || '',
         siege: adresseComplete,
-        capital: entityData.capital || '1000 €'
+        capital: entityData.capital || '1000 €',
+        representant_civilite: entityData.representant_civilite || 'M.',
+        representant_nom: entityData.representant_nom || '',
+        representant_prenom: entityData.representant_prenom || '',
+        qualite_representant: entityData.qualite_representant || ''
       };
     }
   };

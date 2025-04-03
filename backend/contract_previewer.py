@@ -130,9 +130,9 @@ def preview_contract(contract_type, is_free, author_type, author_info,
             apercu += f", dont le siège social est situé au {adresse_complete}"
             
         # Ajouter les informations du représentant si disponibles
-        if (representant_nom or representant_prenom) and qualite_representant:
+        if representant_nom or representant_prenom or qualite_representant:
             representant = f"{representant_civilite} {representant_nom} {representant_prenom}".strip()
-            apercu += f", représentée par {representant}, en sa qualité de {qualite_representant}"
+            apercu += f", représentée par {representant}, en sa qualité de {qualite_representant or 'gérant'}"
             
         if contact:
             apercu += f", joignable à {contact}"
@@ -360,15 +360,58 @@ def generate_contract_preview(contract_data):
         if contact:
             apercu += f", joignable à {contact}"
     else:
-        # Personne morale
+        # Personne morale (auteur)
         nom = author_info.get("nom", "")
         forme_juridique = author_info.get("forme_juridique", "")
         capital = author_info.get("capital", "")
-        rcs = author_info.get("rcs", "")
-        siege = author_info.get("siege", "")
+        siren = author_info.get("siren", "")
+        if not siren:
+            siren = author_info.get("rcs", "")
+        rcs_ville = author_info.get("rcs_ville", "")
+        adresse = author_info.get("adresse", "")
+        code_postal = author_info.get("code_postal", "")
+        ville = author_info.get("ville", "")
+        representant_civilite = author_info.get("representant_civilite", "M.")
+        representant_nom = author_info.get("representant_nom", "").upper()
+        representant_prenom = author_info.get("representant_prenom", "")
+        qualite_representant = author_info.get("qualite_representant", "")
         contact = author_info.get("contact", "")
         
-        apercu += f"La société {nom}, {forme_juridique}, immatriculée sous le numéro {rcs} au Registre du Commerce et des Sociétés, dont le siège social est situé {siege}"
+        apercu += f"{nom}"
+        
+        if forme_juridique:
+            apercu += f", {forme_juridique}"
+            
+        if capital:
+            apercu += f" au capital de {capital}"
+            
+        if siren:
+            if rcs_ville:
+                apercu += f", immatriculé sous le numéro {siren} R.C.S {rcs_ville}"
+            else:
+                apercu += f", immatriculé sous le numéro {siren}"
+        
+        # Construire l'adresse complète
+        adresse_complete = adresse
+        if code_postal or ville:
+            if adresse_complete:
+                adresse_complete += ", "
+            if code_postal:
+                adresse_complete += f"{code_postal}"
+            if ville:
+                if code_postal:
+                    adresse_complete += f" {ville}"
+                else:
+                    adresse_complete += ville
+                    
+        if adresse_complete:
+            apercu += f", dont le siège social est situé au {adresse_complete}"
+            
+        # Ajouter les informations du représentant si disponibles
+        if representant_nom or representant_prenom or qualite_representant:
+            representant = f"{representant_civilite} {representant_nom} {representant_prenom}".strip()
+            apercu += f", représentée par {representant}, en sa qualité de {qualite_representant or 'gérant'}"
+            
         if contact:
             apercu += f", joignable à {contact}"
     
@@ -382,8 +425,15 @@ def generate_contract_preview(contract_data):
     
     # Informations sur le cessionnaire (utilisation des données personnalisées si disponibles)
     if cessionnaire_info and any(cessionnaire_info.values()):
-        # Pour personne physique (détection basée sur la présence de 'prenom')
-        if cessionnaire_info.get('prenom'):
+        print(f"DEBUG - Type de cessionnaire_info: {type(cessionnaire_info)}")
+        print(f"DEBUG - Contenu de cessionnaire_info: {cessionnaire_info}")
+        print(f"DEBUG - Détection personne physique: 'prenom' in cessionnaire_info = {('prenom' in cessionnaire_info)}")
+        print(f"DEBUG - Valeur de prenom: {cessionnaire_info.get('prenom', 'NON TROUVÉ')}")
+        print(f"DEBUG - Type field: {cessionnaire_info.get('type', 'NON TROUVÉ')}")
+        
+        # Pour personne physique (détection basée sur la présence de 'prenom' ou de 'type')
+        if cessionnaire_info.get('prenom') or cessionnaire_info.get('type') == 'physical_person':
+            print(f"DEBUG - Détecté comme personne physique")
             civilite = cessionnaire_info.get('gentille', 'M.')
             prenom = cessionnaire_info.get('prenom', '')
             nom = cessionnaire_info.get('nom', '').upper()
@@ -393,17 +443,17 @@ def generate_contract_preview(contract_data):
             adresse = cessionnaire_info.get('adresse', '')
             code_postal = cessionnaire_info.get('code_postal', '')
             ville = cessionnaire_info.get('ville', '')
+            contact = cessionnaire_info.get('contact', '')
             
             apercu += f"{civilite} {nom} {prenom}"
             
             if date_naissance:
                 apercu += f", né(e) le {date_naissance}"
-            
-            if lieu_naissance:
-                apercu += f" à {lieu_naissance}"
+                if lieu_naissance:
+                    apercu += f" à {lieu_naissance}"
             
             if nationalite:
-                apercu += f" de nationalité {nationalite}"
+                apercu += f", de nationalité {nationalite}"
             
             # Construire l'adresse complète
             adresse_complete = adresse
@@ -420,10 +470,16 @@ def generate_contract_preview(contract_data):
             
             if adresse_complete:
                 apercu += f", domicilié(e) au {adresse_complete}"
-                
+            
+            if contact:
+                apercu += f", joignable à {contact}"
+            
             apercu += ", ci-après dénommé(e) \"le Cessionnaire\""
         # Pour personne morale
         else:
+            print(f"DEBUG - Détecté comme personne morale")
+            print(f"DEBUG - Infos représentant: civilite={cessionnaire_info.get('representant_civilite', 'NON FOURNI')}, nom={cessionnaire_info.get('representant_nom', 'NON FOURNI')}, prenom={cessionnaire_info.get('representant_prenom', 'NON FOURNI')}, qualite={cessionnaire_info.get('qualite_representant', 'NON FOURNI')}")
+            
             nom = cessionnaire_info.get('nom', '')
             forme_juridique = cessionnaire_info.get('forme_juridique', '')
             capital = cessionnaire_info.get('capital', '')
@@ -472,16 +528,16 @@ def generate_contract_preview(contract_data):
                 apercu += f", dont le siège social est situé au {adresse_complete}"
             
             # Ajouter les informations du représentant si disponibles
-            if (representant_nom or representant_prenom) and qualite_representant:
+            if representant_nom or representant_prenom or qualite_representant:
                 representant = f"{representant_civilite} {representant_nom} {representant_prenom}".strip()
-                apercu += f", représentée par {representant}, en sa qualité de {qualite_representant}"
-                
-            apercu += ", ci-après dénommé \"le Cessionnaire\""
+                apercu += f", représentée par {representant}, en sa qualité de {qualite_representant or 'gérant'}"
+            
+            apercu += ", ci-après dénommé(e) \"le Cessionnaire\""
     else:
-        # Utiliser les informations par défaut de Tellers mais avec le format correct
-        apercu += "Tellers, société par actions simplifiée unipersonnelle au capital de 1000 €, immatriculée sous le numéro 932 553 266 R.C.S. Lyon, dont le siège social est situé 12 RUE DE LA PART-DIEU, 69003 LYON, représentée par M. MAURICI Lucas, en sa qualité de gérant"
+        # Utiliser les informations par défaut de Tellers
+        apercu += "Tellers, société par actions simplifiée unipersonnelle au capital de 1000 €, immatriculée sous le numéro 932 553 266 R.C.S. Lyon, dont le siège social est situé 12 RUE DE LA PART-DIEU, 69003 LYON, représentée par M. MAURICI Lucas, en sa qualité de gérant, ci-après dénommé(e) \"le Cessionnaire\""
     
-    apercu += ", ci-après dénommé \"le Cessionnaire\",\n\n"
+    apercu += ",\n\n"
     
     # Introduction
     apercu += "Ci-après dénommées ensemble \"les Parties\" ou individuellement \"la Partie\",\n\n"
