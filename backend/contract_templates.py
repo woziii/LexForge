@@ -87,35 +87,95 @@ class ContractTemplates:
         if cessionnaire_info and isinstance(cessionnaire_info, dict) and cessionnaire_info.get('nom'):
             # Pour une personne physique
             if 'prenom' in cessionnaire_info:
-                gentille = cessionnaire_info.get('gentille', '')
+                civilite = cessionnaire_info.get('gentille', 'M.')
                 prenom = cessionnaire_info.get('prenom', '')
                 nom = cessionnaire_info.get('nom', '')
+                date_naissance = cessionnaire_info.get('date_naissance', '')
+                lieu_naissance = cessionnaire_info.get('lieu_naissance', '')
+                nationalite = cessionnaire_info.get('nationalite', '')
                 adresse = cessionnaire_info.get('adresse', '')
+                code_postal = cessionnaire_info.get('code_postal', '')
+                ville = cessionnaire_info.get('ville', '')
                 
-                preamble += f"{gentille} {prenom} {nom}"
-                if adresse:
-                    preamble += f", domicilié(e) au {adresse}"
+                preamble += f"{civilite} {nom} {prenom}"
+                
+                if date_naissance:
+                    preamble += f", né(e) le {date_naissance}"
+                
+                if lieu_naissance:
+                    preamble += f" à {lieu_naissance}"
+                
+                if nationalite:
+                    preamble += f" de nationalité {nationalite}"
+                
+                # Construire l'adresse complète
+                adresse_complete = adresse
+                if code_postal or ville:
+                    if adresse_complete:
+                        adresse_complete += ", "
+                    if code_postal:
+                        adresse_complete += f"{code_postal}"
+                    if ville:
+                        if code_postal:
+                            adresse_complete += f" {ville}"
+                        else:
+                            adresse_complete += ville
+                
+                if adresse_complete:
+                    preamble += f", domicilié(e) au {adresse_complete}"
             # Pour une personne morale
             else:
                 nom = cessionnaire_info.get('nom', '')
                 forme_juridique = cessionnaire_info.get('forme_juridique', '')
                 capital = cessionnaire_info.get('capital', '')
-                rcs = cessionnaire_info.get('rcs', '')
-                siege = cessionnaire_info.get('siege', '')
-                representant = cessionnaire_info.get('representant', '')
+                siren = cessionnaire_info.get('siren', '')  # Utiliser siren d'abord s'il existe
+                if not siren:
+                    siren = cessionnaire_info.get('rcs', '')
+                
+                adresse = cessionnaire_info.get('adresse', '')
+                code_postal = cessionnaire_info.get('code_postal', '')
+                ville = cessionnaire_info.get('ville', '')
+                representant_civilite = cessionnaire_info.get('representant_civilite', 'M.')
+                representant_nom = cessionnaire_info.get('representant_nom', '')
+                representant_prenom = cessionnaire_info.get('representant_prenom', '')
                 qualite_representant = cessionnaire_info.get('qualite_representant', '')
                 
                 preamble += f"{nom}"
+                
                 if forme_juridique:
                     preamble += f", {forme_juridique}"
+                
                 if capital:
                     preamble += f" au capital de {capital}"
-                if rcs:
-                    preamble += f", immatriculée sous le numéro {rcs}"
-                if siege:
-                    preamble += f", dont le siège social est situé {siege}"
-                if representant and qualite_representant:
-                    preamble += f", représentée par {representant} en sa qualité de {qualite_representant}"
+                
+                if siren:
+                    # Ajouter la ville où est situé le RCS si disponible
+                    rcs_ville = cessionnaire_info.get('rcs_ville', ville)
+                    if rcs_ville:
+                        preamble += f", immatriculée sous le numéro {siren} R.C.S. {rcs_ville}"
+                    else:
+                        preamble += f", immatriculée sous le numéro {siren}"
+                
+                # Construire l'adresse complète
+                adresse_complete = adresse
+                if code_postal or ville:
+                    if adresse_complete:
+                        adresse_complete += ", "
+                    if code_postal:
+                        adresse_complete += f"{code_postal}"
+                    if ville:
+                        if code_postal:
+                            adresse_complete += f" {ville}"
+                        else:
+                            adresse_complete += ville
+                
+                if adresse_complete:
+                    preamble += f", dont le siège social est situé au {adresse_complete}"
+                
+                # Ajouter les informations du représentant si disponibles
+                if (representant_nom or representant_prenom) and qualite_representant:
+                    representant = f"{representant_civilite} {representant_nom} {representant_prenom}".strip()
+                    preamble += f", représentée par {representant}, en sa qualité de {qualite_representant}"
         else:
             # Utiliser les informations par défaut de Tellers
             preamble += f"{TELLERS_INFO['nom']}, {TELLERS_INFO['forme_juridique']} au capital de {TELLERS_INFO['capital']}, "
