@@ -69,8 +69,13 @@ const Step3AuthorInfo = ({ contractData, updateContractData }) => {
       auteur_type: auteurType,
       auteur_info: {
         ...client,
-        // Adapter la clé gentille/civilite si nécessaire
+        // Adapter les clés si nécessaires
         gentille: client.gentille || client.civilite || '',
+        // Assurer que les noms des champs du représentant sont cohérents
+        representant_civilite: client.representant_civilite || 'M.',
+        representant_nom: client.representant_nom || client.representant || '',
+        representant_prenom: client.representant_prenom || '',
+        qualite_representant: client.qualite_representant || ''
       }
     });
   };
@@ -298,6 +303,19 @@ const Step3AuthorInfo = ({ contractData, updateContractData }) => {
             </div>
             
             <div>
+              <label htmlFor="birthplace" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Lieu de naissance</label>
+              <input
+                type="text"
+                id="birthplace"
+                name="lieu_naissance"
+                value={contractData.auteur_info.lieu_naissance || ""}
+                onChange={handleAuthorInfoChange}
+                className="block w-full px-3 py-2.5 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Ex: Paris"
+              />
+            </div>
+            
+            <div>
               <label htmlFor="nationality" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Nationalité</label>
               <input
                 type="text"
@@ -311,16 +329,44 @@ const Step3AuthorInfo = ({ contractData, updateContractData }) => {
             </div>
             
             <div>
-              <label htmlFor="address" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Adresse complète</label>
-              <textarea
+              <label htmlFor="address" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Adresse</label>
+              <input
+                type="text"
                 id="address"
                 name="adresse"
                 value={contractData.auteur_info.adresse || ""}
                 onChange={handleAuthorInfoChange}
-                className="block w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                rows="3"
-                placeholder="Numéro, rue, code postal, ville, pays"
-              ></textarea>
+                className="block w-full px-3 py-2.5 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Numéro et rue"
+              />
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div>
+                <label htmlFor="postal_code" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Code postal</label>
+                <input
+                  type="text"
+                  id="postal_code"
+                  name="code_postal"
+                  value={contractData.auteur_info.code_postal || ""}
+                  onChange={handleAuthorInfoChange}
+                  className="block w-full px-3 py-2.5 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Ex: 75001"
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="city" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Ville</label>
+                <input
+                  type="text"
+                  id="city"
+                  name="ville"
+                  value={contractData.auteur_info.ville || ""}
+                  onChange={handleAuthorInfoChange}
+                  className="block w-full px-3 py-2.5 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Ex: Paris"
+                />
+              </div>
             </div>
           </div>
         ) : (
@@ -366,58 +412,131 @@ const Step3AuthorInfo = ({ contractData, updateContractData }) => {
               </div>
             </div>
             
-            <div>
-              <label htmlFor="rcs" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Numéro RCS</label>
-              <input
-                type="text"
-                id="rcs"
-                name="rcs"
-                value={contractData.auteur_info.rcs || ""}
-                onChange={handleAuthorInfoChange}
-                className="block w-full px-3 py-2.5 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Ex: 123 456 789 R.C.S. Paris"
-              />
-            </div>
-            
-            <div>
-              <label htmlFor="company-address" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Siège social</label>
-              <textarea
-                id="company-address"
-                name="siege"
-                value={contractData.auteur_info.siege || ""}
-                onChange={handleAuthorInfoChange}
-                className="block w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                rows="3"
-                placeholder="Adresse complète du siège social"
-              ></textarea>
-            </div>
-            
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
-                <label htmlFor="representative" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Représentant légal</label>
+                <label htmlFor="siren" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">SIREN/SIRET</label>
                 <input
                   type="text"
-                  id="representative"
-                  name="representant"
-                  value={contractData.auteur_info.representant || ""}
+                  id="siren"
+                  name="siren"
+                  value={contractData.auteur_info.siren || ""}
                   onChange={handleAuthorInfoChange}
                   className="block w-full px-3 py-2.5 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Nom et prénom du représentant"
+                  placeholder="Ex: 123 456 789"
                 />
               </div>
               
               <div>
-                <label htmlFor="representative-title" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Qualité du représentant</label>
+                <label htmlFor="rcs-city" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Ville du RCS</label>
                 <input
                   type="text"
-                  id="representative-title"
-                  name="qualite_representant"
-                  value={contractData.auteur_info.qualite_representant || ""}
+                  id="rcs-city"
+                  name="rcs_ville"
+                  value={contractData.auteur_info.rcs_ville || ""}
                   onChange={handleAuthorInfoChange}
                   className="block w-full px-3 py-2.5 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Ex: Gérant, Président, etc."
+                  placeholder="Ex: Paris"
                 />
               </div>
+            </div>
+            
+            <div>
+              <label htmlFor="address-company" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Adresse</label>
+              <input
+                type="text"
+                id="address-company"
+                name="adresse"
+                value={contractData.auteur_info.adresse || ""}
+                onChange={handleAuthorInfoChange}
+                className="block w-full px-3 py-2.5 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Numéro et rue"
+              />
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div>
+                <label htmlFor="postal-code-company" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Code postal</label>
+                <input
+                  type="text"
+                  id="postal-code-company"
+                  name="code_postal"
+                  value={contractData.auteur_info.code_postal || ""}
+                  onChange={handleAuthorInfoChange}
+                  className="block w-full px-3 py-2.5 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Ex: 75001"
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="city-company" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Ville</label>
+                <input
+                  type="text"
+                  id="city-company"
+                  name="ville"
+                  value={contractData.auteur_info.ville || ""}
+                  onChange={handleAuthorInfoChange}
+                  className="block w-full px-3 py-2.5 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Ex: Paris"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div>
+                <label htmlFor="representative-civility" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Civilité du représentant</label>
+                <select
+                  id="representative-civility"
+                  name="representant_civilite"
+                  value={contractData.auteur_info.representant_civilite || "M."}
+                  onChange={handleAuthorInfoChange}
+                  className="block w-full px-3 py-2.5 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                >
+                  <option value="M.">M.</option>
+                  <option value="Mme">Mme</option>
+                  <option value="Mlle">Mlle</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div>
+                <label htmlFor="representative-lastname" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Nom du représentant</label>
+                <input
+                  type="text"
+                  id="representative-lastname"
+                  name="representant_nom"
+                  value={contractData.auteur_info.representant_nom || ""}
+                  onChange={handleAuthorInfoChange}
+                  className="block w-full px-3 py-2.5 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Nom du représentant"
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="representative-firstname" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Prénom du représentant</label>
+                <input
+                  type="text"
+                  id="representative-firstname"
+                  name="representant_prenom"
+                  value={contractData.auteur_info.representant_prenom || ""}
+                  onChange={handleAuthorInfoChange}
+                  className="block w-full px-3 py-2.5 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Prénom du représentant"
+                />
+              </div>
+            </div>
+              
+            <div>
+              <label htmlFor="representative-title" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Qualité du représentant</label>
+              <input
+                type="text"
+                id="representative-title"
+                name="qualite_representant"
+                value={contractData.auteur_info.qualite_representant || ""}
+                onChange={handleAuthorInfoChange}
+                className="block w-full px-3 py-2.5 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Ex: Gérant, Président, etc."
+              />
             </div>
           </div>
         )}

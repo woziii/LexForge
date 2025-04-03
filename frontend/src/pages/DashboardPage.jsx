@@ -23,7 +23,8 @@ const DashboardPage = () => {
       nom: '',
       prenom: '',
       date_naissance: '',
-      nationalite: '',
+      lieu_naissance: '',
+      nationalite: 'Française',
       adresse: '',
       code_postal: '',
       ville: '',
@@ -36,13 +37,15 @@ const DashboardPage = () => {
       forme_juridique: '',
       capital: '',
       siren: '',
-      siege: '',
+      rcs_ville: '',
       adresse: '',
       code_postal: '',
       ville: '',
       email: '',
       telephone: '',
-      representant: '',
+      representant_civilite: 'M.',
+      representant_nom: '',
+      representant_prenom: '',
       qualite_representant: '',
     },
     selected_entity_type: '', // 'physical_person' ou 'legal_entity'
@@ -155,24 +158,10 @@ const DashboardPage = () => {
       setIsSaving(true);
       setErrorMessage('');
       
-      // Vérifier les données obligatoires selon le type d'entité
+      // Marquer le type sélectionné comme configuré
       if (profileData.selected_entity_type === 'physical_person') {
-        if (!profileData.physical_person.gentille || !profileData.physical_person.nom || !profileData.physical_person.prenom) {
-          setErrorMessage('Veuillez remplir tous les champs obligatoires.');
-          setIsSaving(false);
-          return;
-        }
-        
-        // Marquer comme configuré
         profileData.physical_person.is_configured = true;
       } else if (profileData.selected_entity_type === 'legal_entity') {
-        if (!profileData.legal_entity.nom || !profileData.legal_entity.forme_juridique) {
-          setErrorMessage('Veuillez remplir tous les champs obligatoires.');
-          setIsSaving(false);
-          return;
-        }
-        
-        // Marquer comme configuré
         profileData.legal_entity.is_configured = true;
       } else {
         setErrorMessage('Veuillez sélectionner un type de cessionnaire.');
@@ -191,7 +180,7 @@ const DashboardPage = () => {
         user_id: getCurrentUserId()
       };
       
-      // Sauvegarder dans la base de données
+      // Enregistrer le profil sans validation obligatoire
       await updateUserProfile(dataToSave);
       setSuccessMessage('Vos informations ont été enregistrées avec succès.');
       
@@ -471,23 +460,23 @@ const DashboardPage = () => {
                     
                     <div className="space-y-5">
                       <div>
-                        <label htmlFor="civility" className="block text-sm font-medium text-gray-700 mb-1">Civilité <span className="text-red-500">*</span></label>
+                        <label htmlFor="civility" className="block text-sm font-medium text-gray-700 mb-1">Civilité</label>
                         <select
                           id="civility"
                           value={profileData.physical_person.gentille || ""}
                           onChange={(e) => handleInputChange('physical_person', 'gentille', e.target.value)}
-                          className="block w-full px-4 py-2.5 text-gray-700 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white"
+                          className="block w-full px-4 py-2.5 text-gray-700 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                         >
-                          <option value="">Sélectionnez une civilité</option>
-                          {CIVILITY_OPTIONS.map((civility) => (
-                            <option key={civility} value={civility}>{civility}</option>
-                          ))}
+                          <option value="">Sélectionner</option>
+                          <option value="M.">M.</option>
+                          <option value="Mme">Mme</option>
+                          <option value="Mlle">Mlle</option>
                         </select>
                       </div>
                       
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                         <div>
-                          <label htmlFor="lastname" className="block text-sm font-medium text-gray-700 mb-1">Nom <span className="text-red-500">*</span></label>
+                          <label htmlFor="lastname" className="block text-sm font-medium text-gray-700 mb-1">Nom</label>
                           <input
                             type="text"
                             id="lastname"
@@ -499,7 +488,7 @@ const DashboardPage = () => {
                         </div>
                         
                         <div>
-                          <label htmlFor="firstname" className="block text-sm font-medium text-gray-700 mb-1">Prénom <span className="text-red-500">*</span></label>
+                          <label htmlFor="firstname" className="block text-sm font-medium text-gray-700 mb-1">Prénom</label>
                           <input
                             type="text"
                             id="firstname"
@@ -525,10 +514,10 @@ const DashboardPage = () => {
                       
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                         <div>
-                          <label htmlFor="postal_code" className="block text-sm font-medium text-gray-700 mb-1">Code postal</label>
+                          <label htmlFor="postal-code" className="block text-sm font-medium text-gray-700 mb-1">Code postal</label>
                           <input
                             type="text"
-                            id="postal_code"
+                            id="postal-code"
                             value={profileData.physical_person.code_postal || ""}
                             onChange={(e) => handleInputChange('physical_person', 'code_postal', e.target.value)}
                             className="block w-full px-4 py-2.5 text-gray-700 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
@@ -549,6 +538,43 @@ const DashboardPage = () => {
                         </div>
                       </div>
                       
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div>
+                          <label htmlFor="birthdate" className="block text-sm font-medium text-gray-700 mb-1">Date de naissance</label>
+                          <input
+                            type="date"
+                            id="birthdate"
+                            value={profileData.physical_person.date_naissance || ""}
+                            onChange={(e) => handleInputChange('physical_person', 'date_naissance', e.target.value)}
+                            className="block w-full px-4 py-2.5 text-gray-700 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label htmlFor="birthplace" className="block text-sm font-medium text-gray-700 mb-1">Lieu de naissance</label>
+                          <input
+                            type="text"
+                            id="birthplace"
+                            value={profileData.physical_person.lieu_naissance || ""}
+                            onChange={(e) => handleInputChange('physical_person', 'lieu_naissance', e.target.value)}
+                            className="block w-full px-4 py-2.5 text-gray-700 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                            placeholder="Ex: Paris"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label htmlFor="nationality" className="block text-sm font-medium text-gray-700 mb-1">Nationalité</label>
+                        <input
+                          type="text"
+                          id="nationality"
+                          value={profileData.physical_person.nationalite || ""}
+                          onChange={(e) => handleInputChange('physical_person', 'nationalite', e.target.value)}
+                          className="block w-full px-4 py-2.5 text-gray-700 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                          placeholder="Ex: Française"
+                        />
+                      </div>
+
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                         <div>
                           <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
@@ -592,7 +618,7 @@ const DashboardPage = () => {
                     
                     <div className="space-y-5">
                       <div>
-                        <label htmlFor="company-name" className="block text-sm font-medium text-gray-700 mb-1">Nom de la société <span className="text-red-500">*</span></label>
+                        <label htmlFor="company-name" className="block text-sm font-medium text-gray-700 mb-1">Nom de la société</label>
                         <input
                           type="text"
                           id="company-name"
@@ -605,7 +631,7 @@ const DashboardPage = () => {
                       
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                         <div>
-                          <label htmlFor="legal-form" className="block text-sm font-medium text-gray-700 mb-1">Forme juridique <span className="text-red-500">*</span></label>
+                          <label htmlFor="legal-form" className="block text-sm font-medium text-gray-700 mb-1">Forme juridique</label>
                           <input
                             type="text"
                             id="legal-form"
@@ -629,18 +655,32 @@ const DashboardPage = () => {
                         </div>
                       </div>
                       
-                      <div>
-                        <label htmlFor="siren" className="block text-sm font-medium text-gray-700 mb-1">SIREN/SIRET</label>
-                        <input
-                          type="text"
-                          id="siren"
-                          value={profileData.legal_entity.siren || ""}
-                          onChange={(e) => handleInputChange('legal_entity', 'siren', e.target.value)}
-                          className="block w-full px-4 py-2.5 text-gray-700 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                          placeholder="Ex: 123 456 789"
-                        />
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div>
+                          <label htmlFor="siren" className="block text-sm font-medium text-gray-700 mb-1">SIREN/SIRET</label>
+                          <input
+                            type="text"
+                            id="siren"
+                            value={profileData.legal_entity.siren || ""}
+                            onChange={(e) => handleInputChange('legal_entity', 'siren', e.target.value)}
+                            className="block w-full px-4 py-2.5 text-gray-700 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                            placeholder="Ex: 123 456 789"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label htmlFor="rcs_ville" className="block text-sm font-medium text-gray-700 mb-1">Ville du RCS</label>
+                          <input
+                            type="text"
+                            id="rcs_ville"
+                            value={profileData.legal_entity.rcs_ville || ""}
+                            onChange={(e) => handleInputChange('legal_entity', 'rcs_ville', e.target.value)}
+                            className="block w-full px-4 py-2.5 text-gray-700 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                            placeholder="Ex: Paris"
+                          />
+                        </div>
                       </div>
-                      
+
                       <div>
                         <label htmlFor="address-company" className="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
                         <input
@@ -652,7 +692,7 @@ const DashboardPage = () => {
                           placeholder="Numéro et rue"
                         />
                       </div>
-                      
+                       
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                         <div>
                           <label htmlFor="postal-code-company" className="block text-sm font-medium text-gray-700 mb-1">Code postal</label>
@@ -665,7 +705,7 @@ const DashboardPage = () => {
                             placeholder="Ex: 75001"
                           />
                         </div>
-                        
+                         
                         <div>
                           <label htmlFor="city-company" className="block text-sm font-medium text-gray-700 mb-1">Ville</label>
                           <input
@@ -678,7 +718,7 @@ const DashboardPage = () => {
                           />
                         </div>
                       </div>
-                      
+
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                         <div>
                           <label htmlFor="email-company" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
@@ -691,7 +731,7 @@ const DashboardPage = () => {
                             placeholder="Ex: contact@entreprise.com"
                           />
                         </div>
-                        
+                         
                         <div>
                           <label htmlFor="telephone-company" className="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
                           <input
@@ -703,6 +743,60 @@ const DashboardPage = () => {
                             placeholder="Ex: 01 23 45 67 89"
                           />
                         </div>
+                      </div>
+
+                      <h3 className="text-lg font-medium text-gray-800 mt-6 mb-3">Informations du représentant légal</h3>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                        <div>
+                          <label htmlFor="representant_civilite" className="block text-sm font-medium text-gray-700 mb-1">Civilité</label>
+                          <select
+                            id="representant_civilite"
+                            value={profileData.legal_entity.representant_civilite || "M."}
+                            onChange={(e) => handleInputChange('legal_entity', 'representant_civilite', e.target.value)}
+                            className="block w-full px-4 py-2.5 text-gray-700 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                          >
+                            <option value="M.">M.</option>
+                            <option value="Mme">Mme</option>
+                            <option value="Mlle">Mlle</option>
+                          </select>
+                        </div>
+                        
+                        <div>
+                          <label htmlFor="representant_nom" className="block text-sm font-medium text-gray-700 mb-1">Nom</label>
+                          <input
+                            type="text"
+                            id="representant_nom"
+                            value={profileData.legal_entity.representant_nom || ""}
+                            onChange={(e) => handleInputChange('legal_entity', 'representant_nom', e.target.value)}
+                            className="block w-full px-4 py-2.5 text-gray-700 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                            placeholder="Nom du représentant"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label htmlFor="representant_prenom" className="block text-sm font-medium text-gray-700 mb-1">Prénom</label>
+                          <input
+                            type="text"
+                            id="representant_prenom"
+                            value={profileData.legal_entity.representant_prenom || ""}
+                            onChange={(e) => handleInputChange('legal_entity', 'representant_prenom', e.target.value)}
+                            className="block w-full px-4 py-2.5 text-gray-700 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                            placeholder="Prénom du représentant"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label htmlFor="qualite_representant" className="block text-sm font-medium text-gray-700 mb-1">Qualité</label>
+                        <input
+                          type="text"
+                          id="qualite_representant"
+                          value={profileData.legal_entity.qualite_representant || ""}
+                          onChange={(e) => handleInputChange('legal_entity', 'qualite_representant', e.target.value)}
+                          className="block w-full px-4 py-2.5 text-gray-700 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                          placeholder="Ex: Gérant, Président, Directeur Général"
+                        />
                       </div>
                     </div>
                   </div>

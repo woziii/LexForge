@@ -43,30 +43,97 @@ def preview_contract(contract_type, is_free, author_type, author_info,
     # Informations sur l'auteur/modèle
     if author_type == "Personne physique":
         gentille = author_info.get("gentille", "M.")
-        nom = author_info.get("nom", "")
+        nom = author_info.get("nom", "").upper()
         prenom = author_info.get("prenom", "")
         date_naissance = author_info.get("date_naissance", "")
+        lieu_naissance = author_info.get("lieu_naissance", "")
         nationalite = author_info.get("nationalite", "")
         adresse = author_info.get("adresse", "")
+        code_postal = author_info.get("code_postal", "")
+        ville = author_info.get("ville", "")
         contact = author_info.get("contact", "")
         
-        apercu += f"{gentille} {prenom} {nom}"
+        apercu += f"{gentille} {nom} {prenom}"
+        
         if date_naissance:
             apercu += f", né(e) le {date_naissance}"
+            if lieu_naissance:
+                apercu += f" à {lieu_naissance}"
+                
         if nationalite:
             apercu += f", de nationalité {nationalite}"
-        apercu += f", domicilié(e) au {adresse}"
+            
+        # Construire l'adresse complète
+        adresse_complete = adresse
+        if code_postal or ville:
+            if adresse_complete:
+                adresse_complete += ", "
+            if code_postal:
+                adresse_complete += f"{code_postal}"
+            if ville:
+                if code_postal:
+                    adresse_complete += f" {ville}"
+                else:
+                    adresse_complete += ville
+                    
+        if adresse_complete:
+            apercu += f", domicilié(e) au {adresse_complete}"
+            
         if contact:
             apercu += f", joignable à {contact}"
     else:
         # Personne morale
-        nom_societe = author_info.get("nom_societe", "")
-        statut = author_info.get("statut", "")
-        rcs = author_info.get("rcs", "")
-        siege = author_info.get("siege", "")
+        nom = author_info.get("nom", "")
+        forme_juridique = author_info.get("forme_juridique", "")
+        capital = author_info.get("capital", "")
+        siren = author_info.get("siren", "")
+        if not siren:
+            siren = author_info.get("rcs", "")
+        rcs_ville = author_info.get("rcs_ville", "")
+        adresse = author_info.get("adresse", "")
+        code_postal = author_info.get("code_postal", "")
+        ville = author_info.get("ville", "")
+        representant_civilite = author_info.get("representant_civilite", "M.")
+        representant_nom = author_info.get("representant_nom", "").upper()
+        representant_prenom = author_info.get("representant_prenom", "")
+        qualite_representant = author_info.get("qualite_representant", "")
         contact = author_info.get("contact", "")
         
-        apercu += f"La société {nom_societe}, {statut}, immatriculée sous le numéro {rcs} au Registre du Commerce et des Sociétés, dont le siège social est situé {siege}"
+        apercu += f"{nom}"
+        
+        if forme_juridique:
+            apercu += f", {forme_juridique}"
+            
+        if capital:
+            apercu += f" au capital de {capital}"
+            
+        if siren:
+            if rcs_ville:
+                apercu += f", immatriculé sous le numéro {siren} R.C.S {rcs_ville}"
+            else:
+                apercu += f", immatriculé sous le numéro {siren}"
+        
+        # Construire l'adresse complète
+        adresse_complete = adresse
+        if code_postal or ville:
+            if adresse_complete:
+                adresse_complete += ", "
+            if code_postal:
+                adresse_complete += f"{code_postal}"
+            if ville:
+                if code_postal:
+                    adresse_complete += f" {ville}"
+                else:
+                    adresse_complete += ville
+                    
+        if adresse_complete:
+            apercu += f", dont le siège social est situé au {adresse_complete}"
+            
+        # Ajouter les informations du représentant si disponibles
+        if (representant_nom or representant_prenom) and qualite_representant:
+            representant = f"{representant_civilite} {representant_nom} {representant_prenom}".strip()
+            apercu += f", représentée par {representant}, en sa qualité de {qualite_representant}"
+            
         if contact:
             apercu += f", joignable à {contact}"
     
@@ -254,19 +321,44 @@ def generate_contract_preview(contract_data):
     # Informations sur l'auteur/modèle avec gestion améliorée des champs manquants
     if author_type == "Personne physique":
         gentille = author_info.get("gentille", "M.")
-        nom = author_info.get("nom", "")
+        nom = author_info.get("nom", "").upper()
         prenom = author_info.get("prenom", "")
         date_naissance = author_info.get("date_naissance", "")
+        lieu_naissance = author_info.get("lieu_naissance", "")
         nationalite = author_info.get("nationalite", "")
         adresse = author_info.get("adresse", "")
+        code_postal = author_info.get("code_postal", "")
+        ville = author_info.get("ville", "")
+        contact = author_info.get("contact", "")
         
-        apercu += f"{gentille} {prenom} {nom}"
+        apercu += f"{gentille} {nom} {prenom}"
+        
         if date_naissance:
             apercu += f", né(e) le {date_naissance}"
+            if lieu_naissance:
+                apercu += f" à {lieu_naissance}"
+                
         if nationalite:
             apercu += f", de nationalité {nationalite}"
-        if adresse:
-            apercu += f", domicilié(e) au {adresse}"
+            
+        # Construire l'adresse complète
+        adresse_complete = adresse
+        if code_postal or ville:
+            if adresse_complete:
+                adresse_complete += ", "
+            if code_postal:
+                adresse_complete += f"{code_postal}"
+            if ville:
+                if code_postal:
+                    adresse_complete += f" {ville}"
+                else:
+                    adresse_complete += ville
+                    
+        if adresse_complete:
+            apercu += f", domicilié(e) au {adresse_complete}"
+            
+        if contact:
+            apercu += f", joignable à {contact}"
     else:
         # Personne morale
         nom = author_info.get("nom", "")
@@ -274,20 +366,11 @@ def generate_contract_preview(contract_data):
         capital = author_info.get("capital", "")
         rcs = author_info.get("rcs", "")
         siege = author_info.get("siege", "")
-        representant = author_info.get("representant", "")
-        qualite_representant = author_info.get("qualite_representant", "")
+        contact = author_info.get("contact", "")
         
-        apercu += f"{nom}"
-        if forme_juridique:
-            apercu += f", {forme_juridique}"
-        if capital:
-            apercu += f", au capital de {capital}"
-        if rcs:
-            apercu += f", immatriculée sous le numéro {rcs}"
-        if siege:
-            apercu += f", dont le siège social est situé {siege}"
-        if representant and qualite_representant:
-            apercu += f", représentée par {representant} en sa qualité de {qualite_representant}"
+        apercu += f"La société {nom}, {forme_juridique}, immatriculée sous le numéro {rcs} au Registre du Commerce et des Sociétés, dont le siège social est situé {siege}"
+        if contact:
+            apercu += f", joignable à {contact}"
     
     # Dénomination de l'auteur
     if "Auteur (droits d'auteur)" in contract_type and "Image (droit à l'image)" in contract_type:
@@ -303,54 +386,100 @@ def generate_contract_preview(contract_data):
         if cessionnaire_info.get('prenom'):
             civilite = cessionnaire_info.get('gentille', 'M.')
             prenom = cessionnaire_info.get('prenom', '')
-            nom = cessionnaire_info.get('nom', '')
+            nom = cessionnaire_info.get('nom', '').upper()
+            date_naissance = cessionnaire_info.get('date_naissance', '')
+            lieu_naissance = cessionnaire_info.get('lieu_naissance', '')
+            nationalite = cessionnaire_info.get('nationalite', '')
             adresse = cessionnaire_info.get('adresse', '')
+            code_postal = cessionnaire_info.get('code_postal', '')
+            ville = cessionnaire_info.get('ville', '')
             
-            apercu += f"{civilite} {prenom} {nom}"
-            if adresse:
-                apercu += f", domicilié(e) au {adresse}"
+            apercu += f"{civilite} {nom} {prenom}"
+            
+            if date_naissance:
+                apercu += f", né(e) le {date_naissance}"
+            
+            if lieu_naissance:
+                apercu += f" à {lieu_naissance}"
+            
+            if nationalite:
+                apercu += f" de nationalité {nationalite}"
+            
+            # Construire l'adresse complète
+            adresse_complete = adresse
+            if code_postal or ville:
+                if adresse_complete:
+                    adresse_complete += ", "
+                if code_postal:
+                    adresse_complete += f"{code_postal}"
+                if ville:
+                    if code_postal:
+                        adresse_complete += f" {ville}"
+                    else:
+                        adresse_complete += ville
+            
+            if adresse_complete:
+                apercu += f", domicilié(e) au {adresse_complete}"
+                
+            apercu += ", ci-après dénommé(e) \"le Cessionnaire\""
         # Pour personne morale
         else:
             nom = cessionnaire_info.get('nom', '')
             forme_juridique = cessionnaire_info.get('forme_juridique', '')
             capital = cessionnaire_info.get('capital', '')
-            rcs = cessionnaire_info.get('siren', '') # Accepter 'siren' comme alternative à 'rcs'
-            if not rcs:
-                rcs = cessionnaire_info.get('rcs', '')
+            siren = cessionnaire_info.get('siren', '')  # Utiliser siren d'abord s'il existe
+            if not siren:
+                siren = cessionnaire_info.get('rcs', '')
             
-            siege = cessionnaire_info.get('siege', '')
-            # Si siege n'est pas disponible, construire à partir d'adresse, code_postal et ville
-            if not siege and (cessionnaire_info.get('adresse') or cessionnaire_info.get('code_postal') or cessionnaire_info.get('ville')):
-                address_parts = []
-                if cessionnaire_info.get('adresse'):
-                    address_parts.append(cessionnaire_info.get('adresse'))
-                
-                if cessionnaire_info.get('code_postal') or cessionnaire_info.get('ville'):
-                    city_part = []
-                    if cessionnaire_info.get('code_postal'):
-                        city_part.append(cessionnaire_info.get('code_postal'))
-                    if cessionnaire_info.get('ville'):
-                        city_part.append(cessionnaire_info.get('ville'))
-                    if city_part:
-                        address_parts.append(' '.join(city_part))
-                
-                if address_parts:
-                    siege = ', '.join(address_parts)
+            adresse = cessionnaire_info.get('adresse', '')
+            code_postal = cessionnaire_info.get('code_postal', '')
+            ville = cessionnaire_info.get('ville', '')
+            representant_civilite = cessionnaire_info.get('representant_civilite', 'M.')
+            representant_nom = cessionnaire_info.get('representant_nom', '').upper()
+            representant_prenom = cessionnaire_info.get('representant_prenom', '')
+            qualite_representant = cessionnaire_info.get('qualite_representant', '')
             
             apercu += f"{nom}"
+            
             if forme_juridique:
                 apercu += f", {forme_juridique}"
+            
             if capital:
-                apercu += f", au capital de {capital}"
-            if rcs:
-                apercu += f", immatriculée sous le numéro {rcs}"
-            if siege:
-                apercu += f", dont le siège social est situé {siege}"
+                apercu += f" au capital de {capital}"
+            
+            if siren:
+                # Ajouter la ville où est situé le RCS si disponible
+                rcs_ville = cessionnaire_info.get('rcs_ville', ville)
+                if rcs_ville:
+                    apercu += f", immatriculé sous le numéro {siren} R.C.S {rcs_ville}"
+                else:
+                    apercu += f", immatriculé sous le numéro {siren}"
+            
+            # Construire l'adresse complète
+            adresse_complete = adresse
+            if code_postal or ville:
+                if adresse_complete:
+                    adresse_complete += ", "
+                if code_postal:
+                    adresse_complete += f"{code_postal}"
+                if ville:
+                    if code_postal:
+                        adresse_complete += f" {ville}"
+                    else:
+                        adresse_complete += ville
+            
+            if adresse_complete:
+                apercu += f", dont le siège social est situé au {adresse_complete}"
+            
+            # Ajouter les informations du représentant si disponibles
+            if (representant_nom or representant_prenom) and qualite_representant:
+                representant = f"{representant_civilite} {representant_nom} {representant_prenom}".strip()
+                apercu += f", représentée par {representant}, en sa qualité de {qualite_representant}"
+                
+            apercu += ", ci-après dénommé \"le Cessionnaire\""
     else:
-        # Utiliser les informations par défaut de Tellers
-        apercu += "Tellers, société par actions simplifiée unipersonnelle au capital de 1000 €, "
-        apercu += "immatriculée sous le numéro 932 553 266 R.C.S. Lyon, et dont le siège social est situé au : "
-        apercu += "12 RUE DE LA PART-DIEU, 69003 LYON, représentée par son Président en exercice dûment habilité à l'effet des présentes"
+        # Utiliser les informations par défaut de Tellers mais avec le format correct
+        apercu += "Tellers, société par actions simplifiée unipersonnelle au capital de 1000 €, immatriculée sous le numéro 932 553 266 R.C.S. Lyon, dont le siège social est situé 12 RUE DE LA PART-DIEU, 69003 LYON, représentée par M. MAURICI Lucas, en sa qualité de gérant"
     
     apercu += ", ci-après dénommé \"le Cessionnaire\",\n\n"
     
