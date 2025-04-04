@@ -11,6 +11,7 @@ import EditorCommentPanel from './EditorCommentPanel';
 import EditorSectionNavigator from './EditorSectionNavigator';
 import useDeviceDetect from '../../hooks/useDeviceDetect';
 import { getElementStyle } from '../../utils/editorUtils';
+import { generateEditorPdf } from '../../services/api';
 
 // Styles pour reproduire la mise en page du PDF
 import './ContractEditor.css';
@@ -41,6 +42,7 @@ const ContractEditor = ({
   const [touchStartInfo, setTouchStartInfo] = useState(null);
   const [visibleSections, setVisibleSections] = useState([]);
   const [touchScrollEnabled, setTouchScrollEnabled] = useState(true);
+  const [notificationText, setNotificationText] = useState('');
   
   const editorRef = useRef(null);
   const editorContainerRef = useRef(null);
@@ -432,8 +434,37 @@ const ContractEditor = ({
   // Fonctions de sauvegarde et notification
   const handleSave = () => {
     onSave();
+    showNotification('Document enregistré');
+  };
+  
+  // Fonction pour afficher une notification
+  const showNotification = (message, duration = 3000) => {
     setSavedNotification(true);
-    setTimeout(() => setSavedNotification(false), 3000);
+    setNotificationText(message);
+    setTimeout(() => {
+      setSavedNotification(false);
+      setNotificationText('');
+    }, duration);
+  };
+  
+  // Gérer le téléchargement en PDF
+  const handleDownload = async () => {
+    try {
+      // Afficher une notification de chargement
+      showNotification('Génération du PDF...', 60000); // Long timeout car la génération peut prendre du temps
+      
+      // Utiliser notre nouvelle fonction pour générer le PDF
+      await generateEditorPdf(editorRef, contractData?.title || 'contrat');
+      
+      // Afficher une notification de succès
+      showNotification('PDF téléchargé avec succès!');
+      
+    } catch (error) {
+      console.error('Erreur lors de la génération du PDF:', error);
+      
+      // Afficher une notification d'erreur
+      showNotification('Erreur lors de la génération du PDF', 5000);
+    }
   };
   
   // Calculer les sections pour la navigation
@@ -501,27 +532,6 @@ const ContractEditor = ({
     onUpdateStructure(newElements);
     setSelectedElementIndex(newIndex);
     setContextMenuPosition(null);
-  };
-  
-  // Afficher une notification temporaire
-  const showNotification = (message) => {
-    const notification = document.createElement('div');
-    notification.className = 'editor-notification';
-    notification.textContent = message;
-    document.body.appendChild(notification);
-    
-    // Animation d'entrée
-    setTimeout(() => {
-      notification.classList.add('visible');
-    }, 10);
-    
-    // Disparition automatique
-    setTimeout(() => {
-      notification.classList.remove('visible');
-      setTimeout(() => {
-        document.body.removeChild(notification);
-      }, 300);
-    }, 2000);
   };
   
   // Gérer le menu contextuel
@@ -688,7 +698,7 @@ const ContractEditor = ({
           
           <button 
             className="toolbar-button" 
-            onClick={onDownload}
+            onClick={handleDownload}
             title="Télécharger en PDF"
           >
             <Download size={18} />
@@ -757,7 +767,7 @@ const ContractEditor = ({
       {savedNotification && (
         <div className="save-notification">
           <Check size={16} className="text-green-500" />
-          <span>Document enregistré</span>
+          <span>{notificationText || 'Document enregistré'}</span>
         </div>
       )}
       
