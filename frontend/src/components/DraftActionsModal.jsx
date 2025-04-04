@@ -1,7 +1,7 @@
 import React from 'react';
-import { FileText, Edit, Download, X } from 'lucide-react';
+import { Edit, X } from 'lucide-react';
 
-const DraftActionsModal = ({ isOpen, onClose, onDownloadPdf, onOpenEditor, contractTitle }) => {
+const DraftActionsModal = ({ isOpen, onClose, onOpenEditor, contractTitle }) => {
   if (!isOpen) return null;
   
   return (
@@ -22,44 +22,56 @@ const DraftActionsModal = ({ isOpen, onClose, onDownloadPdf, onOpenEditor, contr
           </div>
           
           <div className="sm:flex sm:items-start">
-            <div className="flex items-center justify-center flex-shrink-0 w-12 h-12 mx-auto bg-green-100 rounded-full sm:mx-0 sm:h-10 sm:w-10">
-              <FileText className="w-6 h-6 text-green-600" />
+            <div className="flex-shrink-0 p-2 mx-auto bg-green-100 rounded-full sm:mx-0">
+              <div className="w-8 h-8 text-green-600">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
             </div>
             <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
               <h3 className="text-lg font-medium leading-6 text-gray-900">
-                Contrat finalisé avec succès
+                Contrat finalisé avec succès !
               </h3>
               <div className="mt-2">
                 <p className="text-sm text-gray-500">
-                  Votre contrat "{contractTitle}" a été enregistré. Que souhaitez-vous faire maintenant ?
+                  Votre contrat <span className="font-semibold">{contractTitle}</span> est maintenant disponible dans votre espace.
+                </p>
+                <p className="mt-1 text-sm text-gray-500">
+                  Il est désormais sauvegardé comme un contrat standard et non plus comme un brouillon.
                 </p>
               </div>
             </div>
           </div>
           
-          <div className="mt-5 sm:mt-4 sm:flex sm:flex-col sm:gap-3">
-            <button
-              type="button"
-              onClick={onDownloadPdf}
-              className="inline-flex items-center justify-center w-full px-4 py-2 text-base font-medium text-white bg-green-600 border border-transparent rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:text-sm"
-            >
-              <Download className="w-5 h-5 mr-2" />
-              Télécharger en PDF
-            </button>
-            
+          <div className="mt-5">
+            <div className="rounded-md bg-gray-50 p-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-gray-800">Que souhaitez-vous faire maintenant ?</h3>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="mt-5 sm:mt-4 flex flex-col sm:flex-row-reverse gap-3">
             <button
               type="button"
               onClick={onOpenEditor}
-              className="inline-flex items-center justify-center w-full px-4 py-2 mt-3 text-base font-medium text-blue-700 bg-white border border-blue-300 rounded-md shadow-sm hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:text-sm"
+              className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:w-auto"
             >
-              <Edit className="w-5 h-5 mr-2" />
+              <Edit className="mr-2 -ml-1 h-4 w-4" />
               Ouvrir dans l'éditeur
             </button>
-            
             <button
               type="button"
               onClick={onClose}
-              className="inline-flex items-center justify-center w-full px-4 py-2 mt-3 text-base font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 sm:mt-0 sm:text-sm"
+              className="w-full inline-flex justify-center items-center px-4 py-2 mt-3 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:w-auto"
             >
               Fermer
             </button>

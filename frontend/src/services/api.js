@@ -22,14 +22,44 @@ export const getCurrentUserId = () => {
   // Pour les utilisateurs authentifiés via Clerk
   try {
     if (window.Clerk && window.Clerk.user) {
-      // Récupérer l'ID de base (sans suffixe)
+      // Récupérer l'ID de base
       const baseId = window.Clerk.user.id;
-      console.log('DEBUG - ID utilisateur de base Clerk:', baseId);
       
-      // Retourner uniquement l'ID de base pour assurer la cohérence 
-      // entre toutes les opérations, quelle que soit la méthode d'authentification
-      localStorage.setItem('clerkUserId', baseId);
-      return baseId;
+      // Récupérer des informations sur la méthode d'authentification
+      let authMethod = "clerk";
+      
+      // Tenter d'identifier la méthode d'authentification
+      if (window.Clerk.session) {
+        const session = window.Clerk.session;
+        
+        // Examiner les identités connectées
+        if (session.user && session.user.externalAccounts) {
+          const accounts = session.user.externalAccounts;
+          
+          // DEBUG: Log pour voir toutes les méthodes d'authentification disponibles
+          console.log('DEBUG - Comptes externes disponibles:', accounts);
+          
+          // Vérifier toutes les identités externes pour trouver celle active
+          // (Google, LinkedIn, etc.)
+          for (const account of accounts) {
+            if (account.verification && account.verification.status === "verified") {
+              authMethod = account.provider.toLowerCase() || authMethod;
+              break;
+            }
+          }
+        }
+      }
+      
+      // Créer un ID composite qui inclut la méthode d'authentification
+      const compositeId = `${baseId}_${authMethod}`;
+      console.log(`DEBUG - Utilisateur authentifié via ${authMethod}, ID composite: ${compositeId}`);
+      
+      // Stocker l'ID dans localStorage pour la cohérence entre les sessions
+      localStorage.setItem('clerkUserId', compositeId);
+      // Stocker également l'ID de base pour la migration
+      localStorage.setItem('clerkBaseUserId', baseId);
+      
+      return compositeId;
     }
   } catch (error) {
     console.error('Erreur lors de la récupération des informations Clerk:', error);
@@ -426,6 +456,12 @@ export const migrateAnonymousUserData = async (newUserId) => {
     const anonymousId = localStorage.getItem('anonymousUserId');
     // Récupérer également l'ID du brouillon s'il existe
     const draftContractId = sessionStorage.getItem('draftContractId');
+    
+    // ⚠️ IMPORTANT: Vérifier que l'ID fourni est bien l'ID de base (sans suffixe)
+    // Note: Le backend attend un ID de base pour la migration pour éviter les problèmes
+    //       de suffixes différents (_google, _clerk, etc.)
+    
+    console.log('DEBUG - migrateAnonymousUserData - ID utilisateur fourni:', newUserId);
     
     let requestData = {
       authenticated_id: newUserId

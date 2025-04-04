@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FileText, Edit, Trash2, Plus, Clock, Calendar, FileUp, FileCheck, AlertTriangle, Download } from 'lucide-react';
-import { getContracts, deleteContract, exportContract, updateContract, generatePdf } from '../services/api';
+import { getContracts, deleteContract, exportContract, updateContract, generatePdf, getUserProfile, getContractById } from '../services/api';
 import ContractSharePanel from '../components/ContractSharePanel';
 import ExportModal from '../components/ExportModal';
 import { TutorialLightbulb } from '../components/ui';
 import DraftRenameModal from '../components/DraftRenameModal';
 import DraftActionsModal from '../components/DraftActionsModal';
-import ContractFixTool from '../components/ContractFixTool';
 
 const ContractsPage = () => {
   const [contracts, setContracts] = useState([]);
@@ -220,10 +219,17 @@ const ContractsPage = () => {
   
   const handleRenameContract = async (newTitle) => {
     try {
-      // Mettre à jour le contrat avec le nouveau titre et marquer comme non-brouillon
+      // Récupérer les données actuelles du contrat
+      const contractDetails = await getContractById(draftContract.id);
+      
+      // IMPORTANT: Nous préservons les données originales du contrat sans les modifier
+      // Ne pas remplacer les informations du cessionnaire par celles du profil utilisateur
+      
+      // Mettre à jour uniquement le titre et le statut brouillon (is_draft)
       const updatedContract = await updateContract(draftContract.id, {
         title: newTitle,
-        is_draft: false
+        is_draft: false  // Marquer comme contrat finalisé (non brouillon)
+        // NE PAS modifier les données (data) originales du contrat
       });
       
       // Mettre à jour la liste des contrats
@@ -290,11 +296,6 @@ const ContractsPage = () => {
               </Link>
               <TutorialLightbulb context="contracts" id="contracts-tutorial-lightbulb" />
             </div>
-          </div>
-          
-          {/* Outil temporaire de diagnostic des brouillons */}
-          <div className="p-4">
-            <ContractFixTool />
           </div>
           
           <div className="hidden sm:block mb-6">
@@ -642,13 +643,13 @@ const ContractsPage = () => {
         onClose={() => setShowRenameModal(false)}
         onRename={handleRenameContract}
         initialTitle={draftContract?.title?.replace('Brouillon - ', '') || ''}
+        contractId={draftContract?.id}
       />
       
       {/* Modal d'actions après finalisation */}
       <DraftActionsModal
         isOpen={showActionsModal}
         onClose={() => setShowActionsModal(false)}
-        onDownloadPdf={handleDownloadPdf}
         onOpenEditor={handleOpenEditor}
         contractTitle={finalizedContract?.title}
       />
