@@ -140,6 +140,275 @@ export const generatePdf = async (contractData, filename) => {
   }
 };
 
+/**
+ * Génère une version imprimable du contenu de l'éditeur dans une nouvelle fenêtre
+ * Utilise les capacités d'impression natives du navigateur pour une pagination parfaite
+ */
+export const generatePrintableVersion = async (editorContainerRef, title = 'contrat') => {
+  try {
+    // Trouver le contenu de l'éditeur
+    const editorContent = editorContainerRef.current.querySelector('.pdf-viewer');
+    
+    if (!editorContent) {
+      throw new Error("Impossible de trouver le contenu de l'éditeur");
+    }
+    
+    // Ouvrir une nouvelle fenêtre pour l'impression
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
+    
+    if (!printWindow) {
+      throw new Error("Impossible d'ouvrir une nouvelle fenêtre. Vérifiez les paramètres de votre navigateur.");
+    }
+    
+    // Créer le contenu de la fenêtre d'impression
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>${title || 'Contrat'}</title>
+        <meta charset="utf-8">
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Bitter:wght@400;700&display=swap');
+          
+          /* Reset CSS */
+          * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+          }
+          
+          /* Styles de page */
+          @page {
+            size: A4;
+            margin: 15mm;
+          }
+          
+          body {
+            font-family: 'Bitter', serif;
+            font-size: 10pt;
+            line-height: 1.5;
+            color: black;
+            background: white;
+            padding: 15mm;
+          }
+          
+          /* En-tête et pied de page */
+          .header {
+            position: running(header);
+            text-align: center;
+            font-size: 8pt;
+            color: #666;
+          }
+          
+          .footer {
+            position: running(footer);
+            text-align: center;
+            font-size: 8pt;
+            color: #666;
+          }
+          
+          @page {
+            @top-center { content: element(header) }
+            @bottom-center { content: element(footer) }
+          }
+          
+          /* Zone de contenu */
+          .content {
+            margin-top: 15mm;
+            margin-bottom: 15mm;
+          }
+          
+          /* Styles spécifiques à notre document */
+          .pdf-title {
+            font-size: 14pt;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 15pt;
+            page-break-after: avoid;
+          }
+          
+          .pdf-subtitle {
+            font-size: 12pt;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 12pt;
+            page-break-after: avoid;
+          }
+          
+          .pdf-article {
+            font-size: 11pt;
+            font-weight: bold;
+            margin-bottom: 10pt;
+            page-break-after: avoid;
+          }
+          
+          .pdf-subarticle {
+            font-size: 10pt;
+            font-weight: bold;
+            margin-bottom: 8pt;
+            page-break-after: avoid;
+          }
+          
+          .pdf-text {
+            font-size: 10pt;
+            text-align: justify;
+            margin-bottom: 8pt;
+          }
+          
+          /* Éviter les sauts de page au sein des paragraphes */
+          p, .contract-element {
+            page-break-inside: avoid;
+          }
+          
+          /* Formatage */
+          strong, b {
+            font-weight: bold;
+          }
+          
+          em, i {
+            font-style: italic;
+          }
+          
+          u {
+            text-decoration: underline;
+          }
+          
+          /* Meilleur surlignage */
+          mark {
+            background-color: #FFEB3B;
+            padding: 0 1px;
+            border-radius: 2px;
+            display: inline;
+            box-decoration-break: clone;
+          }
+          
+          /* Masquer les éléments d'interface */
+          .element-indicator, 
+          .drag-handle, 
+          .comment-indicator, 
+          .comment-badge, 
+          .floating-toolbar,
+          .toolbar-button {
+            display: none !important;
+          }
+          
+          /* Pas de bordures ou d'arrière-plans */
+          .contract-element-container,
+          .contract-element,
+          .element-content,
+          .element-selected {
+            border: none !important;
+            background-color: transparent !important;
+            outline: none !important;
+            box-shadow: none !important;
+          }
+          
+          /* Style d'impression */
+          @media print {
+            .no-print {
+              display: none;
+            }
+            
+            body {
+              -webkit-print-color-adjust: exact;
+              color-adjust: exact;
+              print-color-adjust: exact;
+            }
+          }
+          
+          .print-controls {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: white;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 9999;
+          }
+          
+          .print-button {
+            padding: 8px 15px;
+            background: #4a6cf7;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-weight: bold;
+          }
+          
+          .print-button:hover {
+            background: #3a5ce5;
+          }
+          
+          .print-instructions {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #666;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          LexForge - ${title || 'Contrat'}
+        </div>
+        
+        <div class="content">
+          ${editorContent.innerHTML}
+        </div>
+        
+        <div class="footer">
+          Page <span class="pageNumber"></span>
+        </div>
+        
+        <div class="print-controls no-print">
+          <button class="print-button" id="print-button">
+            Imprimer / Télécharger PDF
+          </button>
+          <p class="print-instructions">
+            Pour enregistrer en PDF, choisissez "Imprimer" puis sélectionnez "Enregistrer au format PDF" comme imprimante.
+          </p>
+        </div>
+        
+        <script>
+          // Ajouter les événements après le chargement du DOM
+          document.addEventListener('DOMContentLoaded', function() {
+            // Nettoyer le document pour l'impression
+            const elementsToRemove = document.querySelectorAll('.element-indicator, .drag-handle, .comment-indicator, .comment-badge');
+            elementsToRemove.forEach(el => el.parentNode && el.parentNode.removeChild(el));
+            
+            // Ajouter l'événement d'impression
+            document.getElementById('print-button').addEventListener('click', function() {
+              // Cacher les contrôles d'impression
+              document.querySelector('.print-controls').style.display = 'none';
+              // Lancer l'impression
+              window.print();
+              // Réafficher les contrôles après l'impression
+              setTimeout(function() {
+                document.querySelector('.print-controls').style.display = 'block';
+              }, 1000);
+            });
+          });
+        </script>
+      </body>
+      </html>
+    `);
+    
+    printWindow.document.close();
+    
+    return true;
+  } catch (error) {
+    console.error('Erreur lors de la génération de la version imprimable:', error);
+    throw error;
+  }
+};
+
+// L'ancienne fonction reste en place pour assurer la rétrocompatibilité
+export const generateEditorPdf = async (editorContainerRef, title = 'contrat') => {
+  return generatePrintableVersion(editorContainerRef, title);
+};
+
 // Nouvelles fonctions pour la gestion des contrats
 
 // Ajout d'une fonction pour générer une empreinte de navigateur simple
@@ -566,39 +835,9 @@ export const migrateAnonymousUserData = async (newUserId) => {
       }
     }
     
-    // Ajouter des informations de sécurité à la réponse
-    return {
-      ...response.data,
-      security_verified: securityVerified
-    };
+    return response.data;
   } catch (error) {
-    console.error('Erreur lors de la migration des données:', error);
-    return { success: false, error: error.message };
+    console.error('Error migrating anonymous user data:', error);
+    throw error;
   }
 };
-
-// Corriger l'avertissement ESLint en créant une variable pour l'export par défaut
-const apiService = {
-  analyzeProject,
-  previewContract,
-  generatePdf,
-  saveContract,
-  getContracts,
-  getContractById,
-  getContractElements,
-  updateContract,
-  deleteContract,
-  exportContract,
-  importContract,
-  getUserProfile,
-  updateUserProfile,
-  testCors,
-  getClients,
-  saveClient,
-  updateClient,
-  deleteClient,
-  accessFinalizationStep,
-  migrateAnonymousUserData
-};
-
-export default apiService;

@@ -5,7 +5,7 @@ import {
   MessageCircle, X, Type, List, ChevronUp, Keyboard, Bold, Italic, Underline,
   AlignLeft, AlignCenter, AlignRight, FileUp, Loader, Check, FileText, Lightbulb
 } from 'lucide-react';
-import { getContractById, getContractElements, updateContract, generatePdf, exportContract } from '../services/api';
+import { getContractById, getContractElements, updateContract, generatePdf, exportContract, generateEditorPdf } from '../services/api';
 import EditorFloatingDock from '../components/ui/editor-floating-dock';
 import EditorSectionNavigator from '../components/editor/EditorSectionNavigator';
 import EditorCommentPanel from '../components/editor/EditorCommentPanel';
@@ -306,22 +306,35 @@ const ContractEditorPage = () => {
   
   const handleDownloadPdf = async () => {
     try {
-      const response = await generatePdf(contractId);
+      setNotification({
+        type: 'info',
+        message: 'Génération du PDF en cours...'
+      });
       
-      // Créer un lien de téléchargement
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `${title || 'contrat'}.pdf`);
-      document.body.appendChild(link);
-      link.click();
+      // Utiliser la nouvelle fonction pour générer un PDF à partir de l'éditeur
+      await generateEditorPdf(editorContainerRef, title);
       
-      // Nettoyer
-      link.parentNode.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      setNotification({
+        type: 'success',
+        message: 'PDF généré avec succès!'
+      });
+      
+      // Masquer la notification après quelques secondes
+      setTimeout(() => {
+        setNotification(null);
+      }, 3000);
+      
     } catch (error) {
       console.error('Erreur lors de la génération du PDF', error);
-      setErrorMessage("Impossible de générer le PDF du contrat.");
+      setNotification({
+        type: 'error',
+        message: "Impossible de générer le PDF du contrat."
+      });
+      
+      // Masquer la notification d'erreur après quelques secondes
+      setTimeout(() => {
+        setNotification(null);
+      }, 5000);
     }
   };
   
