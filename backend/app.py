@@ -1210,8 +1210,10 @@ def migrate_user_data():
     anonymous_id = data.get('anonymous_id')
     authenticated_id = data.get('authenticated_id')
     draft_contract_id = data.get('draft_contract_id')
+    security_verified = data.get('security_verified')
     
     print(f"DEBUG - migrate_user_data - Données reçues: anonymous_id={anonymous_id}, authenticated_id={authenticated_id}, draft_contract_id={draft_contract_id}")
+    print(f"DEBUG - migrate_user_data - Vérification de sécurité: {security_verified}")
     
     if not authenticated_id:
         print("DEBUG - migrate_user_data - Erreur: ID authentifié manquant")
@@ -1220,6 +1222,14 @@ def migrate_user_data():
     if not anonymous_id and not draft_contract_id:
         print("DEBUG - migrate_user_data - Erreur: Aucune donnée à migrer")
         return jsonify({'success': False, 'error': 'Aucune donnée à migrer'}), 400
+    
+    # Enregistrer l'alerte de sécurité si la vérification a échoué
+    # mais continuer le processus pour éviter la perte de données
+    if security_verified is False:
+        print(f"ALERTE SECURITE - Tentative de migration suspecte: draft_id={draft_contract_id}, auth_id={authenticated_id}")
+        # Ici on pourrait ajouter une entrée dans un journal de sécurité ou envoyer une alerte
+        # Optionnel: bloquer complètement la migration si on veut être plus strict
+        # return jsonify({'success': False, 'error': 'Vérification de sécurité échouée'}), 403
     
     try:
         # ⚠️ IMPORTANT - Formatage de l'ID d'utilisateur

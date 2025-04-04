@@ -142,6 +142,35 @@ export const generatePdf = async (contractData, filename) => {
 
 // Nouvelles fonctions pour la gestion des contrats
 
+// Ajout d'une fonction pour générer une empreinte de navigateur simple
+const generateBrowserFingerprint = () => {
+  // Créer une empreinte basée sur les caractéristiques du navigateur
+  // Cette implémentation est simplifiée mais suffisante pour notre cas d'usage
+  const components = [
+    navigator.userAgent,
+    navigator.language,
+    window.screen.colorDepth,
+    window.screen.width + 'x' + window.screen.height,
+    new Date().getTimezoneOffset(),
+    navigator.platform,
+    navigator.cookieEnabled ? 1 : 0
+  ];
+  
+  // Créer une chaîne unique à partir des composants
+  return btoa(components.join('|||')).substring(0, 32);
+};
+
+// Fonction pour stocker l'empreinte avec un ID de brouillon
+export const associateFingerprintWithDraft = (draftId) => {
+  if (!draftId) return;
+  
+  const fingerprint = generateBrowserFingerprint();
+  // Stocker l'association entre l'empreinte et l'ID du brouillon
+  localStorage.setItem(`draft_fp_${draftId}`, fingerprint);
+  console.log(`Empreinte de sécurité générée pour le brouillon ${draftId}`);
+};
+
+// Modification de saveContract pour associer l'empreinte lors de la création d'un brouillon
 export const saveContract = async (contractData, title, id = null, isDraft = false, fromStep6 = false) => {
   try {
     const userId = getCurrentUserId();
@@ -156,6 +185,16 @@ export const saveContract = async (contractData, title, id = null, isDraft = fal
       user_id: userId
     });
     console.log('DEBUG - saveContract - Réponse:', response.data);
+    
+    // Si c'est un brouillon et qu'il n'y a pas d'ID fourni (nouveau brouillon),
+    // associer l'empreinte du navigateur
+    if (isDraft && !id && response.data.id) {
+      associateFingerprintWithDraft(response.data.id);
+      
+      // Stocker également l'ID du brouillon dans sessionStorage pour la migration
+      sessionStorage.setItem('draftContractId', response.data.id);
+    }
+    
     return response.data;
   } catch (error) {
     console.error('Error saving contract:', error);
@@ -471,7 +510,34 @@ export const migrateAnonymousUserData = async (newUserId) => {
       requestData.anonymous_id = anonymousId;
     }
     
+    // Vérification de sécurité pour le brouillon
+    let securityVerified = true;
     if (draftContractId) {
+      // Récupérer l'empreinte stockée
+      const storedFingerprint = localStorage.getItem(`draft_fp_${draftContractId}`);
+      
+      if (storedFingerprint) {
+        // Générer l'empreinte actuelle et comparer
+        const currentFingerprint = generateBrowserFingerprint();
+        
+        if (storedFingerprint !== currentFingerprint) {
+          console.warn(`Alerte sécurité: L'empreinte du navigateur ne correspond pas pour le brouillon ${draftContractId}`);
+          securityVerified = false;
+          
+          // On peut choisir de bloquer la migration ou simplement logger l'incident
+          // Pour une approche progressive, on continue mais on ajoute un flag au backend
+          requestData.security_verified = false;
+        } else {
+          console.log(`Vérification de sécurité réussie pour le brouillon ${draftContractId}`);
+          requestData.security_verified = true;
+        }
+      } else {
+        // Si pas d'empreinte stockée (anciens brouillons), continuer mais noter
+        console.log(`Pas d'empreinte de sécurité pour le brouillon ${draftContractId}`);
+        requestData.security_verified = null;
+      }
+      
+      // Ajouter l'ID du brouillon à la requête
       requestData.draft_contract_id = draftContractId;
       console.log(`Migration du brouillon ${draftContractId} vers l'utilisateur ${newUserId}`);
     }
@@ -495,10 +561,16 @@ export const migrateAnonymousUserData = async (newUserId) => {
       // Ne pas supprimer l'ID du brouillon pour permettre d'afficher la notification
       if (draftContractId) {
         console.log('Brouillon migré avec succès, ID préservé pour la notification.');
+        // Supprimer l'empreinte du brouillon
+        localStorage.removeItem(`draft_fp_${draftContractId}`);
       }
     }
     
-    return response.data;
+    // Ajouter des informations de sécurité à la réponse
+    return {
+      ...response.data,
+      security_verified: securityVerified
+    };
   } catch (error) {
     console.error('Erreur lors de la migration des données:', error);
     return { success: false, error: error.message };

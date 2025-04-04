@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useAuth } from '@clerk/clerk-react';
-import { migrateAnonymousUserData, getCurrentUserId } from '../services/api';
+import { migrateAnonymousUserData, getCurrentUserId, associateFingerprintWithDraft } from '../services/api';
 
 /**
  * Composant qui gère la migration des données après authentification
@@ -14,6 +14,8 @@ import { migrateAnonymousUserData, getCurrentUserId } from '../services/api';
  * 5. Le statut brouillon est conservé pour permettre la validation ultérieure
  * 6. Lors de la validation du brouillon, le flag preserve_data garantit que les données
  *    du contrat ne sont pas altérées et restent identiques à celles d'origine
+ * 7. Une vérification de sécurité basée sur l'empreinte du navigateur est effectuée
+ *    pour s'assurer que la personne qui migre est bien celle qui a créé le brouillon
  */
 const AuthMigration = () => {
   const { isSignedIn, userId, user } = useAuth();
@@ -74,6 +76,43 @@ const AuthMigration = () => {
               // Ajouter des détails supplémentaires sur la preservation des données
               console.log('DEBUG - AuthMigration - Les contrats ont été migrés comme des imports, leurs données sont préservées');
               console.log('DEBUG - AuthMigration - Lors de la validation du brouillon, seul le statut sera modifié');
+              
+              // Vérifier le résultat de la vérification de sécurité
+              if (result.security_verified === false) {
+                console.warn('DEBUG - AuthMigration - ALERTE: La vérification de sécurité a échoué');
+                
+                // Marquer le brouillon comme suspect dans localStorage pour que la page des contrats puisse le détecter
+                localStorage.setItem(`security_alert_${draftId}`, 'true');
+                
+                // Afficher un avertissement à l'utilisateur
+                const notif = document.createElement('div');
+                notif.className = 'fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md z-50';
+                notif.innerHTML = `
+                  <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                      <svg class="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                      </svg>
+                    </div>
+                    <div class="ml-3">
+                      <p class="text-sm font-medium">
+                        Alerte de sécurité: Une vérification de votre navigateur a échoué.
+                        Si vous n'avez pas créé ce brouillon, contactez le support.
+                      </p>
+                    </div>
+                  </div>
+                `;
+                document.body.appendChild(notif);
+                
+                // Supprimer la notification après 10 secondes
+                setTimeout(() => {
+                  notif.remove();
+                }, 10000);
+                
+                // Supprimer le draftContractId de sessionStorage pour éviter d'afficher le contrat
+                // potentiellement compromis
+                sessionStorage.removeItem('draftContractId');
+              }
             } else {
               console.warn('DEBUG - AuthMigration - Échec de la migration:', result.message || result.error);
             }

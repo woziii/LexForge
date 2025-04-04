@@ -34,6 +34,31 @@ const ContractsPage = () => {
     if (draftId) {
       console.log('Brouillon détecté dans la page des contrats:', draftId);
       
+      // Vérifier si le brouillon a été marqué comme suspect
+      const securityCheckFailed = localStorage.getItem(`security_alert_${draftId}`);
+      if (securityCheckFailed === 'true') {
+        console.warn('Alerte de sécurité: Brouillon potentiellement compromis détecté');
+        
+        // Afficher une alerte à l'utilisateur
+        const notif = document.createElement('div');
+        notif.className = 'fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md z-50';
+        notif.textContent = 'Alerte de sécurité: Brouillon potentiellement compromis détecté.';
+        document.body.appendChild(notif);
+        
+        // Supprimer la notification après 5 secondes
+        setTimeout(() => {
+          notif.remove();
+        }, 5000);
+        
+        // Nettoyer cette alerte après l'avoir affichée
+        localStorage.removeItem(`security_alert_${draftId}`);
+        
+        // Supprimer l'ID du brouillon de sessionStorage
+        sessionStorage.removeItem('draftContractId');
+        
+        return; // Ne pas continuer avec le reste de la logique pour ce brouillon
+      }
+      
       // Vérifier après le chargement des contrats si le brouillon est présent
       const checkDraftExists = async () => {
         try {
