@@ -1,0 +1,28 @@
+{
+  "created_at": "2025-04-04T16:43:09.635401",
+  "is_temporary": true,
+  "legal_entity": {
+    "capital": "",
+    "forme_juridique": "",
+    "is_configured": false,
+    "nom": "",
+    "qualite_representant": "",
+    "rcs": "",
+    "representant": "",
+    "siege": ""
+  },
+  "physical_person": {
+    "adresse": "104 avenue de versailles",
+    "code_postal": "75016",
+    "date_naissance": "0022-02-22",
+    "gentille": "M.",
+    "is_configured": true,
+    "lieu_naissance": "Toulouse",
+    "nationalite": "Fran\u00e7aise",
+    "nom": "MAURICI",
+    "prenom": "Lucas",
+    "ville": "Escalquens"
+  },
+  "selected_entity_type": "physical_person",
+  "user_id": "anon_mzfxjm4o9zj_m92sx8c2"
+}

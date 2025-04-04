@@ -24,12 +24,14 @@ const Step6Finalization = ({ contractData, updateContractData }) => {
   
   // Fonction pour sauvegarder temporairement les données avant authentification
   const sauvegarderTemporairement = async (data, action) => {
-    console.log('Sauvegarde temporaire des données:', data);
-    console.log('Action à effectuer après authentification:', action);
+    console.log('DEBUG - Step6Finalization - Sauvegarde temporaire des données, action:', action);
     
     try {
       // Sauvegarder le contrat comme brouillon dans la base de données
       const defaultTitle = `Brouillon - ${new Date().toLocaleString()}`;
+      console.log('DEBUG - Step6Finalization - Titre par défaut du brouillon:', defaultTitle);
+      console.log('DEBUG - Step6Finalization - Titre fourni:', title);
+      
       const savedContract = await saveContract(
         data,
         title || defaultTitle,
@@ -42,14 +44,19 @@ const Step6Finalization = ({ contractData, updateContractData }) => {
       sessionStorage.setItem('draftContractId', savedContract.id);
       sessionStorage.setItem('authRedirectAction', action);
       
-      console.log('Contrat sauvegardé comme brouillon avec ID:', savedContract.id);
+      // Également stocker dans localStorage pour assurer la persistance
+      localStorage.setItem('lastDraftContractId', savedContract.id);
+      localStorage.setItem('lastAuthRedirectAction', action);
+      
+      console.log('DEBUG - Step6Finalization - Contrat sauvegardé comme brouillon avec ID:', savedContract.id);
+      console.log('DEBUG - Step6Finalization - Données stockées dans sessionStorage et localStorage pour persistance');
       
       // Mémoriser l'ID et l'action en état local également
       setSavedContractId(savedContract.id);
       setAuthRedirectAction(action);
       
     } catch (error) {
-      console.error('Erreur lors de la sauvegarde temporaire:', error);
+      console.error('DEBUG - Step6Finalization - Erreur lors de la sauvegarde temporaire:', error);
       // En cas d'erreur, utiliser l'ancien mécanisme de sauvegarde dans sessionStorage
       sessionStorage.setItem('tempContractData', JSON.stringify(data));
       sessionStorage.setItem('authRedirectAction', action);

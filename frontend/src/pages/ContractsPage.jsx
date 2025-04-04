@@ -1,27 +1,111 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FileText, Edit, Trash2, Plus, Clock, Calendar, FileUp, FileCheck, AlertTriangle } from 'lucide-react';
-import { getContracts, deleteContract, exportContract } from '../services/api';
+import { FileText, Edit, Trash2, Plus, Clock, Calendar, FileUp, FileCheck, AlertTriangle, Download } from 'lucide-react';
+import { getContracts, deleteContract, exportContract, updateContract, generatePdf, getUserProfile, getContractById } from '../services/api';
 import ContractSharePanel from '../components/ContractSharePanel';
 import ExportModal from '../components/ExportModal';
 import { TutorialLightbulb } from '../components/ui';
+import DraftRenameModal from '../components/DraftRenameModal';
+import DraftActionsModal from '../components/DraftActionsModal';
 
 const ContractsPage = () => {
   const [contracts, setContracts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [contractToDelete, setContractToDelete] = useState(null);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [contractToExport, setContractToExport] = useState(null);
   const [showDraftModal, setShowDraftModal] = useState(false);
   const [draftContract, setDraftContract] = useState(null);
+  const [showRenameModal, setShowRenameModal] = useState(false);
+  const [showActionsModal, setShowActionsModal] = useState(false);
+  const [finalizedContract, setFinalizedContract] = useState(null);
   
   const navigate = useNavigate();
   
   useEffect(() => {
     fetchContracts();
   }, []);
+  
+  // Vérifier si l'utilisateur a un brouillon et afficher une notification
+  useEffect(() => {
+    const draftId = sessionStorage.getItem('draftContractId');
+    if (draftId) {
+      console.log('Brouillon détecté dans la page des contrats:', draftId);
+      
+      // Vérifier si le brouillon a été marqué comme suspect
+      const securityCheckFailed = localStorage.getItem(`security_alert_${draftId}`);
+      if (securityCheckFailed === 'true') {
+        console.warn('Alerte de sécurité: Brouillon potentiellement compromis détecté');
+        
+        // Afficher une alerte à l'utilisateur
+        const notif = document.createElement('div');
+        notif.className = 'fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md z-50';
+        notif.textContent = 'Alerte de sécurité: Brouillon potentiellement compromis détecté.';
+        document.body.appendChild(notif);
+        
+        // Supprimer la notification après 5 secondes
+        setTimeout(() => {
+          notif.remove();
+        }, 5000);
+        
+        // Nettoyer cette alerte après l'avoir affichée
+        localStorage.removeItem(`security_alert_${draftId}`);
+        
+        // Supprimer l'ID du brouillon de sessionStorage
+        sessionStorage.removeItem('draftContractId');
+        
+        return; // Ne pas continuer avec le reste de la logique pour ce brouillon
+      }
+      
+      // Vérifier après le chargement des contrats si le brouillon est présent
+      const checkDraftExists = async () => {
+        try {
+          // Attendre que les contrats soient chargés
+          if (!isLoading) {
+            // Rechercher le brouillon dans la liste des contrats
+            const draftExists = contracts.some(contract => contract.id === draftId && contract.is_draft);
+            
+            if (draftExists) {
+              console.log('Brouillon trouvé dans la liste des contrats');
+              
+              // Afficher une notification temporaire pour indiquer le brouillon
+              const notif = document.createElement('div');
+              notif.className = 'fixed top-4 right-4 bg-amber-100 border-l-4 border-amber-500 text-amber-700 p-4 rounded shadow-md z-50';
+              notif.textContent = 'Votre brouillon est maintenant disponible dans la liste des contrats';
+              document.body.appendChild(notif);
+              
+              // Supprimer la notification après 5 secondes
+              setTimeout(() => {
+                notif.remove();
+              }, 5000);
+              
+              // Mettre en surbrillance le contrat en brouillon
+              const draftElement = document.getElementById(`contract-${draftId}`);
+              if (draftElement) {
+                draftElement.classList.add('animate-pulse');
+                setTimeout(() => {
+                  draftElement.classList.remove('animate-pulse');
+                }, 5000);
+              }
+              
+              // Maintenant qu'on a confirmé que le brouillon est correctement migré,
+              // on peut supprimer l'ID du sessionStorage
+              sessionStorage.removeItem('draftContractId');
+            } else {
+              console.log('Brouillon non trouvé dans la liste des contrats, il pourrait ne pas avoir été correctement migré');
+              // On ne supprime pas l'ID pour permettre une nouvelle tentative
+            }
+          }
+        } catch (error) {
+          console.error('Erreur lors de la vérification du brouillon:', error);
+        }
+      };
+      
+      checkDraftExists();
+    }
+  }, [contracts, isLoading]);
   
   const fetchContracts = async () => {
     try {
@@ -144,13 +228,9 @@ const ContractsPage = () => {
     if (!draftContract) return;
     
     if (action === 'finalize') {
-      // Si le contrat a été créé à partir de l'étape 6, rediriger vers la finalisation
-      if (draftContract.from_step6) {
-        navigate(`/wizard/finalize/${draftContract.id}`);
-      } else {
-        // Sinon, rediriger vers l'éditeur
-        navigate(`/editor/${draftContract.id}`);
-      }
+      // Ouvrir le modal de renommage
+      setShowDraftModal(false);
+      setShowRenameModal(true);
     } else if (action === 'delete') {
       // Réutiliser la logique de suppression existante
       setContractToDelete(draftContract);
@@ -158,8 +238,68 @@ const ContractsPage = () => {
       setShowDeleteModal(true);
     }
     
-    // Dans tous les cas, fermer le modal
+    // Dans tous les cas, fermer le modal de brouillon
     setShowDraftModal(false);
+  };
+  
+  const handleRenameContract = async (newTitle) => {
+    try {
+      // Récupérer les données actuelles du contrat
+      const contractDetails = await getContractById(draftContract.id);
+      
+      // IMPORTANT: Nous préservons les données originales du contrat sans les modifier
+      // Ne pas remplacer les informations du cessionnaire par celles du profil utilisateur
+      
+      // Mettre à jour uniquement le titre et le statut brouillon (is_draft)
+      const updatedContract = await updateContract(draftContract.id, {
+        title: newTitle,
+        is_draft: false  // Marquer comme contrat finalisé (non brouillon)
+        // NE PAS modifier les données (data) originales du contrat
+      });
+      
+      // Mettre à jour la liste des contrats
+      setContracts(contracts.map(c => 
+        c.id === draftContract.id 
+          ? { ...c, title: newTitle, is_draft: false } 
+          : c
+      ));
+      
+      // Fermer le modal de renommage
+      setShowRenameModal(false);
+      
+      // Définir le contrat finalisé
+      setFinalizedContract({
+        ...draftContract,
+        title: newTitle,
+        is_draft: false
+      });
+      
+      // Ouvrir le modal d'actions
+      setShowActionsModal(true);
+      
+    } catch (error) {
+      console.error('Error finalizing draft contract:', error);
+      setError('Une erreur est survenue lors de la finalisation du brouillon.');
+    }
+  };
+  
+  const handleDownloadPdf = async () => {
+    if (!finalizedContract) return;
+    
+    try {
+      // Récupérer les données du contrat finalisé
+      const contractData = finalizedContract.data;
+      await generatePdf(contractData, finalizedContract.title);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      setError('Une erreur est survenue lors de la génération du PDF.');
+    }
+  };
+  
+  const handleOpenEditor = () => {
+    if (!finalizedContract) return;
+    navigate(`/editor/${finalizedContract.id}`);
+    setShowActionsModal(false);
   };
   
   return (
@@ -250,7 +390,11 @@ const ContractsPage = () => {
               <div className="sm:hidden">
                 <div className="px-4 py-2 space-y-3">
                   {contracts.map((contract) => (
-                    <div key={contract.id} className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+                    <div 
+                      key={contract.id} 
+                      id={`contract-${contract.id}`}
+                      className={`bg-white border ${contract.is_draft ? 'border-amber-300' : 'border-gray-200'} rounded-lg shadow-sm p-4`}
+                    >
                       <div className="flex items-center mb-3">
                         <FileText className="flex-shrink-0 h-5 w-5 text-blue-500" />
                         <div className="ml-2 flex-1">
@@ -337,7 +481,11 @@ const ContractsPage = () => {
                     </thead>
                     <tbody className="divide-y divide-gray-200">
                       {contracts.map((contract) => (
-                        <tr key={contract.id} className="hover:bg-gray-50">
+                        <tr 
+                          key={contract.id} 
+                          id={`contract-${contract.id}`}
+                          className={`hover:bg-gray-50 ${contract.is_draft ? 'bg-amber-50' : ''}`}
+                        >
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
                               <FileText className="flex-shrink-0 h-5 w-5 text-blue-500 mr-3" />
@@ -492,7 +640,7 @@ const ContractsPage = () => {
                   className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm"
                   onClick={() => handleDraftAction('finalize')}
                 >
-                  Finaliser
+                  Valider
                 </button>
                 <button
                   type="button"
@@ -513,6 +661,23 @@ const ContractsPage = () => {
           </div>
         </div>
       )}
+      
+      {/* Modal de renommage du contrat */}
+      <DraftRenameModal
+        isOpen={showRenameModal}
+        onClose={() => setShowRenameModal(false)}
+        onRename={handleRenameContract}
+        initialTitle={draftContract?.title?.replace('Brouillon - ', '') || ''}
+        contractId={draftContract?.id}
+      />
+      
+      {/* Modal d'actions après finalisation */}
+      <DraftActionsModal
+        isOpen={showActionsModal}
+        onClose={() => setShowActionsModal(false)}
+        onOpenEditor={handleOpenEditor}
+        contractTitle={finalizedContract?.title}
+      />
     </div>
   );
 };

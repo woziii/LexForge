@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Déterminer l'URL de l'API en fonction de l'environnement
-const API_URL = process.env.REACT_APP_API_URL || 
+export const API_URL = process.env.REACT_APP_API_URL || 
                 (process.env.NODE_ENV === 'production' 
                   ? 'https://lexforge-backend.onrender.com/api' 
                   : 'http://localhost:5001/api');
@@ -36,6 +36,9 @@ export const getCurrentUserId = () => {
         if (session.user && session.user.externalAccounts) {
           const accounts = session.user.externalAccounts;
           
+          // DEBUG: Log pour voir toutes les méthodes d'authentification disponibles
+          console.log('DEBUG - Comptes externes disponibles:', accounts);
+          
           // Vérifier toutes les identités externes pour trouver celle active
           // (Google, LinkedIn, etc.)
           for (const account of accounts) {
@@ -49,10 +52,13 @@ export const getCurrentUserId = () => {
       
       // Créer un ID composite qui inclut la méthode d'authentification
       const compositeId = `${baseId}_${authMethod}`;
-      console.log(`Utilisateur authentifié via ${authMethod}, ID composite: ${compositeId}`);
+      console.log(`DEBUG - Utilisateur authentifié via ${authMethod}, ID composite: ${compositeId}`);
       
-      // Stocker l'ID dans localStorage
+      // Stocker l'ID dans localStorage pour la cohérence entre les sessions
       localStorage.setItem('clerkUserId', compositeId);
+      // Stocker également l'ID de base pour la migration
+      localStorage.setItem('clerkBaseUserId', baseId);
+      
       return compositeId;
     }
   } catch (error) {
@@ -80,6 +86,7 @@ export const getCurrentUserId = () => {
     }
   }
   
+  console.log('DEBUG - ID anonyme utilisé:', anonymousId);
   return anonymousId;
 };
 
@@ -135,9 +142,40 @@ export const generatePdf = async (contractData, filename) => {
 
 // Nouvelles fonctions pour la gestion des contrats
 
+// Ajout d'une fonction pour générer une empreinte de navigateur simple
+const generateBrowserFingerprint = () => {
+  // Créer une empreinte basée sur les caractéristiques du navigateur
+  // Cette implémentation est simplifiée mais suffisante pour notre cas d'usage
+  const components = [
+    navigator.userAgent,
+    navigator.language,
+    window.screen.colorDepth,
+    window.screen.width + 'x' + window.screen.height,
+    new Date().getTimezoneOffset(),
+    navigator.platform,
+    navigator.cookieEnabled ? 1 : 0
+  ];
+  
+  // Créer une chaîne unique à partir des composants
+  return btoa(components.join('|||')).substring(0, 32);
+};
+
+// Fonction pour stocker l'empreinte avec un ID de brouillon
+export const associateFingerprintWithDraft = (draftId) => {
+  if (!draftId) return;
+  
+  const fingerprint = generateBrowserFingerprint();
+  // Stocker l'association entre l'empreinte et l'ID du brouillon
+  localStorage.setItem(`draft_fp_${draftId}`, fingerprint);
+  console.log(`Empreinte de sécurité générée pour le brouillon ${draftId}`);
+};
+
+// Modification de saveContract pour associer l'empreinte lors de la création d'un brouillon
 export const saveContract = async (contractData, title, id = null, isDraft = false, fromStep6 = false) => {
   try {
     const userId = getCurrentUserId();
+    console.log('DEBUG - saveContract - userId:', userId, 'isDraft:', isDraft, 'fromStep6:', fromStep6);
+    
     const response = await api.post('/contracts', { 
       contractData, 
       title, 
@@ -146,6 +184,17 @@ export const saveContract = async (contractData, title, id = null, isDraft = fal
       fromStep6,
       user_id: userId
     });
+    console.log('DEBUG - saveContract - Réponse:', response.data);
+    
+    // Si c'est un brouillon et qu'il n'y a pas d'ID fourni (nouveau brouillon),
+    // associer l'empreinte du navigateur
+    if (isDraft && !id && response.data.id) {
+      associateFingerprintWithDraft(response.data.id);
+      
+      // Stocker également l'ID du brouillon dans sessionStorage pour la migration
+      sessionStorage.setItem('draftContractId', response.data.id);
+    }
+    
     return response.data;
   } catch (error) {
     console.error('Error saving contract:', error);
@@ -156,9 +205,13 @@ export const saveContract = async (contractData, title, id = null, isDraft = fal
 export const getContracts = async () => {
   try {
     const userId = getCurrentUserId();
+    console.log('DEBUG - getContracts - userId utilisé pour la requête:', userId);
+    
     const response = await api.get('/contracts', {
       params: { user_id: userId }
     });
+    console.log('DEBUG - getContracts - Nombre de contrats reçus:', response.data.contracts.length);
+    console.log('DEBUG - getContracts - Contrats reçus:', response.data.contracts);
     return response.data.contracts;
   } catch (error) {
     console.error('Error fetching contracts:', error);
@@ -169,12 +222,15 @@ export const getContracts = async () => {
 export const getContractById = async (contractId) => {
   try {
     const userId = getCurrentUserId();
+    console.log(`DEBUG - getContractById - Tentative d'accès au contrat ${contractId} avec userId: ${userId}`);
+    
     const response = await api.get(`/contracts/${contractId}`, {
       params: { user_id: userId }
     });
-    return response.data;
+    
+    return response.data.contract;
   } catch (error) {
-    console.error('Error fetching contract:', error);
+    console.error(`Erreur lors de la récupération du contrat ${contractId}:`, error);
     throw error;
   }
 };
@@ -418,7 +474,10 @@ export const deleteClient = async (clientId) => {
 
 export const accessFinalizationStep = async (contractId) => {
   try {
-    const response = await api.get(`/contracts/${contractId}/finalize`);
+    const userId = getCurrentUserId();
+    const response = await api.get(`/contracts/${contractId}/finalize`, {
+      params: { user_id: userId }
+    });
     return response.data;
   } catch (error) {
     console.error('Error accessing finalization step:', error);
@@ -434,25 +493,84 @@ export const migrateAnonymousUserData = async (newUserId) => {
   try {
     // Récupérer l'ID anonyme de l'utilisateur avant qu'il ne se connecte
     const anonymousId = localStorage.getItem('anonymousUserId');
+    // Récupérer également l'ID du brouillon s'il existe
+    const draftContractId = sessionStorage.getItem('draftContractId');
     
-    if (!anonymousId) {
-      console.log('Aucun ID anonyme trouvé, rien à migrer.');
+    // ⚠️ IMPORTANT: Vérifier que l'ID fourni est bien l'ID de base (sans suffixe)
+    // Note: Le backend attend un ID de base pour la migration pour éviter les problèmes
+    //       de suffixes différents (_google, _clerk, etc.)
+    
+    console.log('DEBUG - migrateAnonymousUserData - ID utilisateur fourni:', newUserId);
+    
+    let requestData = {
+      authenticated_id: newUserId
+    };
+    
+    if (anonymousId) {
+      requestData.anonymous_id = anonymousId;
+    }
+    
+    // Vérification de sécurité pour le brouillon
+    let securityVerified = true;
+    if (draftContractId) {
+      // Récupérer l'empreinte stockée
+      const storedFingerprint = localStorage.getItem(`draft_fp_${draftContractId}`);
+      
+      if (storedFingerprint) {
+        // Générer l'empreinte actuelle et comparer
+        const currentFingerprint = generateBrowserFingerprint();
+        
+        if (storedFingerprint !== currentFingerprint) {
+          console.warn(`Alerte sécurité: L'empreinte du navigateur ne correspond pas pour le brouillon ${draftContractId}`);
+          securityVerified = false;
+          
+          // On peut choisir de bloquer la migration ou simplement logger l'incident
+          // Pour une approche progressive, on continue mais on ajoute un flag au backend
+          requestData.security_verified = false;
+        } else {
+          console.log(`Vérification de sécurité réussie pour le brouillon ${draftContractId}`);
+          requestData.security_verified = true;
+        }
+      } else {
+        // Si pas d'empreinte stockée (anciens brouillons), continuer mais noter
+        console.log(`Pas d'empreinte de sécurité pour le brouillon ${draftContractId}`);
+        requestData.security_verified = null;
+      }
+      
+      // Ajouter l'ID du brouillon à la requête
+      requestData.draft_contract_id = draftContractId;
+      console.log(`Migration du brouillon ${draftContractId} vers l'utilisateur ${newUserId}`);
+    }
+    
+    // Si aucune donnée à migrer, retourner immédiatement
+    if (!anonymousId && !draftContractId) {
+      console.log('Aucun ID anonyme ou brouillon trouvé, rien à migrer.');
       return { success: false, message: 'Aucune donnée anonyme à migrer' };
     }
     
     // Envoyer une requête pour migrer les données
-    const response = await api.post('/migrate-user-data', {
-      anonymous_id: anonymousId,
-      authenticated_id: newUserId
-    });
+    const response = await api.post('/migrate-user-data', requestData);
     
     // Si la migration réussit, supprimer l'ID anonyme
     if (response.data.success) {
-      localStorage.removeItem('anonymousUserId');
-      console.log('Migration des données réussie, ID anonyme supprimé.');
+      if (anonymousId) {
+        localStorage.removeItem('anonymousUserId');
+        console.log('Migration des données réussie, ID anonyme supprimé.');
+      }
+      
+      // Ne pas supprimer l'ID du brouillon pour permettre d'afficher la notification
+      if (draftContractId) {
+        console.log('Brouillon migré avec succès, ID préservé pour la notification.');
+        // Supprimer l'empreinte du brouillon
+        localStorage.removeItem(`draft_fp_${draftContractId}`);
+      }
     }
     
-    return response.data;
+    // Ajouter des informations de sécurité à la réponse
+    return {
+      ...response.data,
+      security_verified: securityVerified
+    };
   } catch (error) {
     console.error('Erreur lors de la migration des données:', error);
     return { success: false, error: error.message };

@@ -179,9 +179,10 @@ def preview():
             cessionnaire_info = TELLERS_INFO
             print("Utilisation des informations par défaut Tellers comme cessionnaire_info")
         
-        # Ajouter les informations du cessionnaire aux données du contrat
+        # IMPORTANT: Stocker explicitement les informations du cessionnaire dans le contrat
+        # pour éviter de les perdre lors de la migration ou du changement de profil
         contract_data['cessionnaire_info'] = cessionnaire_info
-        print(f"cessionnaire_info final: {json.dumps(cessionnaire_info, indent=2)}")
+        print(f"Sauvegarde explicite des informations du cessionnaire dans les données du contrat: {json.dumps(cessionnaire_info, indent=2)}")
         
         # Faire la même chose pour les informations de l'auteur si présentes
         if 'auteur_info' in contract_data:
@@ -246,6 +247,7 @@ def create_pdf():
         return normalized
     
     # Si on a un ID de contrat et que le contract_data est vide, charger les données du contrat
+    contract = None
     if contract_id and not contract_data:
         contract_file = os.path.join(CONTRACTS_DIR, f"{contract_id}.json")
         if os.path.exists(contract_file):
@@ -269,44 +271,64 @@ def create_pdf():
     remuneration = contract_data.get('remuneration', '')
     is_exclusive = contract_data.get('exclusivite', False)
     
-    # Vérifier si des informations de cessionnaire sont déjà présentes dans les données du contrat
-    cessionnaire_info = contract_data.get('cessionnaire_info')
-    if cessionnaire_info:
+    # ⚠️ IMPORTANT: Utiliser en priorité les informations de cessionnaire stockées dans le contrat
+    # au lieu de celles du profil utilisateur actuel
+    cessionnaire_info = None
+    
+    # 1. Vérifier d'abord si le contrat contient déjà des infos de cessionnaire
+    if 'cessionnaire_info' in contract_data:
+        print(f"PDF: Utilisation des infos de cessionnaire stockées dans le contrat")
+        cessionnaire_info = contract_data['cessionnaire_info']
         cessionnaire_info = normalize_data(cessionnaire_info)
-        print(f"PDF: cessionnaire_info trouvé dans le contrat et normalisé")
-    else:
-        # 1. Vérifier si entreprise_info est fourni dans les données du contrat et l'utiliser en priorité
-        entreprise_info = contract_data.get('entreprise_info')
-        if entreprise_info:
-            cessionnaire_info = normalize_data(entreprise_info)
-            print(f"PDF: entreprise_info trouvé et normalisé: {json.dumps(cessionnaire_info, indent=2)}")
-        else:
-            # Récupérer les informations du cessionnaire depuis le profil utilisateur spécifique
-            USER_PROFILE_FILE_WITH_ID = os.path.join(USER_PROFILES_DIR, f'user_profile_{user_id}.json')
-            if os.path.exists(USER_PROFILE_FILE_WITH_ID):
-                with open(USER_PROFILE_FILE_WITH_ID, 'r') as f:
-                    user_profile = json.load(f)
+    # 2. Ensuite, vérifier si entreprise_info est disponible
+    elif 'entreprise_info' in contract_data and contract_data['entreprise_info']:
+        print(f"PDF: Utilisation de entreprise_info du contrat")
+        cessionnaire_info = normalize_data(contract_data['entreprise_info'])
+    # 3. Si le contrat existe et a été importé/migré, essayer de récupérer le profil original
+    elif contract and contract.get('original_user_id'):
+        original_user_id = contract.get('original_user_id')
+        original_profile_path = os.path.join(USER_PROFILES_DIR, f'user_profile_{original_user_id}.json')
+        
+        if os.path.exists(original_profile_path):
+            print(f"PDF: Utilisation du profil original: {original_user_id}")
+            try:
+                with open(original_profile_path, 'r') as f:
+                    original_profile = json.load(f)
                 
-                # Si un type d'entité est sélectionné, utiliser ses informations comme cessionnaire
-                if user_profile.get('selected_entity_type') == 'physical_person' and user_profile['physical_person']['is_configured']:
-                    cessionnaire_info = user_profile['physical_person']
-                    cessionnaire_info = normalize_data(cessionnaire_info)
-                    print("PDF: Utilisation du profil physical_person comme cessionnaire_info")
-                elif user_profile.get('selected_entity_type') == 'legal_entity' and user_profile['legal_entity']['is_configured']:
-                    cessionnaire_info = user_profile['legal_entity']
-                    cessionnaire_info = normalize_data(cessionnaire_info)
-                    print("PDF: Utilisation du profil legal_entity comme cessionnaire_info")
-                else:
-                    # Utiliser les informations par défaut de Tellers
-                    cessionnaire_info = TELLERS_INFO
-                    print("PDF: Utilisation des informations par défaut Tellers comme cessionnaire_info")
+                if original_profile.get('selected_entity_type') == 'physical_person' and original_profile['physical_person']['is_configured']:
+                    cessionnaire_info = normalize_data(original_profile['physical_person'])
+                elif original_profile.get('selected_entity_type') == 'legal_entity' and original_profile['legal_entity']['is_configured']:
+                    cessionnaire_info = normalize_data(original_profile['legal_entity'])
+            except Exception as e:
+                print(f"PDF: Erreur lors de la lecture du profil original: {e}")
+    
+    # 4. Si aucune des options ci-dessus n'a fonctionné, utiliser le profil utilisateur actuel
+    if not cessionnaire_info:
+        # Récupérer les informations du cessionnaire depuis le profil utilisateur spécifique
+        USER_PROFILE_FILE_WITH_ID = os.path.join(USER_PROFILES_DIR, f'user_profile_{user_id}.json')
+        if os.path.exists(USER_PROFILE_FILE_WITH_ID):
+            print(f"PDF: Utilisation du profil utilisateur actuel en dernier recours")
+            with open(USER_PROFILE_FILE_WITH_ID, 'r') as f:
+                user_profile = json.load(f)
+            
+            # Si un type d'entité est sélectionné, utiliser ses informations comme cessionnaire
+            if user_profile.get('selected_entity_type') == 'physical_person' and user_profile['physical_person']['is_configured']:
+                cessionnaire_info = user_profile['physical_person']
+                cessionnaire_info = normalize_data(cessionnaire_info)
+            elif user_profile.get('selected_entity_type') == 'legal_entity' and user_profile['legal_entity']['is_configured']:
+                cessionnaire_info = user_profile['legal_entity']
+                cessionnaire_info = normalize_data(cessionnaire_info)
             else:
+                # Utiliser les informations par défaut de Tellers
                 cessionnaire_info = TELLERS_INFO
-                print("PDF: Profil utilisateur non trouvé, utilisation des informations par défaut Tellers")
+        else:
+            cessionnaire_info = TELLERS_INFO
     
     # Normaliser également les informations sur l'auteur
     if author_info:
         author_info = normalize_data(author_info)
+    
+    print(f"PDF: Infos cessionnaire finales: {cessionnaire_info}")
     
     # Générer le PDF
     pdf_path = generate_pdf(
@@ -331,6 +353,68 @@ def save_contract():
     is_draft = data.get('isDraft', False)  # Nouveau champ pour indiquer si c'est un brouillon
     from_step6 = data.get('fromStep6', False)  # Nouveau champ pour indiquer si ça vient de l'étape 6
     user_id = data.get('user_id', 'anonymous')  # Récupérer l'ID utilisateur, utiliser 'anonymous' par défaut
+    
+    # S'assurer que les informations du cessionnaire sont présentes dans le contrat
+    if not contract_data.get('cessionnaire_info'):
+        # Fonction pour normaliser les données
+        def normalize_data(data):
+            normalized = data.copy() if data else {}
+            
+            # Mapping entre les noms de champs potentiellement différents
+            field_mappings = {
+                'rcs': 'siren',
+                'siege': 'adresse',
+                'representant': 'representant_nom',
+            }
+            
+            # Appliquer les mappings
+            for old_field, new_field in field_mappings.items():
+                if old_field in normalized and not normalized.get(new_field):
+                    normalized[new_field] = normalized[old_field]
+                    
+            # Assurer que l'adresse complète est extraite des composants si nécessaire
+            if 'adresse' in normalized and 'code_postal' in normalized and 'ville' in normalized:
+                address_parts = []
+                if normalized.get('adresse'):
+                    address_parts.append(normalized['adresse'])
+                
+                city_part = ''
+                if normalized.get('code_postal'):
+                    city_part += normalized['code_postal'] 
+                if normalized.get('ville'):
+                    if city_part:
+                        city_part += ' '
+                    city_part += normalized['ville']
+                
+                if city_part:
+                    address_parts.append(city_part)
+                
+                if address_parts:
+                    normalized['adresse_complete'] = ', '.join(address_parts)
+            
+            return normalized
+        
+        # 1. Vérifier si entreprise_info est fourni et l'utiliser
+        if contract_data.get('entreprise_info'):
+            print(f"save_contract: Utilisation de entreprise_info comme cessionnaire_info")
+            contract_data['cessionnaire_info'] = normalize_data(contract_data.get('entreprise_info', {}))
+        else:
+            # 2. Sinon, chercher dans le profil utilisateur
+            USER_PROFILE_FILE_WITH_ID = os.path.join(USER_PROFILES_DIR, f'user_profile_{user_id}.json')
+            if os.path.exists(USER_PROFILE_FILE_WITH_ID):
+                with open(USER_PROFILE_FILE_WITH_ID, 'r') as f:
+                    user_profile = json.load(f)
+                
+                if user_profile.get('selected_entity_type') == 'physical_person' and user_profile['physical_person']['is_configured']:
+                    print(f"save_contract: Utilisation du profil physical_person comme cessionnaire_info")
+                    contract_data['cessionnaire_info'] = normalize_data(user_profile['physical_person'])
+                elif user_profile.get('selected_entity_type') == 'legal_entity' and user_profile['legal_entity']['is_configured']:
+                    print(f"save_contract: Utilisation du profil legal_entity comme cessionnaire_info")
+                    contract_data['cessionnaire_info'] = normalize_data(user_profile['legal_entity'])
+                else:
+                    # 3. Par défaut, utiliser les informations de Tellers
+                    print(f"save_contract: Utilisation des informations Tellers par défaut")
+                    contract_data['cessionnaire_info'] = TELLERS_INFO
     
     # Générer un ID unique pour le contrat s'il n'existe pas
     contract_id = data.get('id')
@@ -361,62 +445,118 @@ def save_contract():
 @app.route('/api/contracts', methods=['GET'])
 def get_contracts():
     """
-    Endpoint pour récupérer la liste des contrats.
+    Endpoint pour récupérer tous les contrats d'un utilisateur
     """
-    # Récupérer l'ID utilisateur de la requête
-    user_id = request.args.get('user_id', 'anonymous')
+    user_id = request.args.get('user_id')
+    
+    if not user_id:
+        return jsonify({'error': 'User ID manquant'}), 400
+    
+    # Extraire l'ID de base (sans suffixe) pour la vérification de l'accès
+    base_user_id = user_id
+    if '_' in user_id and not user_id.startswith('anon_'):
+        # Formater: user_XYZ (2 premières parties de l'ID)
+        parts = user_id.split('_')
+        if len(parts) >= 2:
+            base_user_id = f"{parts[0]}_{parts[1]}"
+    
+    print(f"DEBUG - get_contracts - ID utilisateur complet: {user_id}")
+    print(f"DEBUG - get_contracts - ID utilisateur de base: {base_user_id}")
     
     contracts = []
-    
-    # Parcourir les fichiers dans le répertoire des contrats
     for filename in os.listdir(CONTRACTS_DIR):
-        if filename.endswith('.json'):
-            file_path = os.path.join(CONTRACTS_DIR, filename)
-            try:
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    contract = json.load(f)
-                    
-                    # Ne renvoyer que les contrats de l'utilisateur actuel
-                    if contract.get('user_id', 'anonymous') == user_id:
-                        # Filtrer les informations à renvoyer
-                        contract_info = {
-                            'id': contract.get('id'),
-                            'title': contract.get('title', 'Contrat sans titre'),
-                            'created_at': contract.get('created_at'),
-                            'updated_at': contract.get('updated_at'),
-                            'is_draft': contract.get('is_draft', False),  # Inclure le statut de brouillon
-                            'from_step6': contract.get('from_step6', False)  # Inclure l'info si vient de l'étape 6
-                        }
-                        contracts.append(contract_info)
-            except Exception as e:
-                print(f"Error reading contract file {filename}: {e}")
+        if not filename.endswith('.json'):
+            continue
+        
+        contract_path = os.path.join(CONTRACTS_DIR, filename)
+        try:
+            with open(contract_path, 'r', encoding='utf-8') as f:
+                contract = json.load(f)
+            
+            # Obtenir l'ID utilisateur du contrat
+            contract_user_id = contract.get('user_id', '')
+            
+            # Extraire l'ID de base du contrat si nécessaire
+            base_contract_user_id = contract_user_id
+            if '_' in contract_user_id and not contract_user_id.startswith('anon_'):
+                # Formater: user_XYZ (2 premières parties de l'ID)
+                parts = contract_user_id.split('_')
+                if len(parts) >= 2:
+                    base_contract_user_id = f"{parts[0]}_{parts[1]}"
+            
+            # Vérifier la correspondance des IDs avec plusieurs combinaisons pour compatibilité
+            if (user_id == contract_user_id or  # IDs complets identiques
+                base_user_id == base_contract_user_id or  # IDs de base identiques
+                user_id == base_contract_user_id or  # ID complet = ID de base du contrat
+                base_user_id == contract_user_id):  # ID de base = ID complet du contrat
+                contracts.append(contract)
+        except Exception as e:
+            print(f"Erreur lors de la lecture du contrat {filename}: {e}")
     
-    # Trier les contrats par date de mise à jour (du plus récent au plus ancien)
-    contracts.sort(key=lambda x: x.get('updated_at', ''), reverse=True)
+    print(f"DEBUG - get_contracts - Trouvé {len(contracts)} contrats pour l'utilisateur {user_id}")
+    
+    # Trier les contrats par date de création (du plus récent au plus ancien)
+    contracts.sort(key=lambda x: x.get('created_at', ''), reverse=True)
     
     return jsonify({'contracts': contracts})
 
 @app.route('/api/contracts/<contract_id>', methods=['GET'])
 def get_contract(contract_id):
     """
-    Endpoint pour récupérer un contrat spécifique.
+    Endpoint pour récupérer un contrat spécifique par son ID.
+    Vérifie si l'utilisateur a accès à ce contrat.
     """
-    file_path = os.path.join(CONTRACTS_DIR, f"{contract_id}.json")
+    user_id = request.args.get('user_id')
     
-    if not os.path.exists(file_path):
-        return jsonify({'error': 'Contract not found'}), 404
+    if not user_id:
+        return jsonify({'error': 'User ID manquant'}), 400
     
-    with open(file_path, 'r', encoding='utf-8') as f:
+    # Extraire l'ID de base (sans suffixe) pour la vérification de l'accès
+    base_user_id = user_id
+    if '_' in user_id and not user_id.startswith('anon_'):
+        # Formater: user_XYZ (2 premières parties de l'ID)
+        parts = user_id.split('_')
+        if len(parts) >= 2:
+            base_user_id = f"{parts[0]}_{parts[1]}"
+    
+    print(f"DEBUG - get_contract - ID utilisateur complet: {user_id}")
+    print(f"DEBUG - get_contract - ID utilisateur de base: {base_user_id}")
+    
+    contract_file = os.path.join(CONTRACTS_DIR, f"{contract_id}.json")
+    
+    if not os.path.exists(contract_file):
+        return jsonify({'error': 'Contrat non trouvé'}), 404
+    
+    with open(contract_file, 'r', encoding='utf-8') as f:
         contract = json.load(f)
     
-    # Récupérer l'ID utilisateur de la requête
-    user_id = request.args.get('user_id', 'anonymous')
+    # Vérifier si le contrat appartient à l'utilisateur 
+    contract_user_id = contract.get('user_id', '')
     
-    # Vérifier que l'utilisateur a accès à ce contrat
-    if contract.get('user_id', 'anonymous') != user_id and user_id != 'anonymous':
-        return jsonify({'error': 'Unauthorized access to contract'}), 403
+    # Extraire l'ID de base du contrat si nécessaire
+    base_contract_user_id = contract_user_id
+    if '_' in contract_user_id and not contract_user_id.startswith('anon_'):
+        # Formater: user_XYZ (2 premières parties de l'ID)
+        parts = contract_user_id.split('_')
+        if len(parts) >= 2:
+            base_contract_user_id = f"{parts[0]}_{parts[1]}"
     
-    return jsonify(contract)
+    # Vérifier la correspondance des IDs (avec plusieurs vérifications pour compatibilité)
+    has_access = (
+        user_id == contract_user_id or  # IDs complets identiques
+        base_user_id == base_contract_user_id or  # IDs de base identiques
+        user_id == base_contract_user_id or  # ID complet = ID de base du contrat
+        base_user_id == contract_user_id)  # ID de base = ID complet du contrat
+    
+    print(f"DEBUG - get_contract - Vérification d'accès au contrat {contract_id}:")
+    print(f"  - ID utilisateur: {user_id} (base: {base_user_id})")
+    print(f"  - ID du contrat: {contract_user_id} (base: {base_contract_user_id})")
+    print(f"  - Accès autorisé: {has_access}")
+    
+    if not has_access:
+        return jsonify({'error': 'Accès non autorisé'}), 403
+    
+    return jsonify({'contract': contract})
 
 @app.route('/api/contracts/<contract_id>', methods=['PUT'])
 def update_contract(contract_id):
@@ -435,33 +575,110 @@ def update_contract(contract_id):
     # Récupérer l'ID utilisateur de la requête
     user_id = request.json.get('user_id', 'anonymous')
     
-    # Vérifier que l'utilisateur a accès à ce contrat
-    if contract.get('user_id', 'anonymous') != user_id and user_id != 'anonymous':
-        return jsonify({'error': 'Unauthorized access to contract'}), 403
+    # Extraire l'ID de base (sans suffixe) pour la vérification de l'accès
+    base_user_id = user_id
+    if '_' in user_id and not user_id.startswith('anon_'):
+        # Formater: user_XYZ (2 premières parties de l'ID)
+        parts = user_id.split('_')
+        if len(parts) >= 2:
+            base_user_id = f"{parts[0]}_{parts[1]}"
+    
+    # Obtenir l'ID utilisateur du contrat
+    contract_user_id = contract.get('user_id', '')
+    
+    # Extraire l'ID de base du contrat si nécessaire
+    base_contract_user_id = contract_user_id
+    if '_' in contract_user_id and not contract_user_id.startswith('anon_'):
+        # Formater: user_XYZ (2 premières parties de l'ID)
+        parts = contract_user_id.split('_')
+        if len(parts) >= 2:
+            base_contract_user_id = f"{parts[0]}_{parts[1]}"
+    
+    # Vérifier la correspondance des IDs (avec plusieurs vérifications pour compatibilité)
+    has_access = (
+        user_id == contract_user_id or  # IDs complets identiques
+        base_user_id == base_contract_user_id or  # IDs de base identiques
+        user_id == base_contract_user_id or  # ID complet = ID de base du contrat
+        base_user_id == contract_user_id  # ID de base = ID complet du contrat
+    )
+    
+    print(f"DEBUG - update_contract - Vérification d'accès au contrat {contract_id}:")
+    print(f"  - ID utilisateur: {user_id} (base: {base_user_id})")
+    print(f"  - ID du contrat: {contract_user_id} (base: {base_contract_user_id})")
+    print(f"  - Accès autorisé: {has_access}")
+    
+    if not has_access:
+        return jsonify({'error': 'Accès non autorisé'}), 403
     
     data = request.json
-    title = data.get('title')
-    updated_elements = data.get('updatedElements', {})
-    comments = data.get('comments', [])
     
-    # Mettre à jour le titre si fourni
-    if title:
-        contract['title'] = title
+    # Vérifier si le client a demandé de préserver les données (cas des contrats importés/migrés)
+    preserve_data = data.get('preserve_data', False)
+    print(f"DEBUG - update_contract - Préservation des données demandée: {preserve_data}")
     
-    # Mettre à jour les éléments modifiés si fournis
-    if updated_elements and 'elements' in contract:
-        for index, content in updated_elements.items():
-            index = int(index)
-            if index < len(contract['elements']):
-                if 'text' in contract['elements'][index]:
-                    contract['elements'][index]['text'] = content
-    
-    # Mettre à jour ou ajouter les commentaires si fournis
-    if comments is not None:
-        contract['comments'] = comments
-    
-    # Mettre à jour la date de mise à jour
-    contract['updated_at'] = datetime.now().isoformat()
+    # ⚠️ Mode de préservation des données (pour les contrats migrés/importés)
+    # Si ce mode est activé, on ne modifie que le titre et le statut is_draft
+    if preserve_data:
+        print(f"DEBUG - update_contract - Mode préservation activé: seuls le titre et is_draft seront modifiés")
+        
+        # Récupérer uniquement le titre et le statut is_draft
+        title = data.get('title')
+        is_draft = data.get('is_draft')
+        
+        # Mettre à jour le titre si fourni
+        if title:
+            contract['title'] = title
+            print(f"DEBUG - update_contract - Titre mis à jour: {title}")
+        
+        # Mettre à jour le statut de brouillon si fourni
+        if is_draft is not None:
+            contract['is_draft'] = is_draft
+            print(f"DEBUG - update_contract - Statut de brouillon mis à jour: {is_draft}")
+        
+        # Ajouter un marqueur indiquant que ce contrat est préservé
+        if contract.get('original_user_id') and not contract.get('preserved_import'):
+            contract['preserved_import'] = True
+            print(f"DEBUG - update_contract - Marqueur de préservation ajouté")
+        
+        # Mettre à jour la date de mise à jour
+        contract['updated_at'] = datetime.now().isoformat()
+        
+    # Mode normal - mise à jour complète
+    else:
+        title = data.get('title')
+        is_draft = data.get('is_draft')
+        updated_elements = data.get('updatedElements', {})
+        comments = data.get('comments', [])
+        updated_data = data.get('data')  # Nouvelles données du contrat
+        
+        # Mettre à jour le titre si fourni
+        if title:
+            contract['title'] = title
+        
+        # Mettre à jour le statut de brouillon si fourni
+        if is_draft is not None:
+            contract['is_draft'] = is_draft
+            print(f"DEBUG - update_contract - Statut de brouillon mis à jour: {is_draft}")
+        
+        # Mettre à jour les données du contrat si fournies
+        if updated_data:
+            contract['data'] = updated_data
+            print(f"DEBUG - update_contract - Données du contrat mises à jour")
+        
+        # Mettre à jour les éléments modifiés si fournis
+        if updated_elements and 'elements' in contract:
+            for index, content in updated_elements.items():
+                index = int(index)
+                if index < len(contract['elements']):
+                    if 'text' in contract['elements'][index]:
+                        contract['elements'][index]['text'] = content
+        
+        # Mettre à jour ou ajouter les commentaires si fournis
+        if comments is not None:
+            contract['comments'] = comments
+        
+        # Mettre à jour la date de mise à jour
+        contract['updated_at'] = datetime.now().isoformat()
     
     # Sauvegarder le contrat mis à jour
     with open(file_path, 'w', encoding='utf-8') as f:
@@ -486,9 +703,38 @@ def delete_contract(contract_id):
     # Récupérer l'ID utilisateur de la requête
     user_id = request.args.get('user_id', 'anonymous')
     
-    # Vérifier que l'utilisateur a accès à ce contrat
-    if contract.get('user_id', 'anonymous') != user_id and user_id != 'anonymous':
-        return jsonify({'error': 'Unauthorized access to contract'}), 403
+    # Extraire l'ID de base (sans suffixe) pour la vérification de l'accès
+    base_user_id = user_id
+    if '_' in user_id and not user_id.startswith('anon_'):
+        parts = user_id.split('_')
+        if len(parts) >= 2:
+            base_user_id = f"{parts[0]}_{parts[1]}"
+    
+    # Obtenir l'ID utilisateur du contrat
+    contract_user_id = contract.get('user_id', '')
+    
+    # Extraire l'ID de base du contrat si nécessaire
+    base_contract_user_id = contract_user_id
+    if '_' in contract_user_id and not contract_user_id.startswith('anon_'):
+        parts = contract_user_id.split('_')
+        if len(parts) >= 2:
+            base_contract_user_id = f"{parts[0]}_{parts[1]}"
+    
+    # Vérifier la correspondance des IDs
+    has_access = (
+        user_id == contract_user_id or  # IDs complets identiques
+        base_user_id == base_contract_user_id or  # IDs de base identiques
+        user_id == base_contract_user_id or  # ID complet = ID de base du contrat
+        base_user_id == contract_user_id  # ID de base = ID complet du contrat
+    )
+    
+    print(f"DEBUG - delete_contract - Vérification d'accès au contrat {contract_id}:")
+    print(f"  - ID utilisateur: {user_id} (base: {base_user_id})")
+    print(f"  - ID du contrat: {contract_user_id} (base: {base_contract_user_id})")
+    print(f"  - Accès autorisé: {has_access}")
+    
+    if not has_access:
+        return jsonify({'error': 'Accès non autorisé'}), 403
     
     # Supprimer le fichier
     os.remove(file_path)
@@ -509,6 +755,42 @@ def get_contract_elements(contract_id):
         # Récupérer les données du contrat
         with open(file_path, 'r', encoding='utf-8') as f:
             contract = json.load(f)
+        
+        # Récupérer l'ID utilisateur de la requête pour vérifier l'accès
+        user_id = request.args.get('user_id', 'anonymous')
+        
+        # Extraire l'ID de base (sans suffixe) pour la vérification de l'accès
+        base_user_id = user_id
+        if '_' in user_id and not user_id.startswith('anon_'):
+            parts = user_id.split('_')
+            if len(parts) >= 2:
+                base_user_id = f"{parts[0]}_{parts[1]}"
+        
+        # Obtenir l'ID utilisateur du contrat
+        contract_user_id = contract.get('user_id', '')
+        
+        # Extraire l'ID de base du contrat si nécessaire
+        base_contract_user_id = contract_user_id
+        if '_' in contract_user_id and not contract_user_id.startswith('anon_'):
+            parts = contract_user_id.split('_')
+            if len(parts) >= 2:
+                base_contract_user_id = f"{parts[0]}_{parts[1]}"
+        
+        # Vérifier la correspondance des IDs
+        has_access = (
+            user_id == contract_user_id or  # IDs complets identiques
+            base_user_id == base_contract_user_id or  # IDs de base identiques
+            user_id == base_contract_user_id or  # ID complet = ID de base du contrat
+            base_user_id == contract_user_id  # ID de base = ID complet du contrat
+        )
+        
+        print(f"DEBUG - get_contract_elements - Vérification d'accès au contrat {contract_id}:")
+        print(f"  - ID utilisateur: {user_id} (base: {base_user_id})")
+        print(f"  - ID du contrat: {contract_user_id} (base: {base_contract_user_id})")
+        print(f"  - Accès autorisé: {has_access}")
+        
+        if not has_access:
+            return jsonify({'error': 'Accès non autorisé'}), 403
         
         # Fonction pour normaliser les données entre l'étape 3 et le dashboard
         def normalize_data(data):
@@ -548,13 +830,6 @@ def get_contract_elements(contract_id):
             
             return normalized
         
-        # Récupérer l'ID utilisateur de la requête pour vérifier l'accès
-        user_id = request.args.get('user_id', 'anonymous')
-        
-        # Vérifier que l'utilisateur a accès à ce contrat
-        if contract.get('user_id', 'anonymous') != user_id and user_id != 'anonymous':
-            return jsonify({'error': 'Unauthorized access to contract'}), 403
-        
         # Vérifier si le contrat a déjà des éléments stockés
         if 'elements' in contract:
             return jsonify({'elements': contract['elements'], 'comments': contract.get('comments', [])})
@@ -575,29 +850,63 @@ def get_contract_elements(contract_id):
         remuneration = contract_data.get('remuneration', '')
         is_exclusive = contract_data.get('exclusivite', False)
         
-        # Récupérer les informations du cessionnaire depuis le profil utilisateur
+        # ⚠️ IMPORTANT: Utiliser en priorité les informations de cessionnaire stockées dans le contrat 
+        # au lieu de celles du profil utilisateur actuel
         cessionnaire_info = None
-        USER_PROFILE_FILE_WITH_ID = os.path.join(USER_PROFILES_DIR, f'user_profile_{contract.get("user_id", "anonymous")}.json')
-        if os.path.exists(USER_PROFILE_FILE_WITH_ID):
-            with open(USER_PROFILE_FILE_WITH_ID, 'r') as f:
-                user_profile = json.load(f)
+        
+        # 1. Vérifier d'abord si le contrat contient déjà des infos de cessionnaire
+        if 'cessionnaire_info' in contract_data:
+            print(f"DEBUG - get_contract_elements - Utilisation des infos de cessionnaire stockées dans le contrat")
+            cessionnaire_info = contract_data['cessionnaire_info']
+            cessionnaire_info = normalize_data(cessionnaire_info)
+        # 2. Ensuite, vérifier si entreprise_info est disponible
+        elif 'entreprise_info' in contract_data and contract_data['entreprise_info']:
+            print(f"DEBUG - get_contract_elements - Utilisation de entreprise_info du contrat")
+            cessionnaire_info = normalize_data(contract_data['entreprise_info'])
+        # 3. Si le contrat a été importé/migré, essayer de récupérer le profil original
+        elif contract.get('original_user_id'):
+            original_user_id = contract.get('original_user_id')
+            original_profile_path = os.path.join(USER_PROFILES_DIR, f'user_profile_{original_user_id}.json')
             
-            # Si un type d'entité est sélectionné, utiliser ses informations comme cessionnaire
-            if user_profile.get('selected_entity_type') == 'physical_person' and user_profile['physical_person']['is_configured']:
-                cessionnaire_info = user_profile['physical_person']
-                cessionnaire_info = normalize_data(cessionnaire_info)
-            elif user_profile.get('selected_entity_type') == 'legal_entity' and user_profile['legal_entity']['is_configured']:
-                cessionnaire_info = user_profile['legal_entity']
-                cessionnaire_info = normalize_data(cessionnaire_info)
+            if os.path.exists(original_profile_path):
+                print(f"DEBUG - get_contract_elements - Utilisation du profil original: {original_user_id}")
+                try:
+                    with open(original_profile_path, 'r') as f:
+                        original_profile = json.load(f)
+                    
+                    if original_profile.get('selected_entity_type') == 'physical_person' and original_profile['physical_person']['is_configured']:
+                        cessionnaire_info = normalize_data(original_profile['physical_person'])
+                    elif original_profile.get('selected_entity_type') == 'legal_entity' and original_profile['legal_entity']['is_configured']:
+                        cessionnaire_info = normalize_data(original_profile['legal_entity'])
+                except Exception as e:
+                    print(f"DEBUG - get_contract_elements - Erreur lors de la lecture du profil original: {e}")
+        
+        # 4. Si aucune des options ci-dessus n'a fonctionné, utiliser le profil utilisateur actuel
+        if not cessionnaire_info:
+            USER_PROFILE_FILE_WITH_ID = os.path.join(USER_PROFILES_DIR, f'user_profile_{contract.get("user_id", "anonymous")}.json')
+            if os.path.exists(USER_PROFILE_FILE_WITH_ID):
+                print(f"DEBUG - get_contract_elements - Utilisation du profil utilisateur actuel en dernier recours")
+                with open(USER_PROFILE_FILE_WITH_ID, 'r') as f:
+                    user_profile = json.load(f)
+                
+                # Si un type d'entité est sélectionné, utiliser ses informations comme cessionnaire
+                if user_profile.get('selected_entity_type') == 'physical_person' and user_profile['physical_person']['is_configured']:
+                    cessionnaire_info = user_profile['physical_person']
+                    cessionnaire_info = normalize_data(cessionnaire_info)
+                elif user_profile.get('selected_entity_type') == 'legal_entity' and user_profile['legal_entity']['is_configured']:
+                    cessionnaire_info = user_profile['legal_entity']
+                    cessionnaire_info = normalize_data(cessionnaire_info)
+                else:
+                    # Utiliser les informations par défaut de Tellers
+                    cessionnaire_info = TELLERS_INFO
             else:
-                # Utiliser les informations par défaut de Tellers
                 cessionnaire_info = TELLERS_INFO
-        else:
-            cessionnaire_info = TELLERS_INFO
         
         # Normaliser également les informations sur l'auteur si présentes
         if author_info:
             author_info = normalize_data(author_info)
+        
+        print(f"DEBUG - get_contract_elements - Infos cessionnaire finales: {cessionnaire_info}")
         
         # Générer les éléments du contrat avec le ContractBuilder
         elements = ContractBuilder.build_contract_elements(
@@ -831,9 +1140,38 @@ def access_finalization_step(contract_id):
         with open(contract_file, 'r', encoding='utf-8') as f:
             contract = json.load(f)
         
-        # Vérifier que l'utilisateur a accès à ce contrat
-        if contract.get('user_id', 'anonymous') != user_id and user_id != 'anonymous':
-            return jsonify({'error': 'Unauthorized access to contract'}), 403
+        # Extraire l'ID de base (sans suffixe) pour la vérification de l'accès
+        base_user_id = user_id
+        if '_' in user_id and not user_id.startswith('anon_'):
+            parts = user_id.split('_')
+            if len(parts) >= 2:
+                base_user_id = f"{parts[0]}_{parts[1]}"
+        
+        # Obtenir l'ID utilisateur du contrat
+        contract_user_id = contract.get('user_id', '')
+        
+        # Extraire l'ID de base du contrat si nécessaire
+        base_contract_user_id = contract_user_id
+        if '_' in contract_user_id and not contract_user_id.startswith('anon_'):
+            parts = contract_user_id.split('_')
+            if len(parts) >= 2:
+                base_contract_user_id = f"{parts[0]}_{parts[1]}"
+        
+        # Vérifier la correspondance des IDs
+        has_access = (
+            user_id == contract_user_id or  # IDs complets identiques
+            base_user_id == base_contract_user_id or  # IDs de base identiques
+            user_id == base_contract_user_id or  # ID complet = ID de base du contrat
+            base_user_id == contract_user_id  # ID de base = ID complet du contrat
+        )
+        
+        print(f"DEBUG - access_finalization_step - Vérification d'accès au contrat {contract_id}:")
+        print(f"  - ID utilisateur: {user_id} (base: {base_user_id})")
+        print(f"  - ID du contrat: {contract_user_id} (base: {base_contract_user_id})")
+        print(f"  - Accès autorisé: {has_access}")
+        
+        if not has_access:
+            return jsonify({'error': 'Accès non autorisé'}), 403
         
         # Récupérer les données du formulaire
         form_data = contract.get('form_data', contract.get('data', {}))
@@ -843,7 +1181,8 @@ def access_finalization_step(contract_id):
         contract['updated_at'] = datetime.now().isoformat()
         
         # S'assurer que le user_id est correctement défini dans le contrat
-        if contract.get('user_id') != user_id and user_id != 'anonymous':
+        # Utiliser l'ID utilisateur actuel (avec suffixe) pour assurer la compatibilité avec les requêtes futures
+        if not contract.get('user_id') or contract.get('user_id') == 'anonymous':
             contract['user_id'] = user_id
         
         # Sauvegarder les modifications
@@ -865,55 +1204,134 @@ def access_finalization_step(contract_id):
 def migrate_user_data():
     """
     Endpoint pour migrer les données d'un utilisateur anonyme vers un utilisateur authentifié.
+    Peut également migrer un brouillon spécifique identifié par draft_contract_id.
     """
     data = request.json
     anonymous_id = data.get('anonymous_id')
     authenticated_id = data.get('authenticated_id')
+    draft_contract_id = data.get('draft_contract_id')
+    security_verified = data.get('security_verified')
     
-    if not anonymous_id or not authenticated_id:
-        return jsonify({'success': False, 'error': 'IDs manquants'}), 400
+    print(f"DEBUG - migrate_user_data - Données reçues: anonymous_id={anonymous_id}, authenticated_id={authenticated_id}, draft_contract_id={draft_contract_id}")
+    print(f"DEBUG - migrate_user_data - Vérification de sécurité: {security_verified}")
     
-    if not anonymous_id.startswith('anon_'):
-        return jsonify({'success': False, 'error': 'ID anonyme invalide'}), 400
+    if not authenticated_id:
+        print("DEBUG - migrate_user_data - Erreur: ID authentifié manquant")
+        return jsonify({'success': False, 'error': 'ID authentifié manquant'}), 400
+    
+    if not anonymous_id and not draft_contract_id:
+        print("DEBUG - migrate_user_data - Erreur: Aucune donnée à migrer")
+        return jsonify({'success': False, 'error': 'Aucune donnée à migrer'}), 400
+    
+    # Enregistrer l'alerte de sécurité si la vérification a échoué
+    # mais continuer le processus pour éviter la perte de données
+    if security_verified is False:
+        print(f"ALERTE SECURITE - Tentative de migration suspecte: draft_id={draft_contract_id}, auth_id={authenticated_id}")
+        # Ici on pourrait ajouter une entrée dans un journal de sécurité ou envoyer une alerte
+        # Optionnel: bloquer complètement la migration si on veut être plus strict
+        # return jsonify({'success': False, 'error': 'Vérification de sécurité échouée'}), 403
     
     try:
+        # ⚠️ IMPORTANT - Formatage de l'ID d'utilisateur
+        # NOTE: L'ID reçu est potentiellement sans suffixe, car envoyé directement depuis Clerk
+        # Dans notre système, nous avons besoin d'un ID avec suffixe pour l'accès
+        # L'ID du contrat sera sauvegardé avec le suffixe pour garantir l'accès ultérieur
+
+        # Construire l'ID avec suffixe pour assurer la cohérence avec le reste du système
+        # Par défaut, on utilise le suffixe "_clerk" si aucune info spécifique n'est disponible
+        formatted_authenticated_id = f"{authenticated_id}_clerk"
+        
+        # Vérifier dans les headers ou autres données s'il y a une info sur la méthode d'authentification
+        auth_method = request.headers.get('X-Auth-Method', 'clerk').lower()
+        if auth_method in ['google', 'github', 'linkedin']:
+            formatted_authenticated_id = f"{authenticated_id}_{auth_method}"
+        
+        print(f"DEBUG - migrate_user_data - ID authentifié formaté: {formatted_authenticated_id}")
+        
         migrated_contracts = 0
         
-        # 1. Récupérer le profil anonyme s'il existe
-        anonymous_profile_path = os.path.join(USER_PROFILES_DIR, f'user_profile_{anonymous_id}.json')
-        authenticated_profile_path = os.path.join(USER_PROFILES_DIR, f'user_profile_{authenticated_id}.json')
+        # Traiter d'abord le brouillon spécifique s'il est fourni
+        if draft_contract_id:
+            contract_file = os.path.join(CONTRACTS_DIR, f"{draft_contract_id}.json")
+            print(f"DEBUG - migrate_user_data - Recherche du fichier de brouillon: {contract_file}")
+            
+            if os.path.exists(contract_file):
+                # ⚠️ IMPORTANT: Utiliser une approche similaire à l'import plutôt qu'une simple modification
+                # Cela permet de conserver intégralement les données du contrat sans modification
+                
+                # 1. Lire le contrat original
+                with open(contract_file, 'r', encoding='utf-8') as f:
+                    contract = json.load(f)
+                
+                print(f"DEBUG - migrate_user_data - Contrat trouvé: {contract.get('id')}, user_id actuel: {contract.get('user_id')}")
+                
+                # 2. Créer une copie du contrat avec seulement les modifications minimales nécessaires
+                migrated_contract = contract.copy()
+                
+                # 3. Stocker l'ID utilisateur d'origine dans un champ spécial pour référence future
+                old_user_id = contract.get('user_id')
+                migrated_contract['original_user_id'] = old_user_id
+                
+                # 4. Mettre à jour uniquement l'ID utilisateur et la date de mise à jour
+                migrated_contract['user_id'] = formatted_authenticated_id
+                migrated_contract['updated_at'] = datetime.now().isoformat()
+                
+                # 5. S'assurer que le statut de brouillon est préservé
+                if 'is_draft' not in migrated_contract:
+                    migrated_contract['is_draft'] = True
+                
+                # 6. Sauvegarder le contrat mis à jour (même ID, mais nouveau propriétaire)
+                with open(contract_file, 'w', encoding='utf-8') as f:
+                    json.dump(migrated_contract, f, ensure_ascii=False, indent=2)
+                
+                print(f"DEBUG - migrate_user_data - Brouillon {draft_contract_id} migré comme import: user_id changé de {old_user_id} à {formatted_authenticated_id}")
+                print(f"DEBUG - migrate_user_data - Toutes les données du contrat original ont été préservées")
+                migrated_contracts += 1
+            else:
+                print(f"DEBUG - migrate_user_data - Erreur: Brouillon {draft_contract_id} introuvable")
         
-        anonymous_profile = None
-        if os.path.exists(anonymous_profile_path):
-            with open(anonymous_profile_path, 'r', encoding='utf-8') as f:
-                anonymous_profile = json.load(f)
+        # Migrer d'autres contrats si un ID anonyme est fourni
+        if anonymous_id:
+            # Code existant pour la migration basée sur l'ID anonyme
+            print(f"DEBUG - migrate_user_data - Migration des données basée sur l'ID anonyme: {anonymous_id}")
+            
+            # Compter les contrats migrés via cette méthode
+            anonymous_migrated = 0
+            
+            for filename in os.listdir(CONTRACTS_DIR):
+                if not filename.endswith('.json'):
+                    continue
+                
+                contract_path = os.path.join(CONTRACTS_DIR, filename)
+                try:
+                    with open(contract_path, 'r', encoding='utf-8') as f:
+                        contract = json.load(f)
+                    
+                    # Vérifier si le contrat appartient à l'utilisateur anonyme
+                    if contract.get('user_id') == anonymous_id:
+                        # Même approche que pour le brouillon spécifique
+                        migrated_contract = contract.copy()
+                        old_user_id = contract.get('user_id')
+                        migrated_contract['original_user_id'] = old_user_id
+                        migrated_contract['user_id'] = formatted_authenticated_id
+                        migrated_contract['updated_at'] = datetime.now().isoformat()
+                        
+                        # Sauvegarder le contrat mis à jour
+                        with open(contract_path, 'w', encoding='utf-8') as f:
+                            json.dump(migrated_contract, f, ensure_ascii=False, indent=2)
+                        
+                        print(f"DEBUG - migrate_user_data - Contrat {contract.get('id')} migré comme import: user_id changé de {old_user_id} à {formatted_authenticated_id}")
+                        anonymous_migrated += 1
+                        migrated_contracts += 1
+                except Exception as e:
+                    print(f"DEBUG - migrate_user_data - Erreur lors de la migration du contrat {filename}: {e}")
+            
+            print(f"DEBUG - migrate_user_data - {anonymous_migrated} contrats migrés basés sur l'ID anonyme")
         
-        # 2. Créer ou mettre à jour le profil authentifié
-        if anonymous_profile:
-            # Si le profil authentifié existe déjà, le charger
-            authenticated_profile = DEFAULT_PROFILE.copy()
-            if os.path.exists(authenticated_profile_path):
-                with open(authenticated_profile_path, 'r', encoding='utf-8') as f:
-                    authenticated_profile = json.load(f)
-            
-            # Mise à jour du profil authentifié avec les données du profil anonyme
-            # On ne remplace que si le profil authentifié n'est pas déjà configuré
-            if anonymous_profile.get('selected_entity_type') and not authenticated_profile.get('selected_entity_type'):
-                authenticated_profile['selected_entity_type'] = anonymous_profile['selected_entity_type']
-            
-            entity_type = anonymous_profile.get('selected_entity_type')
-            if entity_type in ['physical_person', 'legal_entity']:
-                if anonymous_profile[entity_type]['is_configured'] and not authenticated_profile[entity_type]['is_configured']:
-                    authenticated_profile[entity_type] = anonymous_profile[entity_type]
-            
-            # Mise à jour de l'ID utilisateur
-            authenticated_profile['user_id'] = authenticated_id
-            
-            # Sauvegarde du profil authentifié
-            with open(authenticated_profile_path, 'w', encoding='utf-8') as f:
-                json.dump(authenticated_profile, f, ensure_ascii=False, indent=2)
+        # Vérifier que les migrations ont fonctionné en listant tous les contrats de l'utilisateur
+        user_contracts = []
         
-        # 3. Mettre à jour les contrats associés à l'utilisateur anonyme
+        # ⚠️ Pour la vérification, nous devons chercher les contrats avec l'ID formaté ET l'ID de base
         for filename in os.listdir(CONTRACTS_DIR):
             if not filename.endswith('.json'):
                 continue
@@ -923,32 +1341,39 @@ def migrate_user_data():
                 with open(contract_path, 'r', encoding='utf-8') as f:
                     contract = json.load(f)
                 
-                # Vérifier si le contrat appartient à l'utilisateur anonyme
-                if contract.get('user_id') == anonymous_id:
-                    # Mettre à jour l'ID utilisateur
-                    contract['user_id'] = authenticated_id
-                    contract['updated_at'] = datetime.now().isoformat()
-                    
-                    # Sauvegarder le contrat mis à jour
-                    with open(contract_path, 'w', encoding='utf-8') as f:
-                        json.dump(contract, f, ensure_ascii=False, indent=2)
-                    
-                    migrated_contracts += 1
+                contract_user_id = contract.get('user_id', '')
+                
+                # Vérifier si le contrat appartient à l'utilisateur (avec ou sans suffixe)
+                if (contract_user_id == formatted_authenticated_id or
+                    contract_user_id == authenticated_id or
+                    (contract_user_id.startswith(authenticated_id + '_'))):
+                    user_contracts.append({
+                        'id': contract.get('id'),
+                        'title': contract.get('title'),
+                        'is_draft': contract.get('is_draft', False),
+                        'user_id': contract_user_id,  # Inclure l'ID utilisateur pour débogage
+                        'was_imported': bool(contract.get('original_user_id')) # Indiquer si c'était un import
+                    })
             except Exception as e:
-                print(f"Erreur lors de la migration du contrat {filename}: {e}")
+                print(f"DEBUG - migrate_user_data - Erreur lors de la vérification du contrat {filename}: {e}")
         
-        # 4. Supprimer le profil anonyme après migration
-        if os.path.exists(anonymous_profile_path):
-            os.remove(anonymous_profile_path)
+        print(f"DEBUG - migrate_user_data - L'utilisateur {formatted_authenticated_id} a maintenant {len(user_contracts)} contrats:")
+        for contract in user_contracts:
+            print(f"  - Contrat {contract['id']}: {contract['title']} (user_id: {contract['user_id']})")
         
         return jsonify({
             'success': True,
-            'message': f'Migration réussie: {migrated_contracts} contrats migrés',
-            'migrated_contracts': migrated_contracts
+            'message': f'Migration réussie: {migrated_contracts} contrats migrés comme imports',
+            'migrated_contracts': migrated_contracts,
+            'user_contracts': user_contracts,
+            'authenticated_id': {
+                'base': authenticated_id,
+                'formatted': formatted_authenticated_id
+            }
         })
     
     except Exception as e:
-        print(f"Error during user data migration: {e}")
+        print(f"DEBUG - migrate_user_data - Erreur pendant la migration: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 # Pour le développement local

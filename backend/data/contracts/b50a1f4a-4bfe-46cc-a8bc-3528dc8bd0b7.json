@@ -1,0 +1,52 @@
+{
+  "id": "b50a1f4a-4bfe-46cc-a8bc-3528dc8bd0b7",
+  "title": "test",
+  "data": {
+    "type_contrat": [
+      "Image (droit à l'image)"
+    ],
+    "type_cession": "Gratuite",
+    "droits_cedes": [],
+    "exclusivite": false,
+    "auteur_type": "Personne physique",
+    "auteur_info": {
+      "gentille": "Mme",
+      "saveToClients": false,
+      "nom": "ASTRUC",
+      "prenom": "Florine",
+      "date_naissance": "2025-04-11",
+      "lieu_naissance": "Montpellier",
+      "nationalite": "Française",
+      "adresse": "104 Avenue de Versailles",
+      "code_postal": "75016",
+      "ville": "Paris"
+    },
+    "description_oeuvre": "",
+    "description_image": "test",
+    "supports": [],
+    "remuneration": "",
+    "entreprise_info": {},
+    "user_id": "anon_mzfxjm4o9zj_m92sx8c2",
+    "cessionnaire_info": {
+      "adresse": "104 avenue de versailles",
+      "code_postal": "75016",
+      "date_naissance": "0022-02-22",
+      "gentille": "M.",
+      "is_configured": true,
+      "lieu_naissance": "Toulouse",
+      "nationalite": "Française",
+      "nom": "MAURICI",
+      "prenom": "Lucas",
+      "ville": "Escalquens",
+      "adresse_complete": "104 avenue de versailles, 75016 Escalquens"
+    }
+  },
+  "is_draft": false,
+  "from_step6": true,
+  "user_id": "user_2vB3c2hURFDmvhtc2QpqUVqUM9q_clerk",
+  "created_at": "2025-04-04T18:17:09.840668",
+  "updated_at": "2025-04-04T18:17:20.029108",
+  "original_user_id": "anon_mzfxjm4o9zj_m92sx8c2",
+  "preserved_import": true,
+  "comments": []
+}
