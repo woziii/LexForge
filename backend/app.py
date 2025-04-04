@@ -865,55 +865,88 @@ def access_finalization_step(contract_id):
 def migrate_user_data():
     """
     Endpoint pour migrer les données d'un utilisateur anonyme vers un utilisateur authentifié.
+    Peut également migrer un brouillon spécifique identifié par draft_contract_id.
     """
     data = request.json
     anonymous_id = data.get('anonymous_id')
     authenticated_id = data.get('authenticated_id')
+    draft_contract_id = data.get('draft_contract_id')
     
-    if not anonymous_id or not authenticated_id:
-        return jsonify({'success': False, 'error': 'IDs manquants'}), 400
+    print(f"DEBUG - migrate_user_data - Données reçues: anonymous_id={anonymous_id}, authenticated_id={authenticated_id}, draft_contract_id={draft_contract_id}")
     
-    if not anonymous_id.startswith('anon_'):
-        return jsonify({'success': False, 'error': 'ID anonyme invalide'}), 400
+    if not authenticated_id:
+        print("DEBUG - migrate_user_data - Erreur: ID authentifié manquant")
+        return jsonify({'success': False, 'error': 'ID authentifié manquant'}), 400
+    
+    if not anonymous_id and not draft_contract_id:
+        print("DEBUG - migrate_user_data - Erreur: Aucune donnée à migrer")
+        return jsonify({'success': False, 'error': 'Aucune donnée à migrer'}), 400
     
     try:
         migrated_contracts = 0
         
-        # 1. Récupérer le profil anonyme s'il existe
-        anonymous_profile_path = os.path.join(USER_PROFILES_DIR, f'user_profile_{anonymous_id}.json')
-        authenticated_profile_path = os.path.join(USER_PROFILES_DIR, f'user_profile_{authenticated_id}.json')
+        # Traiter d'abord le brouillon spécifique s'il est fourni
+        if draft_contract_id:
+            contract_file = os.path.join(CONTRACTS_DIR, f"{draft_contract_id}.json")
+            print(f"DEBUG - migrate_user_data - Recherche du fichier de brouillon: {contract_file}")
+            
+            if os.path.exists(contract_file):
+                with open(contract_file, 'r', encoding='utf-8') as f:
+                    contract = json.load(f)
+                
+                print(f"DEBUG - migrate_user_data - Contrat trouvé: {contract.get('id')}, user_id actuel: {contract.get('user_id')}")
+                
+                # Mettre à jour l'ID utilisateur du brouillon
+                old_user_id = contract.get('user_id')
+                contract['user_id'] = authenticated_id
+                contract['updated_at'] = datetime.now().isoformat()
+                
+                # Sauvegarder le contrat mis à jour
+                with open(contract_file, 'w', encoding='utf-8') as f:
+                    json.dump(contract, f, ensure_ascii=False, indent=2)
+                
+                print(f"DEBUG - migrate_user_data - Brouillon {draft_contract_id} migré: user_id changé de {old_user_id} à {authenticated_id}")
+                migrated_contracts += 1
+            else:
+                print(f"DEBUG - migrate_user_data - Erreur: Brouillon {draft_contract_id} introuvable")
         
-        anonymous_profile = None
-        if os.path.exists(anonymous_profile_path):
-            with open(anonymous_profile_path, 'r', encoding='utf-8') as f:
-                anonymous_profile = json.load(f)
+        # Migrer d'autres contrats si un ID anonyme est fourni
+        if anonymous_id:
+            # Code existant pour la migration basée sur l'ID anonyme
+            print(f"DEBUG - migrate_user_data - Migration des données basée sur l'ID anonyme: {anonymous_id}")
+            
+            # Compter les contrats migrés via cette méthode
+            anonymous_migrated = 0
+            
+            for filename in os.listdir(CONTRACTS_DIR):
+                if not filename.endswith('.json'):
+                    continue
+                
+                contract_path = os.path.join(CONTRACTS_DIR, filename)
+                try:
+                    with open(contract_path, 'r', encoding='utf-8') as f:
+                        contract = json.load(f)
+                    
+                    # Vérifier si le contrat appartient à l'utilisateur anonyme
+                    if contract.get('user_id') == anonymous_id:
+                        old_user_id = contract.get('user_id')
+                        contract['user_id'] = authenticated_id
+                        contract['updated_at'] = datetime.now().isoformat()
+                        
+                        # Sauvegarder le contrat mis à jour
+                        with open(contract_path, 'w', encoding='utf-8') as f:
+                            json.dump(contract, f, ensure_ascii=False, indent=2)
+                        
+                        print(f"DEBUG - migrate_user_data - Contrat {contract.get('id')} migré: user_id changé de {old_user_id} à {authenticated_id}")
+                        anonymous_migrated += 1
+                        migrated_contracts += 1
+                except Exception as e:
+                    print(f"DEBUG - migrate_user_data - Erreur lors de la migration du contrat {filename}: {e}")
+            
+            print(f"DEBUG - migrate_user_data - {anonymous_migrated} contrats migrés basés sur l'ID anonyme")
         
-        # 2. Créer ou mettre à jour le profil authentifié
-        if anonymous_profile:
-            # Si le profil authentifié existe déjà, le charger
-            authenticated_profile = DEFAULT_PROFILE.copy()
-            if os.path.exists(authenticated_profile_path):
-                with open(authenticated_profile_path, 'r', encoding='utf-8') as f:
-                    authenticated_profile = json.load(f)
-            
-            # Mise à jour du profil authentifié avec les données du profil anonyme
-            # On ne remplace que si le profil authentifié n'est pas déjà configuré
-            if anonymous_profile.get('selected_entity_type') and not authenticated_profile.get('selected_entity_type'):
-                authenticated_profile['selected_entity_type'] = anonymous_profile['selected_entity_type']
-            
-            entity_type = anonymous_profile.get('selected_entity_type')
-            if entity_type in ['physical_person', 'legal_entity']:
-                if anonymous_profile[entity_type]['is_configured'] and not authenticated_profile[entity_type]['is_configured']:
-                    authenticated_profile[entity_type] = anonymous_profile[entity_type]
-            
-            # Mise à jour de l'ID utilisateur
-            authenticated_profile['user_id'] = authenticated_id
-            
-            # Sauvegarde du profil authentifié
-            with open(authenticated_profile_path, 'w', encoding='utf-8') as f:
-                json.dump(authenticated_profile, f, ensure_ascii=False, indent=2)
-        
-        # 3. Mettre à jour les contrats associés à l'utilisateur anonyme
+        # Vérifier que les migrations ont fonctionné en listant tous les contrats de l'utilisateur
+        user_contracts = []
         for filename in os.listdir(CONTRACTS_DIR):
             if not filename.endswith('.json'):
                 continue
@@ -923,32 +956,26 @@ def migrate_user_data():
                 with open(contract_path, 'r', encoding='utf-8') as f:
                     contract = json.load(f)
                 
-                # Vérifier si le contrat appartient à l'utilisateur anonyme
-                if contract.get('user_id') == anonymous_id:
-                    # Mettre à jour l'ID utilisateur
-                    contract['user_id'] = authenticated_id
-                    contract['updated_at'] = datetime.now().isoformat()
-                    
-                    # Sauvegarder le contrat mis à jour
-                    with open(contract_path, 'w', encoding='utf-8') as f:
-                        json.dump(contract, f, ensure_ascii=False, indent=2)
-                    
-                    migrated_contracts += 1
+                if contract.get('user_id') == authenticated_id:
+                    user_contracts.append({
+                        'id': contract.get('id'),
+                        'title': contract.get('title'),
+                        'is_draft': contract.get('is_draft', False)
+                    })
             except Exception as e:
-                print(f"Erreur lors de la migration du contrat {filename}: {e}")
+                print(f"DEBUG - migrate_user_data - Erreur lors de la vérification du contrat {filename}: {e}")
         
-        # 4. Supprimer le profil anonyme après migration
-        if os.path.exists(anonymous_profile_path):
-            os.remove(anonymous_profile_path)
+        print(f"DEBUG - migrate_user_data - L'utilisateur {authenticated_id} a maintenant {len(user_contracts)} contrats: {user_contracts}")
         
         return jsonify({
             'success': True,
             'message': f'Migration réussie: {migrated_contracts} contrats migrés',
-            'migrated_contracts': migrated_contracts
+            'migrated_contracts': migrated_contracts,
+            'user_contracts': user_contracts
         })
     
     except Exception as e:
-        print(f"Error during user data migration: {e}")
+        print(f"DEBUG - migrate_user_data - Erreur pendant la migration: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 # Pour le développement local

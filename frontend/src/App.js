@@ -11,18 +11,24 @@ import LegalPage from './pages/LegalPage';
 import FinalizationPage from './pages/FinalizationPage';
 import AuthGuard from './components/AuthGuard';
 import { WelcomePopup, MiniSaul } from './components/ui';
+import DraftNotification from './components/DraftNotification';
+import AuthMigration from './components/AuthMigration';
+import { useAuth } from '@clerk/clerk-react';
 
 function App() {
+  const { isSignedIn } = useAuth();
+  
   return (
     <>
       <WelcomePopup />
       <MiniSaul />
+      <AuthMigration />
+      {isSignedIn && <DraftNotification />}
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<HomePage />} />
           <Route path="wizard" element={<ContractWizard />} />
           
-          {/* Nouvelle route pour l'étape de finalisation d'un contrat existant */}
           <Route 
             path="wizard/finalize/:contractId" 
             element={
@@ -34,10 +40,8 @@ function App() {
           
           <Route path="dashboard" element={<DashboardPage />} />
           
-          {/* Rediriger les anciennes routes vers la nouvelle */}
           <Route path="temp-dashboard" element={<Navigate to="/dashboard" replace />} />
           
-          {/* Routes protégées qui nécessitent une authentification */}
           <Route
             path="contracts"
             element={

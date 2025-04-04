@@ -22,38 +22,14 @@ export const getCurrentUserId = () => {
   // Pour les utilisateurs authentifiés via Clerk
   try {
     if (window.Clerk && window.Clerk.user) {
-      // Récupérer l'ID de base
+      // Récupérer l'ID de base (sans suffixe)
       const baseId = window.Clerk.user.id;
+      console.log('DEBUG - ID utilisateur de base Clerk:', baseId);
       
-      // Récupérer des informations sur la méthode d'authentification
-      let authMethod = "clerk";
-      
-      // Tenter d'identifier la méthode d'authentification
-      if (window.Clerk.session) {
-        const session = window.Clerk.session;
-        
-        // Examiner les identités connectées
-        if (session.user && session.user.externalAccounts) {
-          const accounts = session.user.externalAccounts;
-          
-          // Vérifier toutes les identités externes pour trouver celle active
-          // (Google, LinkedIn, etc.)
-          for (const account of accounts) {
-            if (account.verification && account.verification.status === "verified") {
-              authMethod = account.provider.toLowerCase() || authMethod;
-              break;
-            }
-          }
-        }
-      }
-      
-      // Créer un ID composite qui inclut la méthode d'authentification
-      const compositeId = `${baseId}_${authMethod}`;
-      console.log(`Utilisateur authentifié via ${authMethod}, ID composite: ${compositeId}`);
-      
-      // Stocker l'ID dans localStorage
-      localStorage.setItem('clerkUserId', compositeId);
-      return compositeId;
+      // Retourner uniquement l'ID de base pour assurer la cohérence 
+      // entre toutes les opérations, quelle que soit la méthode d'authentification
+      localStorage.setItem('clerkUserId', baseId);
+      return baseId;
     }
   } catch (error) {
     console.error('Erreur lors de la récupération des informations Clerk:', error);
@@ -80,6 +56,7 @@ export const getCurrentUserId = () => {
     }
   }
   
+  console.log('DEBUG - ID anonyme utilisé:', anonymousId);
   return anonymousId;
 };
 
@@ -138,6 +115,8 @@ export const generatePdf = async (contractData, filename) => {
 export const saveContract = async (contractData, title, id = null, isDraft = false, fromStep6 = false) => {
   try {
     const userId = getCurrentUserId();
+    console.log('DEBUG - saveContract - userId:', userId, 'isDraft:', isDraft, 'fromStep6:', fromStep6);
+    
     const response = await api.post('/contracts', { 
       contractData, 
       title, 
@@ -146,6 +125,7 @@ export const saveContract = async (contractData, title, id = null, isDraft = fal
       fromStep6,
       user_id: userId
     });
+    console.log('DEBUG - saveContract - Réponse:', response.data);
     return response.data;
   } catch (error) {
     console.error('Error saving contract:', error);
@@ -156,9 +136,13 @@ export const saveContract = async (contractData, title, id = null, isDraft = fal
 export const getContracts = async () => {
   try {
     const userId = getCurrentUserId();
+    console.log('DEBUG - getContracts - userId utilisé pour la requête:', userId);
+    
     const response = await api.get('/contracts', {
       params: { user_id: userId }
     });
+    console.log('DEBUG - getContracts - Nombre de contrats reçus:', response.data.contracts.length);
+    console.log('DEBUG - getContracts - Contrats reçus:', response.data.contracts);
     return response.data.contracts;
   } catch (error) {
     console.error('Error fetching contracts:', error);
@@ -169,12 +153,15 @@ export const getContracts = async () => {
 export const getContractById = async (contractId) => {
   try {
     const userId = getCurrentUserId();
+    console.log(`DEBUG - getContractById - Tentative d'accès au contrat ${contractId} avec userId: ${userId}`);
+    
     const response = await api.get(`/contracts/${contractId}`, {
       params: { user_id: userId }
     });
-    return response.data;
+    
+    return response.data.contract;
   } catch (error) {
-    console.error('Error fetching contract:', error);
+    console.error(`Erreur lors de la récupération du contrat ${contractId}:`, error);
     throw error;
   }
 };
@@ -418,7 +405,10 @@ export const deleteClient = async (clientId) => {
 
 export const accessFinalizationStep = async (contractId) => {
   try {
-    const response = await api.get(`/contracts/${contractId}/finalize`);
+    const userId = getCurrentUserId();
+    const response = await api.get(`/contracts/${contractId}/finalize`, {
+      params: { user_id: userId }
+    });
     return response.data;
   } catch (error) {
     console.error('Error accessing finalization step:', error);
@@ -434,22 +424,42 @@ export const migrateAnonymousUserData = async (newUserId) => {
   try {
     // Récupérer l'ID anonyme de l'utilisateur avant qu'il ne se connecte
     const anonymousId = localStorage.getItem('anonymousUserId');
+    // Récupérer également l'ID du brouillon s'il existe
+    const draftContractId = sessionStorage.getItem('draftContractId');
     
-    if (!anonymousId) {
-      console.log('Aucun ID anonyme trouvé, rien à migrer.');
+    let requestData = {
+      authenticated_id: newUserId
+    };
+    
+    if (anonymousId) {
+      requestData.anonymous_id = anonymousId;
+    }
+    
+    if (draftContractId) {
+      requestData.draft_contract_id = draftContractId;
+      console.log(`Migration du brouillon ${draftContractId} vers l'utilisateur ${newUserId}`);
+    }
+    
+    // Si aucune donnée à migrer, retourner immédiatement
+    if (!anonymousId && !draftContractId) {
+      console.log('Aucun ID anonyme ou brouillon trouvé, rien à migrer.');
       return { success: false, message: 'Aucune donnée anonyme à migrer' };
     }
     
     // Envoyer une requête pour migrer les données
-    const response = await api.post('/migrate-user-data', {
-      anonymous_id: anonymousId,
-      authenticated_id: newUserId
-    });
+    const response = await api.post('/migrate-user-data', requestData);
     
     // Si la migration réussit, supprimer l'ID anonyme
     if (response.data.success) {
-      localStorage.removeItem('anonymousUserId');
-      console.log('Migration des données réussie, ID anonyme supprimé.');
+      if (anonymousId) {
+        localStorage.removeItem('anonymousUserId');
+        console.log('Migration des données réussie, ID anonyme supprimé.');
+      }
+      
+      // Ne pas supprimer l'ID du brouillon pour permettre d'afficher la notification
+      if (draftContractId) {
+        console.log('Brouillon migré avec succès, ID préservé pour la notification.');
+      }
     }
     
     return response.data;

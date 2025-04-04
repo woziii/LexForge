@@ -1,5 +1,5 @@
 {
-  "created_at": "2025-04-04T11:20:20.428554",
+  "created_at": "2025-04-04T14:55:02.155840",
   "is_temporary": true,
   "legal_entity": {
     "capital": "",
@@ -13,18 +13,16 @@
   },
   "physical_person": {
     "adresse": "104 avenue de versailles",
-    "date_naissance": "2025-04-24",
+    "code_postal": "75016",
+    "date_naissance": "1999-12-24",
     "gentille": "M.",
     "is_configured": true,
+    "lieu_naissance": "Paris",
     "nationalite": "Fran\u00e7aise",
     "nom": "MAURICI",
     "prenom": "Lucas",
-    "code_postal": "75016",
-    "ville": "Paris",
-    "lieu_naissance": "Toulouse",
-    "email": "lucas.maurici@aol.com",
-    "telephone": "0659965152"
+    "ville": "Paris"
   },
   "selected_entity_type": "physical_person",
-  "user_id": "anon_z1grl36owq_m92klce0"
+  "user_id": "anon_wf1tdx79ku_m92seryf"
 }
