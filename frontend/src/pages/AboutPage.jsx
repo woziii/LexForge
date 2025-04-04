@@ -36,10 +36,10 @@ const AboutPage = () => {
             Le backend de LexForge est hébergé sur Render et le frontend sur Vercel. Nous mettons un point d'honneur sur la confidentialité et le respect de la vie privée et entrepreneuriale de nos utilisateurs. Ce qui est sur l'espace privé de l'utilisateur n'intéresse que l'utilisateur (à part s'il transfère le contrat).
           </p>
           <p className="text-gray-600 mb-3">
-            Notez que cette version Bêta peut être soumise à des évolutions. Le niveau de sécurité n'est pas encore optimal, et il est fortement déconseillé, pour le moment, de laisser des documents sensibles sur la plateforme.
+            Notez que cette version Bêta peut être soumise à des évolutions. Le niveau de sécurité n'est pas encore optimal, et il est fortement déconseillé, pour le moment, de laisser des informations personnelles ou confidentielles sur la plateforme.
           </p>
           <p className="text-gray-600">
-            Important : LexForge est en constante évolution. Bien que nos serveurs soient désormais opérationnels en permanence pour une meilleure expérience utilisateur, nous tenons à souligner que notre plateforme est toujours en phase bêta. En tant qu'utilisateur, vous devez être conscient que la sécurité de vos données n'est pas encore garantie à 100%. Nous vous recommandons donc de faire preuve de prudence et d'éviter de partager des informations hautement confidentielles jusqu'à la sortie de notre version stable.
+            Important : LexForge est en constante évolution. Bien que nos serveurs soient désormais opérationnels en permanence pour une meilleure expérience utilisateur, nous tenons à souligner que notre plateforme est toujours en phase bêta. En tant qu'utilisateur, vous devez être conscient que la sécurité de vos données n'est pas encore garantie à 100%. Nous vous recommandons donc de faire preuve de prudence et d'éviter de partager des informations personnelles ou confidentielles jusqu'à la sortie de notre version stable.
           </p>
         </div>
         <div className="bg-white p-6 rounded-lg shadow-md">
