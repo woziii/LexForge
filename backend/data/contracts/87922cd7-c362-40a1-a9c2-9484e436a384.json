@@ -1,0 +1,36 @@
+{
+  "id": "87922cd7-c362-40a1-a9c2-9484e436a384",
+  "title": "Brouillon - 04/04/2025 14:14:51",
+  "data": {
+    "type_contrat": [
+      "Image (droit à l'image)"
+    ],
+    "type_cession": "Gratuite",
+    "droits_cedes": [],
+    "exclusivite": false,
+    "auteur_type": "Personne physique",
+    "auteur_info": {
+      "gentille": "Mme",
+      "saveToClients": false,
+      "nom": "ASTRUC",
+      "prenom": "Florine",
+      "date_naissance": "2025-04-04",
+      "lieu_naissance": "Montpellier",
+      "nationalite": "Française",
+      "adresse": "104 Avenue de Versailles",
+      "code_postal": "75016",
+      "ville": "Paris"
+    },
+    "description_oeuvre": "",
+    "description_image": "test",
+    "supports": [],
+    "remuneration": "",
+    "entreprise_info": {},
+    "user_id": "anon_z1grl36owq_m92klce0"
+  },
+  "is_draft": true,
+  "from_step6": true,
+  "user_id": "anon_z1grl36owq_m92klce0",
+  "created_at": "2025-04-04T14:14:51.634398",
+  "updated_at": "2025-04-04T14:14:51.634414"
+}
