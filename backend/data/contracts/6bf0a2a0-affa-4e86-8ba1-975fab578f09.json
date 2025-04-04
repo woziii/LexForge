@@ -1,5 +1,5 @@
 {
-  "id": "8b6309f6-d7ea-4ffe-8c72-ac04c9186f9b",
+  "id": "6bf0a2a0-affa-4e86-8ba1-975fab578f09",
   "title": "fzef",
   "data": {
     "type_contrat": [
@@ -10,11 +10,11 @@
     "exclusivite": false,
     "auteur_type": "Personne physique",
     "auteur_info": {
-      "gentille": "Mme",
+      "gentille": "M.",
       "saveToClients": false,
-      "nom": "ASTRUC",
-      "prenom": "Florine",
-      "date_naissance": "2025-04-04",
+      "nom": "MAURICI",
+      "prenom": "Lucas",
+      "date_naissance": "2025-04-21",
       "lieu_naissance": "Montpellier",
       "nationalite": "Française",
       "adresse": "104 Avenue de Versailles",
@@ -44,8 +44,8 @@
   "is_draft": false,
   "from_step6": true,
   "user_id": "user_2vB3c2hURFDmvhtc2QpqUVqUM9q_clerk",
-  "created_at": "2025-04-04T17:57:14.200579",
-  "updated_at": "2025-04-04T17:57:25.657158",
+  "created_at": "2025-04-04T18:12:17.272893",
+  "updated_at": "2025-04-04T18:12:26.076404",
   "original_user_id": "anon_mzfxjm4o9zj_m92sx8c2",
   "preserved_import": true,
   "comments": [],
@@ -71,7 +71,7 @@
     {
       "type": "paragraph",
       "style": "ContractText",
-      "text": "Mme ASTRUC Florine, né(e) le 2025-04-04 à Montpellier, de nationalité Française, domicilié(e) au 104 Avenue de Versailles, 75016 Paris, ci-après dénommé(e) \"le Modèle\","
+      "text": "M. MAURICI Lucas, né(e) le 2025-04-21 à Montpellier, de nationalité Française, domicilié(e) au 104 Avenue de Versailles, 75016 Paris, ci-après dénommé(e) \"le Modèle\","
     },
     {
       "type": "spacer",

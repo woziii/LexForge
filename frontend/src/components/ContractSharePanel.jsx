@@ -1,7 +1,10 @@
 import React, { useState, useRef } from 'react';
 import { FileDown, UploadCloud, Check, AlertCircle, ArrowRight, Loader } from 'lucide-react';
-import { exportContract, importContract } from '../services/api';
+import { exportContract, importContract, getCurrentUserId } from '../services/api';
 import ExportModal from './ExportModal';
+
+// Importation de l'URL de l'API depuis le fichier de services
+import { API_URL } from '../services/api';
 
 /**
  * Composant de partage de contrat qui permet d'exporter et d'importer des contrats.

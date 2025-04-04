@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Déterminer l'URL de l'API en fonction de l'environnement
-const API_URL = process.env.REACT_APP_API_URL || 
+export const API_URL = process.env.REACT_APP_API_URL || 
                 (process.env.NODE_ENV === 'production' 
                   ? 'https://lexforge-backend.onrender.com/api' 
                   : 'http://localhost:5001/api');
