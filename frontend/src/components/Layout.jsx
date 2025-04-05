@@ -7,7 +7,8 @@ import {
   InfoIcon, 
   LayoutDashboard,
   Menu,
-  X
+  X,
+  BookOpen
 } from 'lucide-react';
 import { useAuth, UserButton, SignInButton, useClerk } from '@clerk/clerk-react';
 import { migrateAnonymousUserData, getCurrentUserId } from '../services/api';
@@ -282,7 +283,12 @@ const Layout = () => {
             </div>
             <div className="flex flex-col items-center text-xs sm:text-sm text-gray-400">
               <div>© {new Date().getFullYear()} LexForge - Tous droits réservés</div>
-              <Link to="/legal" className="hover:text-blue-300 mt-1">Mentions légales</Link>
+              <div className="flex mt-1 space-x-3">
+                <Link to="/legal" className="hover:text-blue-300">Mentions légales</Link>
+                <Link to="/versions" className="hover:text-blue-300 flex items-center">
+                  <BookOpen size={14} className="mr-1" /> Versions
+                </Link>
+              </div>
             </div>
           </div>
         </div>
