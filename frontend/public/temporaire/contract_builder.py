@@ -66,7 +66,7 @@ class ContractBuilder:
     @staticmethod
     def build_contract_elements(contract_type, is_free, author_type, author_info, 
                                work_description, image_description, supports, 
-                               additional_rights, remuneration, is_exclusive, cessionnaire_info=None):
+                               additional_rights, remuneration, is_exclusive):
         """
         Construit tous les éléments du contrat.
         
@@ -81,7 +81,6 @@ class ContractBuilder:
             additional_rights (list): Liste des droits supplémentaires sélectionnés
             remuneration (str): Modalités de rémunération
             is_exclusive (bool): True si la cession est exclusive, False sinon
-            cessionnaire_info (dict, optional): Informations sur le cessionnaire
             
         Returns:
             list: Liste des éléments du contrat pour ReportLab
@@ -98,7 +97,7 @@ class ContractBuilder:
         elements.append(Spacer(1, 15))
         
         # 2. Préambule
-        preamble_text = ContractTemplates.get_preamble_text(contract_type, author_type, author_info, cessionnaire_info)
+        preamble_text = ContractTemplates.get_preamble_text(contract_type, author_type, author_info)
         paragraphs = preamble_text.split('\n\n')
         for i, paragraph in enumerate(paragraphs):
             if paragraph.strip():
@@ -157,8 +156,16 @@ class ContractBuilder:
         
         # 5. Article sur les droits à l'image (pour contrat droit à l'image)
         if "Image (droit à l'image)" in contract_type:
-            image_rights_article_num = article_num
-            image_clause = ContractTemplates.get_image_rights_clause(is_free, is_exclusive, image_rights_article_num)
+            image_rights_article_num = article_num if "Auteur (droits d'auteur)" not in contract_type else article_num
+            image_clause = ContractTemplates.get_image_rights_clause(is_free, is_exclusive)
+            # Remplacer le numéro d'article si nécessaire
+            if image_rights_article_num != 3:
+                image_clause = image_clause.replace("ARTICLE 3", f"ARTICLE {image_rights_article_num}")
+                # Aussi remplacer les sous-titres 3.x par le bon numéro
+                image_clause = image_clause.replace("3.1", f"{image_rights_article_num}.1")
+                image_clause = image_clause.replace("3.2", f"{image_rights_article_num}.2")
+                image_clause = image_clause.replace("3.3", f"{image_rights_article_num}.3")
+                image_clause = image_clause.replace("3.4", f"{image_rights_article_num}.4")
             
             paragraphs = image_clause.split('\n\n')
             for paragraph in paragraphs:

@@ -29,7 +29,7 @@ class ContractTemplates:
             return "CONTRAT DE CESSION DE DROITS À L'IMAGE"
     
     @staticmethod
-    def get_preamble_text(contract_type, author_type, author_info, cessionnaire_info=None):
+    def get_preamble_text(contract_type, author_type, author_info):
         """
         Retourne le texte du préambule du contrat.
         
@@ -37,7 +37,6 @@ class ContractTemplates:
             contract_type (list): Liste des types de contrats sélectionnés
             author_type (str): Type d'auteur ("Personne physique" ou "Personne morale")
             author_info (dict): Informations sur l'auteur
-            cessionnaire_info (dict, optional): Informations sur le cessionnaire
             
         Returns:
             str: Texte du préambule
@@ -48,97 +47,30 @@ class ContractTemplates:
         # Informations sur l'auteur/modèle
         if author_type == "Personne physique":
             gentille = author_info.get("gentille", "M.")
-            nom = author_info.get("nom", "").upper()
+            nom = author_info.get("nom", "")
             prenom = author_info.get("prenom", "")
             date_naissance = author_info.get("date_naissance", "")
-            lieu_naissance = author_info.get("lieu_naissance", "")
             nationalite = author_info.get("nationalite", "")
             adresse = author_info.get("adresse", "")
-            code_postal = author_info.get("code_postal", "")
-            ville = author_info.get("ville", "")
             contact = author_info.get("contact", "")
             
-            preamble += f"{gentille} {nom} {prenom}"
-            
+            preamble += f"{gentille} {prenom} {nom}"
             if date_naissance:
                 preamble += f", né(e) le {date_naissance}"
-                if lieu_naissance:
-                    preamble += f" à {lieu_naissance}"
-                    
             if nationalite:
                 preamble += f", de nationalité {nationalite}"
-                
-            # Construire l'adresse complète
-            adresse_complete = adresse
-            if code_postal or ville:
-                if adresse_complete:
-                    adresse_complete += ", "
-                if code_postal:
-                    adresse_complete += f"{code_postal}"
-                if ville:
-                    if code_postal:
-                        adresse_complete += f" {ville}"
-                    else:
-                        adresse_complete += ville
-                        
-            if adresse_complete:
-                preamble += f", domicilié(e) au {adresse_complete}"
-                
+            preamble += f", domicilié(e) au {adresse}"
             if contact:
                 preamble += f", joignable à {contact}"
         else:
             # Personne morale
-            nom = author_info.get("nom_societe", "") or author_info.get("nom", "")
-            forme_juridique = author_info.get("statut", "") or author_info.get("forme_juridique", "")
-            capital = author_info.get("capital", "")
-            siren = author_info.get("siren", "")
-            if not siren:
-                siren = author_info.get("rcs", "")
-            rcs_ville = author_info.get("rcs_ville", "")
-            adresse = author_info.get("adresse", "") or author_info.get("siege", "")
-            code_postal = author_info.get("code_postal", "")
-            ville = author_info.get("ville", "")
-            representant_civilite = author_info.get("representant_civilite", "M.")
-            representant_nom = author_info.get("representant_nom", "").upper() or author_info.get("representant", "").upper()
-            representant_prenom = author_info.get("representant_prenom", "")
-            qualite_representant = author_info.get("qualite_representant", "")
+            nom_societe = author_info.get("nom_societe", "")
+            statut = author_info.get("statut", "")
+            rcs = author_info.get("rcs", "")
+            siege = author_info.get("siege", "")
             contact = author_info.get("contact", "")
             
-            preamble += f"La société {nom}"
-            
-            if forme_juridique:
-                preamble += f", {forme_juridique}"
-                
-            if capital:
-                preamble += f", au capital de {capital}"
-                
-            if siren:
-                if rcs_ville:
-                    preamble += f", immatriculée sous le numéro {siren} R.C.S {rcs_ville}"
-                else:
-                    preamble += f", immatriculée sous le numéro {siren} au Registre du Commerce et des Sociétés"
-            
-            # Construire l'adresse complète
-            adresse_complete = adresse
-            if code_postal or ville:
-                if adresse_complete:
-                    adresse_complete += ", "
-                if code_postal:
-                    adresse_complete += f"{code_postal}"
-                if ville:
-                    if code_postal:
-                        adresse_complete += f" {ville}"
-                    else:
-                        adresse_complete += ville
-                        
-            if adresse_complete:
-                preamble += f", dont le siège social est situé au {adresse_complete}"
-                
-            # Ajouter les informations du représentant si disponibles
-            if (representant_nom or representant_prenom) and qualite_representant:
-                representant = f"{representant_civilite} {representant_nom} {representant_prenom}".strip()
-                preamble += f", représentée par {representant}, en sa qualité de {qualite_representant}"
-                
+            preamble += f"La société {nom_societe}, {statut}, immatriculée sous le numéro {rcs} au Registre du Commerce et des Sociétés, dont le siège social est situé {siege}"
             if contact:
                 preamble += f", joignable à {contact}"
         
@@ -150,106 +82,11 @@ class ContractTemplates:
         else:
             preamble += ", ci-après dénommé(e) \"le Modèle\",\n\n"
         
-        # Informations sur le cessionnaire (personnalisé si disponible, sinon Tellers par défaut)
-        if cessionnaire_info and isinstance(cessionnaire_info, dict) and cessionnaire_info.get('nom'):
-            # Pour une personne physique
-            if 'prenom' in cessionnaire_info:
-                civilite = cessionnaire_info.get('gentille', 'M.')
-                prenom = cessionnaire_info.get('prenom', '')
-                nom = cessionnaire_info.get('nom', '').upper()
-                date_naissance = cessionnaire_info.get('date_naissance', '')
-                lieu_naissance = cessionnaire_info.get('lieu_naissance', '')
-                nationalite = cessionnaire_info.get('nationalite', '')
-                adresse = cessionnaire_info.get('adresse', '')
-                code_postal = cessionnaire_info.get('code_postal', '')
-                ville = cessionnaire_info.get('ville', '')
-                
-                preamble += f"{civilite} {nom} {prenom}"
-                
-                if date_naissance:
-                    preamble += f", né(e) le {date_naissance}"
-                
-                if lieu_naissance:
-                    preamble += f" à {lieu_naissance}"
-                
-                if nationalite:
-                    preamble += f" de nationalité {nationalite}"
-                
-                # Construire l'adresse complète
-                adresse_complete = adresse
-                if code_postal or ville:
-                    if adresse_complete:
-                        adresse_complete += ", "
-                    if code_postal:
-                        adresse_complete += f"{code_postal}"
-                    if ville:
-                        if code_postal:
-                            adresse_complete += f" {ville}"
-                        else:
-                            adresse_complete += ville
-                
-                if adresse_complete:
-                    preamble += f", domicilié(e) au {adresse_complete}"
-            # Pour une personne morale
-            else:
-                nom = cessionnaire_info.get('nom', '')
-                forme_juridique = cessionnaire_info.get('forme_juridique', '')
-                capital = cessionnaire_info.get('capital', '')
-                siren = cessionnaire_info.get('siren', '')  # Utiliser siren d'abord s'il existe
-                if not siren:
-                    siren = cessionnaire_info.get('rcs', '')
-                
-                adresse = cessionnaire_info.get('adresse', '')
-                code_postal = cessionnaire_info.get('code_postal', '')
-                ville = cessionnaire_info.get('ville', '')
-                representant_civilite = cessionnaire_info.get('representant_civilite', 'M.')
-                representant_nom = cessionnaire_info.get('representant_nom', '').upper()
-                representant_prenom = cessionnaire_info.get('representant_prenom', '')
-                qualite_representant = cessionnaire_info.get('qualite_representant', '')
-                
-                preamble += f"{nom}"
-                
-                if forme_juridique:
-                    preamble += f", {forme_juridique}"
-                
-                if capital:
-                    preamble += f" au capital de {capital}"
-                
-                if siren:
-                    # Ajouter la ville où est situé le RCS si disponible
-                    rcs_ville = cessionnaire_info.get('rcs_ville', ville)
-                    if rcs_ville:
-                        preamble += f", immatriculé sous le numéro {siren} R.C.S {rcs_ville}"
-                    else:
-                        preamble += f", immatriculé sous le numéro {siren}"
-                
-                # Construire l'adresse complète
-                adresse_complete = adresse
-                if code_postal or ville:
-                    if adresse_complete:
-                        adresse_complete += ", "
-                    if code_postal:
-                        adresse_complete += f"{code_postal}"
-                    if ville:
-                        if code_postal:
-                            adresse_complete += f" {ville}"
-                        else:
-                            adresse_complete += ville
-                
-                if adresse_complete:
-                    preamble += f", dont le siège social est situé au {adresse_complete}"
-                
-                # Ajouter les informations du représentant si disponibles
-                if (representant_nom or representant_prenom) and qualite_representant:
-                    representant = f"{representant_civilite} {representant_nom} {representant_prenom}".strip()
-                    preamble += f", représentée par {representant}, en sa qualité de {qualite_representant}"
-        else:
-            # Utiliser les informations par défaut de Tellers
-            preamble += f"{TELLERS_INFO['nom']}, {TELLERS_INFO['forme_juridique']} au capital de {TELLERS_INFO['capital']}, "
-            preamble += f"immatriculée sous le numéro {TELLERS_INFO['rcs']}, et dont le siège social est situé au : "
-            preamble += f"{TELLERS_INFO['siege']}, représentée par son Président en exercice dûment habilité à l'effet des présentes"
-            
-        preamble += ", ci-après dénommée \"le Cessionnaire\",\n\n"
+        # Informations sur Tellers (bénéficiaire)
+        preamble += f"{TELLERS_INFO['nom']}, {TELLERS_INFO['forme_juridique']} au capital de {TELLERS_INFO['capital']}, "
+        preamble += f"immatriculée sous le numéro {TELLERS_INFO['rcs']}, et dont le siège social est situé au : "
+        preamble += f"{TELLERS_INFO['siege']}, représentée par son Président en exercice dûment habilité à l'effet des présentes, "
+        preamble += "ci-après dénommée \"le Cessionnaire\",\n\n"
         
         # Introduction commune
         preamble += "Ci-après dénommées ensemble \"les Parties\" ou individuellement \"la Partie\",\n\n"
@@ -437,28 +274,27 @@ class ContractTemplates:
         return rights_clause
     
     @staticmethod
-    def get_image_rights_clause(is_free, is_exclusive, article_num=3):
+    def get_image_rights_clause(is_free, is_exclusive):
         """
         Retourne la clause des droits cédés pour le droit à l'image.
         
         Args:
             is_free (bool): True si la cession est gratuite, False sinon
             is_exclusive (bool): True si la cession est exclusive, False sinon
-            article_num (int, optional): Numéro de l'article, par défaut 3
             
         Returns:
             str: Clause des droits à l'image
         """
-        image_clause = f"ARTICLE {article_num} – AUTORISATION D'EXPLOITATION DE L'IMAGE\n\n"
+        image_clause = "ARTICLE 3 – AUTORISATION D'EXPLOITATION DE L'IMAGE\n\n"
         
-        image_clause += f"{article_num}.1 Objet de l'autorisation\n\n"
+        image_clause += "3.1 Objet de l'autorisation\n\n"
         image_clause += "Le Modèle autorise expressément le Cessionnaire à fixer, reproduire, diffuser et exploiter son image telle qu'elle figure dans les supports visuels décrits à l'article 1.2.\n\n"
         
         image_clause += "Cette autorisation comprend notamment :\n"
         image_clause += "- Le droit de reproduire et faire reproduire les Images par tous procédés techniques connus ou inconnus à ce jour (photographie, imprimerie, numérisation, etc.) sur tous supports (papier, tissu, plastique, céramique, supports électroniques, optiques, magnétiques, numériques, etc.) et en tous formats ;\n"
         image_clause += "- Le droit de représenter et faire représenter publiquement les Images par tous moyens de diffusion et de communication connus ou inconnus à ce jour, notamment exposition, télédiffusion, cinéma, Internet (sites web, réseaux sociaux, applications mobiles), affichage, projection publique, présentation au public, etc.\n\n"
         
-        image_clause += f"{article_num}.2 Conditions de l'autorisation\n\n"
+        image_clause += "3.2 Conditions de l'autorisation\n\n"
         image_clause += "La présente autorisation est consentie "
         
         if is_exclusive:
@@ -473,7 +309,7 @@ class ContractTemplates:
         
         image_clause += f"pour la durée et sur le territoire mentionnés à l'article 4.\n\n"
         
-        image_clause += f"{article_num}.3 Restrictions et engagements\n\n"
+        image_clause += "3.3 Restrictions et engagements\n\n"
         
         # Restrictions d'utilisation pour le droit à l'image
         image_clause += "Le Cessionnaire s'engage expressément à :\n"
@@ -486,13 +322,13 @@ class ContractTemplates:
         
         # Clause d'exclusivité pour le droit à l'image
         if is_exclusive:
-            image_clause += f"{article_num}.4 Exclusivité\n\n"
+            image_clause += "3.4 Exclusivité\n\n"
             image_clause += "Compte tenu du caractère exclusif de la présente autorisation, le Modèle s'engage, pendant toute la durée du présent contrat :\n"
             image_clause += "- À ne pas autoriser l'exploitation de son image telle que décrite à l'article 1.2 à des tiers ;\n"
             image_clause += "- À ne pas utiliser ou exploiter lui-même son image dans des conditions similaires à celles autorisées au Cessionnaire.\n\n"
             image_clause += "Cette exclusivité constitue un élément essentiel du présent contrat, sans lequel le Cessionnaire n'aurait pas contracté.\n\n"
         else:
-            image_clause += f"{article_num}.4 Non-exclusivité\n\n"
+            image_clause += "3.4 Non-exclusivité\n\n"
             image_clause += "La présente autorisation étant non exclusive, le Modèle conserve le droit d'autoriser l'exploitation de son image à des tiers, "
             image_clause += "sous réserve que cela ne nuise pas directement aux intérêts légitimes du Cessionnaire.\n\n"
         
@@ -511,13 +347,13 @@ class ContractTemplates:
         """
         duration_clause = f"ARTICLE {article_num} – DURÉE ET TERRITOIRE\n\n"
         
-        duration_clause += f"{article_num}.1 Durée\n\n"
+        duration_clause += "4.1 Durée\n\n"
         duration_clause += f"La présente cession est consentie pour une durée initiale de {DEFAULT_DURATION} à compter de la date de signature du présent contrat.\n\n"
         duration_clause += f"Elle se renouvellera ensuite automatiquement par {DEFAULT_RENEWAL}, "
         duration_clause += "sauf dénonciation par l'une ou l'autre des Parties par lettre recommandée avec accusé de réception, "
         duration_clause += "adressée à l'autre Partie au moins trois (3) mois avant l'expiration de la période en cours.\n\n"
         
-        duration_clause += f"{article_num}.2 Territoire\n\n"
+        duration_clause += "4.2 Territoire\n\n"
         duration_clause += f"La présente cession est consentie pour le {DEFAULT_TERRITORY}, sans restriction géographique. "
         duration_clause += "Cette étendue territoriale se justifie par la nature numérique et dématérialisée des services fournis par le Cessionnaire, "
         duration_clause += "susceptibles d'être accessibles depuis n'importe quel point du globe, sans possibilité technique de limitation géographique efficace.\n\n"
@@ -538,14 +374,14 @@ class ContractTemplates:
         """
         supports_clause = f"ARTICLE {article_num} – SUPPORTS D'EXPLOITATION\n\n"
         
-        supports_clause += f"{article_num}.1 Supports autorisés\n\n"
+        supports_clause += "5.1 Supports autorisés\n\n"
         supports_clause += "Le Cessionnaire est autorisé à exploiter l'œuvre et/ou l'image sur les supports suivants :\n\n"
         
         # Création d'une liste détaillée des supports
         for support in supports:
             supports_clause += f"- {support}\n"
         
-        supports_clause += f"\n{article_num}.2 Nature des exploitations\n\n"
+        supports_clause += "\n5.2 Nature des exploitations\n\n"
         supports_clause += "Le Cessionnaire pourra notamment, sans que cette liste soit limitative :\n"
         supports_clause += "- Publier l'œuvre et/ou l'image sur son site web et ses plateformes numériques ;\n"
         supports_clause += "- Inclure l'œuvre et/ou l'image dans des communications internes ou externes ;\n"
@@ -553,7 +389,7 @@ class ContractTemplates:
         supports_clause += "- Intégrer l'œuvre et/ou l'image dans des créations dérivées en lien avec son activité ;\n"
         supports_clause += "- Partager l'œuvre et/ou l'image sur les réseaux sociaux et plateformes de partage.\n\n"
         
-        supports_clause += f"{article_num}.3 Limitation d'usage\n\n"
+        supports_clause += "5.3 Limitation d'usage\n\n"
         supports_clause += "Cette liste est limitative et le Cessionnaire s'engage à ne pas utiliser l'œuvre et/ou l'image sur d'autres supports "
         supports_clause += "sans l'autorisation préalable et écrite du Cédant.\n\n"
         
@@ -578,12 +414,12 @@ class ContractTemplates:
         remuneration_clause = f"ARTICLE {article_num} – RÉMUNÉRATION\n\n"
         
         if is_free:
-            remuneration_clause += f"{article_num}.1 Cession à titre gratuit\n\n"
+            remuneration_clause += "6.1 Cession à titre gratuit\n\n"
             remuneration_clause += "La présente cession est consentie à titre gratuit, sans contrepartie financière. "
             remuneration_clause += "Le Cédant déclare expressément renoncer à toute rémunération au titre de la présente cession et être pleinement informé "
             remuneration_clause += "de la portée de cette gratuité.\n\n"
             
-            remuneration_clause += f"{article_num}.2 Motivation de la gratuité\n\n"
+            remuneration_clause += "6.2 Motivation de la gratuité\n\n"
             remuneration_clause += "Les Parties reconnaissent que cette gratuité se justifie par :\n"
             remuneration_clause += "- L'intérêt réciproque des Parties à cette collaboration ;\n"
             remuneration_clause += "- La visibilité et la promotion apportées par le Cessionnaire à l'œuvre et/ou à l'image du Cédant ;\n"
@@ -591,10 +427,10 @@ class ContractTemplates:
             
             remuneration_clause += "Le Cédant reconnaît avoir été pleinement informé de son droit à rémunération et y renoncer librement.\n\n"
         else:
-            remuneration_clause += f"{article_num}.1 Rémunération\n\n"
+            remuneration_clause += "6.1 Rémunération\n\n"
             remuneration_clause += f"En contrepartie de la présente cession, le Cessionnaire versera au Cédant la rémunération suivante :\n\n{remuneration}\n\n"
             
-            remuneration_clause += f"{article_num}.2 Modalités de paiement\n\n"
+            remuneration_clause += "6.2 Modalités de paiement\n\n"
             if "forfaitaire" in remuneration.lower() or "€" in remuneration or "euros" in remuneration.lower():
                 remuneration_clause += "Cette rémunération forfaitaire est réputée définitive, forfaitaire et non révisable. "
                 remuneration_clause += "Elle inclut tout montant dû au titre de l'ensemble des droits cédés, tels que définis dans le présent contrat.\n\n"
@@ -615,7 +451,7 @@ class ContractTemplates:
                 remuneration_clause += "Le Cessionnaire s'engage à respecter strictement ces conditions de rémunération, qui constituent "
                 remuneration_clause += "un élément essentiel du consentement du Cédant.\n\n"
             
-            remuneration_clause += f"{article_num}.3 Justification de la rémunération\n\n"
+            remuneration_clause += "6.3 Justification de la rémunération\n\n"
             remuneration_clause += "Les Parties reconnaissent que cette rémunération est équitable et proportionnée aux exploitations prévues. "
             remuneration_clause += "Elle a été déterminée en tenant compte notamment de l'étendue des droits cédés, de la durée de la cession, "
             remuneration_clause += "du territoire concerné et des investissements nécessaires à l'exploitation de l'œuvre/image.\n\n"
@@ -637,7 +473,7 @@ class ContractTemplates:
         warranties_clause = f"ARTICLE {article_num} – GARANTIES ET RESPONSABILITÉS\n\n"
         
         if "Auteur (droits d'auteur)" in contract_type:
-            warranties_clause += f"{article_num}.1 Garanties de l'Auteur\n\n"
+            warranties_clause += "7.1 Garanties de l'Auteur\n\n"
             warranties_clause += "L'Auteur garantit au Cessionnaire :\n"
             warranties_clause += "- Qu'il est bien l'auteur de l'œuvre et le titulaire exclusif des droits de propriété intellectuelle sur celle-ci ;\n"
             warranties_clause += "- Que l'œuvre est originale et ne constitue pas une contrefaçon d'une œuvre préexistante ;\n"
@@ -652,8 +488,7 @@ class ContractTemplates:
             warranties_clause += "Il s'engage à indemniser le Cessionnaire de tous frais et indemnités qui pourraient résulter de telles actions.\n\n"
         
         if "Image (droit à l'image)" in contract_type:
-            section_num = 2 if "Auteur (droits d'auteur)" in contract_type else 1
-            warranties_clause += f"{article_num}.{section_num} Garanties du Modèle\n\n"
+            warranties_clause += "7.2 Garanties du Modèle\n\n"
             warranties_clause += "Le Modèle garantit au Cessionnaire :\n"
             warranties_clause += "- Qu'il est libre de consentir à la présente autorisation et dispose de la pleine capacité juridique à cet effet ;\n"
             warranties_clause += "- Que son image n'est pas liée à d'autres engagements exclusifs incompatibles avec le présent contrat ;\n"
@@ -663,8 +498,8 @@ class ContractTemplates:
             warranties_clause += "disposer de droits sur l'image du Modèle. Il s'engage à indemniser le Cessionnaire de tous frais et indemnités "
             warranties_clause += "qui pourraient résulter de telles actions.\n\n"
         
-        section_num = 3 if 'Image (droit à l\'image)' in contract_type and 'Auteur (droits d\'auteur)' in contract_type else 2
-        warranties_clause += f"{article_num}.{section_num} Obligations du Cessionnaire\n\n"
+        section_num = '3' if 'Image (droit à l\'image)' in contract_type else '2'
+        warranties_clause += f"7.{section_num} Obligations du Cessionnaire\n\n"
         warranties_clause += "Le Cessionnaire s'engage à :\n"
         warranties_clause += "- Respecter l'intégrité de l'œuvre et/ou de l'image dans le cadre des exploitations autorisées ;\n"
         
@@ -691,7 +526,7 @@ class ContractTemplates:
         """
         termination_clause = f"ARTICLE {article_num} – RÉSILIATION\n\n"
         
-        termination_clause += f"{article_num}.1 Résiliation pour inexécution\n\n"
+        termination_clause += "8.1 Résiliation pour inexécution\n\n"
         termination_clause += "Le présent contrat pourra être résilié de plein droit par l'une des parties en cas d'inexécution "
         termination_clause += "par l'autre partie de l'une quelconque de ses obligations contractuelles. "
         termination_clause += "Cette résiliation deviendra effective trois (3) mois après l'envoi par la partie plaignante "
@@ -699,12 +534,12 @@ class ContractTemplates:
         termination_clause += "à moins que, dans ce délai, la partie défaillante n'ait satisfait à ses obligations ou "
         termination_clause += "n'ait apporté la preuve d'un empêchement consécutif à un cas de force majeure.\n\n"
         
-        termination_clause += f"{article_num}.2 Résiliation anticipée\n\n"
+        termination_clause += "8.2 Résiliation anticipée\n\n"
         termination_clause += "Chacune des parties pourra également mettre fin au présent contrat avant son terme, "
         termination_clause += "moyennant un préavis de trois (3) mois notifié par lettre recommandée avec accusé de réception. "
         termination_clause += "Dans ce cas, la résiliation ne prendra effet qu'à l'expiration du préavis.\n\n"
         
-        termination_clause += f"{article_num}.3 Conséquences de la résiliation\n\n"
+        termination_clause += "8.3 Conséquences de la résiliation\n\n"
         termination_clause += "En cas de résiliation du contrat, pour quelque cause que ce soit :\n"
         termination_clause += "- Le Cessionnaire devra cesser toute nouvelle exploitation de l'œuvre et/ou de l'image ;\n"
         termination_clause += "- Le Cessionnaire sera néanmoins autorisé à écouler les stocks existants pendant une période maximale de trois (3) mois ;\n"
@@ -732,28 +567,28 @@ class ContractTemplates:
         """
         other_clauses = f"ARTICLE {article_num} – DISPOSITIONS DIVERSES\n\n"
         
-        other_clauses += f"{article_num}.1 Clause de non-dénigrement\n\n"
+        other_clauses += "9.1 Clause de non-dénigrement\n\n"
         other_clauses += "Les Parties s'engagent mutuellement à ne pas tenir de propos négatifs ou diffamatoires l'une envers l'autre, "
         other_clauses += "que ce soit en privé ou en public, notamment sur les réseaux sociaux, dans les médias ou auprès de partenaires commerciaux. "
         other_clauses += "Cette obligation survivra à la fin du présent contrat pour une durée de deux (2) ans.\n\n"
         
-        other_clauses += f"{article_num}.2 Intuitu personae\n\n"
+        other_clauses += "9.2 Intuitu personae\n\n"
         other_clauses += "Le présent contrat est conclu intuitu personae. Les droits et obligations en résultant ne pourront être cédés ou transférés "
         other_clauses += "par l'une des Parties sans l'accord préalable et écrit de l'autre Partie.\n\n"
         
         other_clauses += "Toutefois, en cas de cession ou de transfert de son activité à un tiers, le Cessionnaire pourra transférer le bénéfice "
         other_clauses += "du présent contrat à ce tiers, à condition d'en informer préalablement le Cédant par écrit.\n\n"
         
-        other_clauses += f"{article_num}.3 Intégralité de l'accord\n\n"
+        other_clauses += "9.3 Intégralité de l'accord\n\n"
         other_clauses += "Le présent contrat et ses éventuelles annexes constituent l'intégralité de l'accord entre les Parties relativement à son objet. "
         other_clauses += "Il remplace et annule tout engagement oral ou écrit antérieur relatif à l'objet des présentes.\n\n"
         
-        other_clauses += f"{article_num}.4 Nullité partielle\n\n"
+        other_clauses += "9.4 Nullité partielle\n\n"
         other_clauses += "Si l'une quelconque des stipulations du présent contrat était déclarée nulle au regard d'une règle de droit en vigueur "
         other_clauses += "ou d'une décision judiciaire devenue définitive, elle serait alors réputée non écrite, sans pour autant entraîner la nullité "
         other_clauses += "du contrat ni altérer la validité de ses autres dispositions.\n\n"
         
-        other_clauses += f"{article_num}.5 Modification du contrat\n\n"
+        other_clauses += "9.5 Modification du contrat\n\n"
         other_clauses += "Toute modification du présent contrat ne pourra résulter que d'un document écrit et signé par les Parties. "
         other_clauses += "Aucune modification ne pourra être déduite de la passivité de l'une des Parties.\n\n"
         
@@ -772,17 +607,17 @@ class ContractTemplates:
         """
         law_clause = f"ARTICLE {article_num} – LOI APPLICABLE ET JURIDICTION COMPÉTENTE\n\n"
         
-        law_clause += f"{article_num}.1 Loi applicable\n\n"
+        law_clause += "10.1 Loi applicable\n\n"
         law_clause += "Le présent contrat est soumis au droit français.\n\n"
         
-        law_clause += f"{article_num}.2 Résolution amiable des litiges\n\n"
+        law_clause += "10.2 Résolution amiable des litiges\n\n"
         law_clause += "En cas de différend entre les Parties relatif à l'interprétation, l'exécution ou la résiliation du présent contrat, "
         law_clause += "les Parties s'efforceront de résoudre leur différend à l'amiable.\n\n"
         
         law_clause += "À cet effet, la Partie la plus diligente adressera à l'autre Partie une notification précisant la nature et l'étendue du différend. "
         law_clause += "Les Parties s'engagent à se réunir dans les trente (30) jours suivant cette notification pour tenter de résoudre le litige.\n\n"
         
-        law_clause += f"{article_num}.3 Attribution de juridiction\n\n"
+        law_clause += "10.3 Attribution de juridiction\n\n"
         law_clause += "À défaut d'accord amiable dans un délai de soixante (60) jours à compter de la notification du différend, "
         law_clause += "tout litige relatif à l'existence, la validité, l'interprétation, l'exécution ou la résiliation du présent contrat "
         law_clause += "sera soumis à la compétence exclusive des tribunaux de Lyon, y compris en cas de référé, d'appel en garantie "

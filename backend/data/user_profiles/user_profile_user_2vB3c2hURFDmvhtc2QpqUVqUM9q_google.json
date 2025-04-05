@@ -14,17 +14,17 @@
       "ville": "Paris"
     },
     {
-      "gentille": "M.",
-      "nom": "ASTRUC",
-      "prenom": "Florine",
-      "date_naissance": "2025-04-03",
-      "lieu_naissance": "Montpellier",
-      "nationalite": "Fran\u00e7aise",
       "adresse": "104 Avenue de Versailles",
       "code_postal": "75016",
-      "ville": "Paris",
+      "date_naissance": "2025-04-03",
+      "gentille": "M.",
+      "id": "1743779851179",
+      "lieu_naissance": "Montpellier",
+      "nationalite": "Fran\u00e7aise",
+      "nom": "ASTRUC",
+      "prenom": "Florine",
       "type": "physical_person",
-      "id": "1743779851179"
+      "ville": "Paris"
     }
   ],
   "legal_entity": {

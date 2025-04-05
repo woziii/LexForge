@@ -1,59 +1,83 @@
 {
-  "id": "b50a1f4a-4bfe-46cc-a8bc-3528dc8bd0b7",
-  "title": "test",
+  "id": "d052e30f-8bb4-4d2a-a94c-ebd4f1351a29",
+  "title": "Contrat 1743866100433",
   "data": {
     "type_contrat": [
-      "Image (droit à l'image)"
+      "Image (droit à l'image)",
+      "Auteur (droits d'auteur)"
     ],
-    "type_cession": "Gratuite",
-    "droits_cedes": [],
-    "exclusivite": false,
+    "type_cession": "Onéreuse",
+    "droits_cedes": [
+      "distribution - droit de distribuer l'original ou les copies de l'œuvre au public"
+    ],
+    "exclusivite": true,
     "auteur_type": "Personne physique",
     "auteur_info": {
-      "gentille": "Mme",
-      "saveToClients": false,
-      "nom": "ASTRUC",
-      "prenom": "Florine",
-      "date_naissance": "2025-04-11",
-      "lieu_naissance": "Montpellier",
-      "nationalite": "Française",
       "adresse": "104 Avenue de Versailles",
       "code_postal": "75016",
-      "ville": "Paris"
+      "date_naissance": "2025-04-03",
+      "gentille": "M.",
+      "id": "1743779843640",
+      "lieu_naissance": "Montpellier",
+      "nationalite": "Française",
+      "nom": "ASTRUC",
+      "prenom": "Florine",
+      "type": "physical_person",
+      "ville": "Paris",
+      "representant_civilite": "M.",
+      "representant_nom": "",
+      "representant_prenom": "",
+      "qualite_representant": ""
     },
-    "description_oeuvre": "",
+    "description_oeuvre": "test",
     "description_image": "test",
     "supports": [],
-    "remuneration": "",
-    "entreprise_info": {},
-    "user_id": "anon_mzfxjm4o9zj_m92sx8c2",
-    "cessionnaire_info": {
-      "adresse": "104 avenue de versailles",
+    "remuneration": "500",
+    "entreprise_info": {
+      "type": "legal_entity",
+      "nom": "Tellers",
+      "forme_juridique": "Société par action simplifié",
+      "siren": "932 553 266",
+      "adresse": "104 Avenue de Versailles",
       "code_postal": "75016",
-      "date_naissance": "0022-02-22",
-      "gentille": "M.",
-      "is_configured": true,
-      "lieu_naissance": "Toulouse",
-      "nationalite": "Française",
-      "nom": "MAURICI",
-      "prenom": "Lucas",
-      "ville": "Escalquens",
-      "adresse_complete": "104 avenue de versailles, 75016 Escalquens"
+      "ville": "Paris",
+      "email": "maurici.lucas@proton.me",
+      "telephone": "0659965152",
+      "capital": "1000€",
+      "representant_civilite": "M.",
+      "representant_nom": "MAURICI",
+      "representant_prenom": "Lucas",
+      "qualite_representant": "Gérant"
+    },
+    "user_id": "user_2vB3c2hURFDmvhtc2QpqUVqUM9q_google",
+    "cessionnaire_info": {
+      "type": "legal_entity",
+      "nom": "Tellers",
+      "forme_juridique": "Société par action simplifié",
+      "siren": "932 553 266",
+      "adresse": "104 Avenue de Versailles",
+      "code_postal": "75016",
+      "ville": "Paris",
+      "email": "maurici.lucas@proton.me",
+      "telephone": "0659965152",
+      "capital": "1000€",
+      "representant_civilite": "M.",
+      "representant_nom": "MAURICI",
+      "representant_prenom": "Lucas",
+      "qualite_representant": "Gérant",
+      "adresse_complete": "104 Avenue de Versailles, 75016 Paris"
     }
   },
   "is_draft": false,
   "from_step6": true,
-  "user_id": "user_2vB3c2hURFDmvhtc2QpqUVqUM9q_clerk",
-  "created_at": "2025-04-04T18:17:09.840668",
-  "updated_at": "2025-04-04T18:17:20.029108",
-  "original_user_id": "anon_mzfxjm4o9zj_m92sx8c2",
-  "preserved_import": true,
-  "comments": [],
+  "user_id": "user_2vB3c2hURFDmvhtc2QpqUVqUM9q_google",
+  "created_at": "2025-04-05T17:15:00.439732",
+  "updated_at": "2025-04-05T17:15:00.439752",
   "elements": [
     {
       "type": "paragraph",
       "style": "ContractTitle",
-      "text": "CONTRAT DE CESSION DE DROITS À L'IMAGE"
+      "text": "CONTRAT DE CESSION DE DROITS D'AUTEUR ET DE DROITS À L'IMAGE"
     },
     {
       "type": "spacer",
@@ -71,7 +95,7 @@
     {
       "type": "paragraph",
       "style": "ContractText",
-      "text": "Mme ASTRUC Florine, né(e) le 2025-04-11 à Montpellier, de nationalité Française, domicilié(e) au 104 Avenue de Versailles, 75016 Paris, ci-après dénommé(e) \"le Modèle\","
+      "text": "M. ASTRUC Florine, né(e) le 2025-04-03 à Montpellier, de nationalité Française, domicilié(e) au 104 Avenue de Versailles, 75016 Paris, ci-après dénommé(e) \"l'Auteur et le Modèle\","
     },
     {
       "type": "spacer",
@@ -80,7 +104,7 @@
     {
       "type": "paragraph",
       "style": "ContractText",
-      "text": "M. MAURICI Lucas, né(e) le 0022-02-22 à Toulouse de nationalité Française, domicilié(e) au 104 avenue de versailles, 75016 Escalquens, ci-après dénommée \"le Cessionnaire\","
+      "text": "Tellers, Société par action simplifié au capital de 1000€, immatriculé sous le numéro 932 553 266 R.C.S Paris, dont le siège social est situé au 104 Avenue de Versailles, 75016 Paris, représentée par M. MAURICI Lucas, en sa qualité de Gérant, ci-après dénommée \"le Cessionnaire\","
     },
     {
       "type": "spacer",
@@ -107,7 +131,7 @@
     {
       "type": "paragraph",
       "style": "ContractText",
-      "text": "Le Modèle dispose de droits exclusifs sur son image et son apparence. Le Cessionnaire souhaite obtenir l'autorisation d'utiliser et d'exploiter l'image du Modèle dans le cadre de ses activités."
+      "text": "L'Auteur a créé une œuvre originale et est titulaire des droits d'auteur sur cette œuvre. Il figure également en tant que Modèle dans des images ou vidéos qu'il souhaite inclure dans la présente cession. Le Cessionnaire souhaite obtenir certains droits sur cette œuvre et sur l'image de l'Auteur/Modèle afin de l'exploiter dans le cadre de ses activités."
     },
     {
       "type": "spacer",
@@ -135,6 +159,42 @@
       "type": "paragraph",
       "style": "ContractArticle",
       "text": "ARTICLE 1 – OBJET DU CONTRAT"
+    },
+    {
+      "type": "spacer",
+      "height": 6
+    },
+    {
+      "type": "paragraph",
+      "style": "ContractSubArticle",
+      "text": "1.1 Œuvre concernée"
+    },
+    {
+      "type": "spacer",
+      "height": 6
+    },
+    {
+      "type": "paragraph",
+      "style": "ContractText",
+      "text": "L'Auteur déclare être le créateur et titulaire exclusif des droits d'auteur sur l'œuvre suivante (ci-après \"l'Œuvre\") :"
+    },
+    {
+      "type": "spacer",
+      "height": 6
+    },
+    {
+      "type": "paragraph",
+      "style": "ContractText",
+      "text": "test"
+    },
+    {
+      "type": "spacer",
+      "height": 6
+    },
+    {
+      "type": "paragraph",
+      "style": "ContractText",
+      "text": "L'Auteur garantit que l'Œuvre présente un caractère original au sens de la législation sur le droit d'auteur et qu'il détient l'intégralité des droits nécessaires pour conclure le présent contrat."
     },
     {
       "type": "spacer",
@@ -188,7 +248,7 @@
     {
       "type": "paragraph",
       "style": "ContractText",
-      "text": "Par le présent contrat, le Modèle autorise le Cessionnaire à exploiter son image, dans les conditions et limites définies ci-après."
+      "text": "Par le présent contrat : - L'Auteur cède au Cessionnaire certains droits d'exploitation sur l'Œuvre ; - Le Modèle autorise le Cessionnaire à exploiter son image ; Le tout dans les conditions et limites définies ci-après."
     },
     {
       "type": "spacer",
@@ -206,7 +266,7 @@
     {
       "type": "paragraph",
       "style": "ContractArticle",
-      "text": "ARTICLE 2 – AUTORISATION D'EXPLOITATION DE L'IMAGE"
+      "text": "ARTICLE 2 – ÉTENDUE DES DROITS CÉDÉS"
     },
     {
       "type": "spacer",
@@ -215,7 +275,160 @@
     {
       "type": "paragraph",
       "style": "ContractSubArticle",
-      "text": "2.1 Objet de l'autorisation"
+      "text": "2.1 Nature de la cession"
+    },
+    {
+      "type": "spacer",
+      "height": 6
+    },
+    {
+      "type": "paragraph",
+      "style": "ContractText",
+      "text": "L'Auteur cède au Cessionnaire, à titre exclusif, pour la durée précisée à l'article 4 et moyennant la rémunération précisée à l'article 6, les droits patrimoniaux détaillés ci-après."
+    },
+    {
+      "type": "spacer",
+      "height": 6
+    },
+    {
+      "type": "paragraph",
+      "style": "ContractSubArticle",
+      "text": "2.2 Droits patrimoniaux cédés"
+    },
+    {
+      "type": "spacer",
+      "height": 6
+    },
+    {
+      "type": "paragraph",
+      "style": "ContractSubArticle",
+      "text": "2.2.1 Droits de base"
+    },
+    {
+      "type": "spacer",
+      "height": 6
+    },
+    {
+      "type": "paragraph",
+      "style": "ContractText",
+      "text": "a) Droit de reproduction"
+    },
+    {
+      "type": "spacer",
+      "height": 6
+    },
+    {
+      "type": "paragraph",
+      "style": "ContractText",
+      "text": "L'Auteur cède au Cessionnaire le droit de reproduction qui s'entend comme le droit de reproduire ou de faire reproduire l'Œuvre : - Par tous procédés techniques connus ou inconnus à ce jour, notamment par impression, numérisation, enregistrement magnétique, optique, numérique ou électronique ; - Sur tous supports connus ou inconnus à ce jour, notamment papier, électronique, magnétique, optique, numérique, CD-ROM, DVD, disques durs, serveurs informatiques, réseaux, cloud ; - En tous formats ; - En autant d'exemplaires que le Cessionnaire le souhaitera, selon les besoins de son activité et les finalités précisées au présent contrat."
+    },
+    {
+      "type": "spacer",
+      "height": 6
+    },
+    {
+      "type": "paragraph",
+      "style": "ContractText",
+      "text": "b) Droit de représentation"
+    },
+    {
+      "type": "spacer",
+      "height": 6
+    },
+    {
+      "type": "paragraph",
+      "style": "ContractText",
+      "text": "L'Auteur cède au Cessionnaire le droit de représentation qui s'entend comme le droit de communiquer l'Œuvre au public : - Par tous moyens de diffusion connus ou inconnus à ce jour, notamment exposition, projection publique, transmission dans un lieu public de l'Œuvre télédiffusée, présentation au public sur écran accessible en ligne ; - Par tous procédés connus ou inconnus à ce jour, notamment par diffusion numérique en ligne sur Internet (sites web, réseaux sociaux, blogs, plateformes de partage, applications mobiles), diffusion par satellite, câble, réseaux informatiques, etc. ; - À destination de tout public, restreint ou non."
+    },
+    {
+      "type": "spacer",
+      "height": 6
+    },
+    {
+      "type": "paragraph",
+      "style": "ContractSubArticle",
+      "text": "2.2.2 Droits supplémentaires"
+    },
+    {
+      "type": "spacer",
+      "height": 6
+    },
+    {
+      "type": "paragraph",
+      "style": "ContractText",
+      "text": "c) distribution - droit de distribuer l'original ou les copies de l'œuvre au public"
+    },
+    {
+      "type": "spacer",
+      "height": 6
+    },
+    {
+      "type": "paragraph",
+      "style": "ContractText",
+      "text": "L'Auteur cède au Cessionnaire le droit de distribution qui s'entend comme le droit de mettre à disposition du public l'original de l'Œuvre ou ses copies, par la vente, la location, le prêt ou tout autre mode de mise à disposition. Ce droit comprend notamment : - Le droit de vendre ou faire vendre, d'offrir à la vente tout ou partie de l'Œuvre ; - Le droit de diffuser et de faire diffuser tout ou partie de l'Œuvre par tous moyens et sur tous supports ; - Le droit de distribuer l'Œuvre à des fins commerciales ou non commerciales."
+    },
+    {
+      "type": "spacer",
+      "height": 6
+    },
+    {
+      "type": "paragraph",
+      "style": "ContractSubArticle",
+      "text": "2.3 Droits réservés"
+    },
+    {
+      "type": "spacer",
+      "height": 6
+    },
+    {
+      "type": "paragraph",
+      "style": "ContractText",
+      "text": "Tous les droits non expressément cédés par le présent contrat demeurent la propriété exclusive de l'Auteur. Toute exploitation non prévue au présent contrat devra faire l'objet d'un accord complémentaire entre les Parties."
+    },
+    {
+      "type": "spacer",
+      "height": 6
+    },
+    {
+      "type": "paragraph",
+      "style": "ContractSubArticle",
+      "text": "2.4 Modalités d'exploitation"
+    },
+    {
+      "type": "spacer",
+      "height": 6
+    },
+    {
+      "type": "paragraph",
+      "style": "ContractText",
+      "text": "La présente cession est consentie à titre exclusif. En conséquence, pendant toute la durée du présent contrat : - L'Auteur s'interdit de céder à un tiers l'un quelconque des droits faisant l'objet de la présente cession ; - L'Auteur s'interdit d'exploiter lui-même l'Œuvre selon les modalités cédées au Cessionnaire."
+    },
+    {
+      "type": "spacer",
+      "height": 6
+    },
+    {
+      "type": "paragraph",
+      "style": "ContractText",
+      "text": "Cette exclusivité constitue un élément essentiel du présent contrat, sans lequel le Cessionnaire n'aurait pas contracté."
+    },
+    {
+      "type": "spacer",
+      "height": 6
+    },
+    {
+      "type": "paragraph",
+      "style": "ContractArticle",
+      "text": "ARTICLE 3 – AUTORISATION D'EXPLOITATION DE L'IMAGE"
+    },
+    {
+      "type": "spacer",
+      "height": 6
+    },
+    {
+      "type": "paragraph",
+      "style": "ContractSubArticle",
+      "text": "3.1 Objet de l'autorisation"
     },
     {
       "type": "spacer",
@@ -242,7 +455,7 @@
     {
       "type": "paragraph",
       "style": "ContractSubArticle",
-      "text": "2.2 Conditions de l'autorisation"
+      "text": "3.2 Conditions de l'autorisation"
     },
     {
       "type": "spacer",
@@ -251,7 +464,7 @@
     {
       "type": "paragraph",
       "style": "ContractText",
-      "text": "La présente autorisation est consentie à titre non exclusif, gratuitement, pour la durée et sur le territoire mentionnés à l'article 4."
+      "text": "La présente autorisation est consentie à titre exclusif, moyennant la rémunération précisée à l'article 6, pour la durée et sur le territoire mentionnés à l'article 4."
     },
     {
       "type": "spacer",
@@ -260,7 +473,7 @@
     {
       "type": "paragraph",
       "style": "ContractSubArticle",
-      "text": "2.3 Restrictions et engagements"
+      "text": "3.3 Restrictions et engagements"
     },
     {
       "type": "spacer",
@@ -287,7 +500,7 @@
     {
       "type": "paragraph",
       "style": "ContractSubArticle",
-      "text": "2.4 Non-exclusivité"
+      "text": "3.4 Exclusivité"
     },
     {
       "type": "spacer",
@@ -296,7 +509,16 @@
     {
       "type": "paragraph",
       "style": "ContractText",
-      "text": "La présente autorisation étant non exclusive, le Modèle conserve le droit d'autoriser l'exploitation de son image à des tiers, sous réserve que cela ne nuise pas directement aux intérêts légitimes du Cessionnaire."
+      "text": "Compte tenu du caractère exclusif de la présente autorisation, le Modèle s'engage, pendant toute la durée du présent contrat : - À ne pas autoriser l'exploitation de son image telle que décrite à l'article 1.2 à des tiers ; - À ne pas utiliser ou exploiter lui-même son image dans des conditions similaires à celles autorisées au Cessionnaire."
+    },
+    {
+      "type": "spacer",
+      "height": 6
+    },
+    {
+      "type": "paragraph",
+      "style": "ContractText",
+      "text": "Cette exclusivité constitue un élément essentiel du présent contrat, sans lequel le Cessionnaire n'aurait pas contracté."
     },
     {
       "type": "spacer",
@@ -305,7 +527,7 @@
     {
       "type": "paragraph",
       "style": "ContractArticle",
-      "text": "ARTICLE 3 – DURÉE ET TERRITOIRE"
+      "text": "ARTICLE 4 – DURÉE ET TERRITOIRE"
     },
     {
       "type": "spacer",
@@ -359,7 +581,7 @@
     {
       "type": "paragraph",
       "style": "ContractArticle",
-      "text": "ARTICLE 4 – SUPPORTS D'EXPLOITATION"
+      "text": "ARTICLE 5 – SUPPORTS D'EXPLOITATION"
     },
     {
       "type": "spacer",
@@ -440,7 +662,7 @@
     {
       "type": "paragraph",
       "style": "ContractArticle",
-      "text": "ARTICLE 5 – RÉMUNÉRATION"
+      "text": "ARTICLE 6 – RÉMUNÉRATION"
     },
     {
       "type": "spacer",
@@ -449,7 +671,7 @@
     {
       "type": "paragraph",
       "style": "ContractSubArticle",
-      "text": "6.1 Cession à titre gratuit"
+      "text": "6.1 Rémunération"
     },
     {
       "type": "spacer",
@@ -458,7 +680,16 @@
     {
       "type": "paragraph",
       "style": "ContractText",
-      "text": "La présente cession est consentie à titre gratuit, sans contrepartie financière. Le Cédant déclare expressément renoncer à toute rémunération au titre de la présente cession et être pleinement informé de la portée de cette gratuité."
+      "text": "En contrepartie de la présente cession, le Cessionnaire versera au Cédant la rémunération suivante :"
+    },
+    {
+      "type": "spacer",
+      "height": 6
+    },
+    {
+      "type": "paragraph",
+      "style": "ContractText",
+      "text": "500"
     },
     {
       "type": "spacer",
@@ -467,7 +698,7 @@
     {
       "type": "paragraph",
       "style": "ContractSubArticle",
-      "text": "6.2 Motivation de la gratuité"
+      "text": "6.2 Modalités de paiement"
     },
     {
       "type": "spacer",
@@ -476,7 +707,16 @@
     {
       "type": "paragraph",
       "style": "ContractText",
-      "text": "Les Parties reconnaissent que cette gratuité se justifie par : - L'intérêt réciproque des Parties à cette collaboration ; - La visibilité et la promotion apportées par le Cessionnaire à l'œuvre et/ou à l'image du Cédant ; - Le caractère non lucratif de certaines exploitations envisagées."
+      "text": "Le paiement sera effectué selon les modalités indiquées ci-dessus. Le Cessionnaire s'engage à respecter strictement ces conditions de rémunération, qui constituent un élément essentiel du consentement du Cédant."
+    },
+    {
+      "type": "spacer",
+      "height": 6
+    },
+    {
+      "type": "paragraph",
+      "style": "ContractSubArticle",
+      "text": "6.3 Justification de la rémunération"
     },
     {
       "type": "spacer",
@@ -485,7 +725,7 @@
     {
       "type": "paragraph",
       "style": "ContractText",
-      "text": "Le Cédant reconnaît avoir été pleinement informé de son droit à rémunération et y renoncer librement."
+      "text": "Les Parties reconnaissent que cette rémunération est équitable et proportionnée aux exploitations prévues. Elle a été déterminée en tenant compte notamment de l'étendue des droits cédés, de la durée de la cession, du territoire concerné et des investissements nécessaires à l'exploitation de l'œuvre/image."
     },
     {
       "type": "spacer",
@@ -494,7 +734,34 @@
     {
       "type": "paragraph",
       "style": "ContractArticle",
-      "text": "ARTICLE 6 – GARANTIES ET RESPONSABILITÉS"
+      "text": "ARTICLE 7 – GARANTIES ET RESPONSABILITÉS"
+    },
+    {
+      "type": "spacer",
+      "height": 6
+    },
+    {
+      "type": "paragraph",
+      "style": "ContractSubArticle",
+      "text": "7.1 Garanties de l'Auteur"
+    },
+    {
+      "type": "spacer",
+      "height": 6
+    },
+    {
+      "type": "paragraph",
+      "style": "ContractText",
+      "text": "L'Auteur garantit au Cessionnaire : - Qu'il est bien l'auteur de l'œuvre et le titulaire exclusif des droits de propriété intellectuelle sur celle-ci ; - Que l'œuvre est originale et ne constitue pas une contrefaçon d'une œuvre préexistante ; - Qu'il n'a préalablement consenti aucune cession ou licence de droits à un tiers qui serait incompatible avec la présente cession ; - Que l'œuvre ne contient aucun élément susceptible de tomber sous le coup des lois et règlements relatifs à la diffamation, l'injure, la protection de la vie privée, le droit à l'image, les droits de la personnalité ou la contrefaçon ; - Qu'il n'existe aucune restriction légale ou contractuelle qui pourrait limiter ou interdire l'exploitation de l'œuvre dans les conditions prévues au présent contrat."
+    },
+    {
+      "type": "spacer",
+      "height": 6
+    },
+    {
+      "type": "paragraph",
+      "style": "ContractText",
+      "text": "En conséquence, l'Auteur garantit le Cessionnaire contre toute éviction, revendication ou action de tiers, fondée sur la propriété intellectuelle ou tout autre fondement, qui troublerait l'exploitation paisible des droits cédés. Il s'engage à indemniser le Cessionnaire de tous frais et indemnités qui pourraient résulter de telles actions."
     },
     {
       "type": "spacer",
@@ -539,7 +806,7 @@
     {
       "type": "paragraph",
       "style": "ContractText",
-      "text": "Le Cessionnaire s'engage à : - Respecter l'intégrité de l'œuvre et/ou de l'image dans le cadre des exploitations autorisées ; - N'effectuer aucune modification substantielle de l'œuvre et/ou de l'image sans l'accord préalable du Cédant, à l'exception des adaptations techniques nécessaires à l'exploitation ; - Exploiter l'œuvre et/ou l'image conformément aux usages professionnels et aux dispositions du présent contrat."
+      "text": "Le Cessionnaire s'engage à : - Respecter l'intégrité de l'œuvre et/ou de l'image dans le cadre des exploitations autorisées ; - Mentionner le nom de l'Auteur lors de toute exploitation de l'œuvre, sauf lorsque cela est techniquement impossible ou inapproprié compte tenu du support d'exploitation ; - N'effectuer aucune modification substantielle de l'œuvre et/ou de l'image sans l'accord préalable du Cédant, à l'exception des adaptations techniques nécessaires à l'exploitation ; - Exploiter l'œuvre et/ou l'image conformément aux usages professionnels et aux dispositions du présent contrat."
     },
     {
       "type": "spacer",
@@ -548,7 +815,7 @@
     {
       "type": "paragraph",
       "style": "ContractArticle",
-      "text": "ARTICLE 7 – RÉSILIATION"
+      "text": "ARTICLE 8 – RÉSILIATION"
     },
     {
       "type": "spacer",
@@ -620,7 +887,7 @@
     {
       "type": "paragraph",
       "style": "ContractArticle",
-      "text": "ARTICLE 8 – DISPOSITIONS DIVERSES"
+      "text": "ARTICLE 9 – DISPOSITIONS DIVERSES"
     },
     {
       "type": "spacer",
@@ -728,7 +995,7 @@
     {
       "type": "paragraph",
       "style": "ContractArticle",
-      "text": "ARTICLE 9 – LOI APPLICABLE ET JURIDICTION COMPÉTENTE"
+      "text": "ARTICLE 10 – LOI APPLICABLE ET JURIDICTION COMPÉTENTE"
     },
     {
       "type": "spacer",
@@ -822,11 +1089,12 @@
     {
       "type": "paragraph",
       "style": "ContractText",
-      "text": "Pour le Modèle : Pour le Cessionnaire : [Nom, Prénom] [Nom, Prénom et qualité] Signature précédée de la mention Signature précédée de la mention « Lu et approuvé » « Lu et approuvé »"
+      "text": "Pour l'Auteur et Modèle : Pour le Cessionnaire : [Nom, Prénom] [Nom, Prénom et qualité] Signature précédée de la mention Signature précédée de la mention « Lu et approuvé » « Lu et approuvé »"
     },
     {
       "type": "spacer",
       "height": 8
     }
-  ]
+  ],
+  "comments": []
 }

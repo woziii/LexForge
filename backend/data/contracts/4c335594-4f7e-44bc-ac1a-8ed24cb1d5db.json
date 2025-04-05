@@ -1,54 +1,82 @@
 {
-  "id": "b50a1f4a-4bfe-46cc-a8bc-3528dc8bd0b7",
-  "title": "test",
+  "id": "4c335594-4f7e-44bc-ac1a-8ed24cb1d5db",
+  "title": "Contrat 1743865660134",
   "data": {
     "type_contrat": [
       "Image (droit à l'image)"
     ],
-    "type_cession": "Gratuite",
-    "droits_cedes": [],
-    "exclusivite": false,
+    "type_cession": "Onéreuse",
+    "droits_cedes": [
+      "distribution - droit de distribuer l'original ou les copies de l'œuvre au public",
+      "usage - droit d'utiliser l'œuvre pour les besoins du cessionnaire",
+      "adaptation - droit de modifier, transformer, traduire l'œuvre",
+      "pret - droit de mettre l'œuvre à disposition pour un usage temporaire",
+      "location - droit de mettre l'œuvre à disposition contre rémunération",
+      "suite - droit de percevoir un pourcentage lors de reventes (œuvres graphiques/plastiques uniquement)"
+    ],
+    "exclusivite": true,
     "auteur_type": "Personne physique",
     "auteur_info": {
-      "gentille": "Mme",
-      "saveToClients": false,
-      "nom": "ASTRUC",
-      "prenom": "Florine",
-      "date_naissance": "2025-04-11",
-      "lieu_naissance": "Montpellier",
-      "nationalite": "Française",
       "adresse": "104 Avenue de Versailles",
       "code_postal": "75016",
-      "ville": "Paris"
+      "date_naissance": "2025-04-03",
+      "gentille": "M.",
+      "id": "1743779843640",
+      "lieu_naissance": "Montpellier",
+      "nationalite": "Française",
+      "nom": "ASTRUC",
+      "prenom": "Florine",
+      "type": "physical_person",
+      "ville": "Paris",
+      "representant_civilite": "M.",
+      "representant_nom": "",
+      "representant_prenom": "",
+      "qualite_representant": ""
     },
     "description_oeuvre": "",
     "description_image": "test",
     "supports": [],
-    "remuneration": "",
-    "entreprise_info": {},
-    "user_id": "anon_mzfxjm4o9zj_m92sx8c2",
-    "cessionnaire_info": {
-      "adresse": "104 avenue de versailles",
+    "remuneration": "500",
+    "entreprise_info": {
+      "type": "legal_entity",
+      "nom": "Tellers",
+      "forme_juridique": "Société par action simplifié",
+      "siren": "932 553 266",
+      "adresse": "104 Avenue de Versailles",
       "code_postal": "75016",
-      "date_naissance": "0022-02-22",
-      "gentille": "M.",
-      "is_configured": true,
-      "lieu_naissance": "Toulouse",
-      "nationalite": "Française",
-      "nom": "MAURICI",
-      "prenom": "Lucas",
-      "ville": "Escalquens",
-      "adresse_complete": "104 avenue de versailles, 75016 Escalquens"
+      "ville": "Paris",
+      "email": "maurici.lucas@proton.me",
+      "telephone": "0659965152",
+      "capital": "1000€",
+      "representant_civilite": "M.",
+      "representant_nom": "MAURICI",
+      "representant_prenom": "Lucas",
+      "qualite_representant": "Gérant"
+    },
+    "user_id": "user_2vB3c2hURFDmvhtc2QpqUVqUM9q_google",
+    "cessionnaire_info": {
+      "type": "legal_entity",
+      "nom": "Tellers",
+      "forme_juridique": "Société par action simplifié",
+      "siren": "932 553 266",
+      "adresse": "104 Avenue de Versailles",
+      "code_postal": "75016",
+      "ville": "Paris",
+      "email": "maurici.lucas@proton.me",
+      "telephone": "0659965152",
+      "capital": "1000€",
+      "representant_civilite": "M.",
+      "representant_nom": "MAURICI",
+      "representant_prenom": "Lucas",
+      "qualite_representant": "Gérant",
+      "adresse_complete": "104 Avenue de Versailles, 75016 Paris"
     }
   },
   "is_draft": false,
   "from_step6": true,
-  "user_id": "user_2vB3c2hURFDmvhtc2QpqUVqUM9q_clerk",
-  "created_at": "2025-04-04T18:17:09.840668",
-  "updated_at": "2025-04-04T18:17:20.029108",
-  "original_user_id": "anon_mzfxjm4o9zj_m92sx8c2",
-  "preserved_import": true,
-  "comments": [],
+  "user_id": "user_2vB3c2hURFDmvhtc2QpqUVqUM9q_google",
+  "created_at": "2025-04-05T17:07:40.145411",
+  "updated_at": "2025-04-05T17:07:40.145422",
   "elements": [
     {
       "type": "paragraph",
@@ -71,7 +99,7 @@
     {
       "type": "paragraph",
       "style": "ContractText",
-      "text": "Mme ASTRUC Florine, né(e) le 2025-04-11 à Montpellier, de nationalité Française, domicilié(e) au 104 Avenue de Versailles, 75016 Paris, ci-après dénommé(e) \"le Modèle\","
+      "text": "M. ASTRUC Florine, né(e) le 2025-04-03 à Montpellier, de nationalité Française, domicilié(e) au 104 Avenue de Versailles, 75016 Paris, ci-après dénommé(e) \"le Modèle\","
     },
     {
       "type": "spacer",
@@ -80,7 +108,7 @@
     {
       "type": "paragraph",
       "style": "ContractText",
-      "text": "M. MAURICI Lucas, né(e) le 0022-02-22 à Toulouse de nationalité Française, domicilié(e) au 104 avenue de versailles, 75016 Escalquens, ci-après dénommée \"le Cessionnaire\","
+      "text": "Tellers, Société par action simplifié au capital de 1000€, immatriculé sous le numéro 932 553 266 R.C.S Paris, dont le siège social est situé au 104 Avenue de Versailles, 75016 Paris, représentée par M. MAURICI Lucas, en sa qualité de Gérant, ci-après dénommée \"le Cessionnaire\","
     },
     {
       "type": "spacer",
@@ -251,7 +279,7 @@
     {
       "type": "paragraph",
       "style": "ContractText",
-      "text": "La présente autorisation est consentie à titre non exclusif, gratuitement, pour la durée et sur le territoire mentionnés à l'article 4."
+      "text": "La présente autorisation est consentie à titre exclusif, moyennant la rémunération précisée à l'article 6, pour la durée et sur le territoire mentionnés à l'article 4."
     },
     {
       "type": "spacer",
@@ -287,7 +315,7 @@
     {
       "type": "paragraph",
       "style": "ContractSubArticle",
-      "text": "2.4 Non-exclusivité"
+      "text": "2.4 Exclusivité"
     },
     {
       "type": "spacer",
@@ -296,7 +324,16 @@
     {
       "type": "paragraph",
       "style": "ContractText",
-      "text": "La présente autorisation étant non exclusive, le Modèle conserve le droit d'autoriser l'exploitation de son image à des tiers, sous réserve que cela ne nuise pas directement aux intérêts légitimes du Cessionnaire."
+      "text": "Compte tenu du caractère exclusif de la présente autorisation, le Modèle s'engage, pendant toute la durée du présent contrat : - À ne pas autoriser l'exploitation de son image telle que décrite à l'article 1.2 à des tiers ; - À ne pas utiliser ou exploiter lui-même son image dans des conditions similaires à celles autorisées au Cessionnaire."
+    },
+    {
+      "type": "spacer",
+      "height": 6
+    },
+    {
+      "type": "paragraph",
+      "style": "ContractText",
+      "text": "Cette exclusivité constitue un élément essentiel du présent contrat, sans lequel le Cessionnaire n'aurait pas contracté."
     },
     {
       "type": "spacer",
@@ -449,7 +486,7 @@
     {
       "type": "paragraph",
       "style": "ContractSubArticle",
-      "text": "6.1 Cession à titre gratuit"
+      "text": "6.1 Rémunération"
     },
     {
       "type": "spacer",
@@ -458,7 +495,16 @@
     {
       "type": "paragraph",
       "style": "ContractText",
-      "text": "La présente cession est consentie à titre gratuit, sans contrepartie financière. Le Cédant déclare expressément renoncer à toute rémunération au titre de la présente cession et être pleinement informé de la portée de cette gratuité."
+      "text": "En contrepartie de la présente cession, le Cessionnaire versera au Cédant la rémunération suivante :"
+    },
+    {
+      "type": "spacer",
+      "height": 6
+    },
+    {
+      "type": "paragraph",
+      "style": "ContractText",
+      "text": "500"
     },
     {
       "type": "spacer",
@@ -467,7 +513,7 @@
     {
       "type": "paragraph",
       "style": "ContractSubArticle",
-      "text": "6.2 Motivation de la gratuité"
+      "text": "6.2 Modalités de paiement"
     },
     {
       "type": "spacer",
@@ -476,7 +522,16 @@
     {
       "type": "paragraph",
       "style": "ContractText",
-      "text": "Les Parties reconnaissent que cette gratuité se justifie par : - L'intérêt réciproque des Parties à cette collaboration ; - La visibilité et la promotion apportées par le Cessionnaire à l'œuvre et/ou à l'image du Cédant ; - Le caractère non lucratif de certaines exploitations envisagées."
+      "text": "Le paiement sera effectué selon les modalités indiquées ci-dessus. Le Cessionnaire s'engage à respecter strictement ces conditions de rémunération, qui constituent un élément essentiel du consentement du Cédant."
+    },
+    {
+      "type": "spacer",
+      "height": 6
+    },
+    {
+      "type": "paragraph",
+      "style": "ContractSubArticle",
+      "text": "6.3 Justification de la rémunération"
     },
     {
       "type": "spacer",
@@ -485,7 +540,7 @@
     {
       "type": "paragraph",
       "style": "ContractText",
-      "text": "Le Cédant reconnaît avoir été pleinement informé de son droit à rémunération et y renoncer librement."
+      "text": "Les Parties reconnaissent que cette rémunération est équitable et proportionnée aux exploitations prévues. Elle a été déterminée en tenant compte notamment de l'étendue des droits cédés, de la durée de la cession, du territoire concerné et des investissements nécessaires à l'exploitation de l'œuvre/image."
     },
     {
       "type": "spacer",
@@ -503,7 +558,7 @@
     {
       "type": "paragraph",
       "style": "ContractSubArticle",
-      "text": "7.2 Garanties du Modèle"
+      "text": "6.1 Garanties du Modèle"
     },
     {
       "type": "spacer",
@@ -530,7 +585,7 @@
     {
       "type": "paragraph",
       "style": "ContractSubArticle",
-      "text": "7.3 Obligations du Cessionnaire"
+      "text": "6.2 Obligations du Cessionnaire"
     },
     {
       "type": "spacer",
@@ -557,7 +612,7 @@
     {
       "type": "paragraph",
       "style": "ContractSubArticle",
-      "text": "8.1 Résiliation pour inexécution"
+      "text": "7.1 Résiliation pour inexécution"
     },
     {
       "type": "spacer",
@@ -575,7 +630,7 @@
     {
       "type": "paragraph",
       "style": "ContractSubArticle",
-      "text": "8.2 Résiliation anticipée"
+      "text": "7.2 Résiliation anticipée"
     },
     {
       "type": "spacer",
@@ -593,7 +648,7 @@
     {
       "type": "paragraph",
       "style": "ContractSubArticle",
-      "text": "8.3 Conséquences de la résiliation"
+      "text": "7.3 Conséquences de la résiliation"
     },
     {
       "type": "spacer",
@@ -629,7 +684,7 @@
     {
       "type": "paragraph",
       "style": "ContractSubArticle",
-      "text": "9.1 Clause de non-dénigrement"
+      "text": "8.1 Clause de non-dénigrement"
     },
     {
       "type": "spacer",
@@ -647,7 +702,7 @@
     {
       "type": "paragraph",
       "style": "ContractSubArticle",
-      "text": "9.2 Intuitu personae"
+      "text": "8.2 Intuitu personae"
     },
     {
       "type": "spacer",
@@ -674,7 +729,7 @@
     {
       "type": "paragraph",
       "style": "ContractSubArticle",
-      "text": "9.3 Intégralité de l'accord"
+      "text": "8.3 Intégralité de l'accord"
     },
     {
       "type": "spacer",
@@ -692,7 +747,7 @@
     {
       "type": "paragraph",
       "style": "ContractSubArticle",
-      "text": "9.4 Nullité partielle"
+      "text": "8.4 Nullité partielle"
     },
     {
       "type": "spacer",
@@ -710,7 +765,7 @@
     {
       "type": "paragraph",
       "style": "ContractSubArticle",
-      "text": "9.5 Modification du contrat"
+      "text": "8.5 Modification du contrat"
     },
     {
       "type": "spacer",
@@ -737,7 +792,7 @@
     {
       "type": "paragraph",
       "style": "ContractSubArticle",
-      "text": "10.1 Loi applicable"
+      "text": "9.1 Loi applicable"
     },
     {
       "type": "spacer",
@@ -755,7 +810,7 @@
     {
       "type": "paragraph",
       "style": "ContractSubArticle",
-      "text": "10.2 Résolution amiable des litiges"
+      "text": "9.2 Résolution amiable des litiges"
     },
     {
       "type": "spacer",
@@ -782,7 +837,7 @@
     {
       "type": "paragraph",
       "style": "ContractSubArticle",
-      "text": "10.3 Attribution de juridiction"
+      "text": "9.3 Attribution de juridiction"
     },
     {
       "type": "spacer",
@@ -828,5 +883,6 @@
       "type": "spacer",
       "height": 8
     }
-  ]
+  ],
+  "comments": []
 }
