@@ -9,6 +9,7 @@ import ContractEditorPage from './pages/ContractEditorPage';
 import DashboardPage from './pages/DashboardPage';
 import LegalPage from './pages/LegalPage';
 import FinalizationPage from './pages/FinalizationPage';
+import VersionPage from './pages/VersionPage';
 import AuthGuard from './components/AuthGuard';
 import { WelcomePopup, MiniSaul } from './components/ui';
 import DraftNotification from './components/DraftNotification';
@@ -61,6 +62,7 @@ function App() {
           
           <Route path="about" element={<AboutPage />} />
           <Route path="legal" element={<LegalPage />} />
+          <Route path="versions" element={<VersionPage />} />
         </Route>
       </Routes>
     </>

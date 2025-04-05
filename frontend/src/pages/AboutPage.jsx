@@ -1,5 +1,6 @@
 import React from 'react';
-import { Shield, Book, HelpCircle } from 'lucide-react';
+import { Shield, BookOpen, HelpCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const AboutPage = () => {
   return (
@@ -44,12 +45,18 @@ const AboutPage = () => {
         </div>
         <div className="bg-white p-6 rounded-lg shadow-md">
           <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-            <Book className="h-6 w-6 text-blue-600" />
+            <BookOpen className="h-6 w-6 text-blue-600" />
           </div>
           <h3 className="text-xl font-semibold mb-2">Expertise juridique</h3>
-          <p className="text-gray-600">
+          <p className="text-gray-600 mb-4">
             Les modèles de contrats sont élaborés par un juriste et régulièrement mis à jour pour refléter les évolutions législatives et réglementaires. Chaque template a été construit avec soin pour éviter toute erreur et garantir une qualité juridique optimale.
           </p>
+          <div className="mt-4">
+            <Link to="/versions" className="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors">
+              <BookOpen size={16} className="mr-1" />
+              <span>Consulter les versions et corrections</span>
+            </Link>
+          </div>
         </div>
         <div className="bg-white p-6 rounded-lg shadow-md">
           <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
