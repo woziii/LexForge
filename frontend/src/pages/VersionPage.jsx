@@ -16,7 +16,7 @@ const VersionPage = () => {
         <div className="bg-white rounded-lg shadow-md p-8">
           <div className="flex items-center mb-6">
             <GitBranch className="h-7 w-7 text-blue-600 mr-3" />
-            <h2 className="text-2xl font-bold text-gray-900">Version Bêta 1.0</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Version Bêta 1.1</h2>
             <span className="ml-3 text-sm bg-blue-100 text-blue-800 py-1 px-2 rounded-md">Actuelle</span>
           </div>
           
@@ -58,7 +58,7 @@ const VersionPage = () => {
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-8">
           <div className="flex items-center mb-6">
             <GitBranch className="h-7 w-7 text-indigo-600 mr-3" />
-            <h2 className="text-2xl font-bold text-gray-900">Version Bêta 1.1</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Version Bêta 1.2</h2>
             <span className="ml-3 text-sm bg-indigo-100 text-indigo-800 py-1 px-2 rounded-md">À venir</span>
           </div>
           
