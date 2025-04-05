@@ -41,7 +41,7 @@ const VersionPage = () => {
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
               <Bug className="h-5 w-5 text-amber-600 mr-2" />
-              Corrections de bugs récentes
+              Corrections récentes :
             </h3>
             <ul className="list-disc list-inside text-gray-600 space-y-1 pl-6">
               <li>Correction du bug de numérotation des contrats</li>
