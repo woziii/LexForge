@@ -288,6 +288,7 @@ const Layout = () => {
                 <Link to="/versions" className="hover:text-blue-300 flex items-center">
                   <BookOpen size={14} className="mr-1" /> Versions
                 </Link>
+                <Link to="/plan-site" className="hover:text-blue-300">Plan du site</Link>
               </div>
             </div>
           </div>
