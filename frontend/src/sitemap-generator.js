@@ -17,7 +17,10 @@ const hostname = 'https://www.lexforge.fr';
 
 async function generateSitemap() {
   try {
-    const sitemapStream = new SitemapStream({ hostname });
+    const sitemapStream = new SitemapStream({ 
+      hostname,
+      pretty: true // Ajout de l'option pretty pour la mise en forme
+    });
 
     routes.forEach(route => {
       sitemapStream.write({
@@ -30,9 +33,13 @@ async function generateSitemap() {
     sitemapStream.end();
 
     const xmlData = await streamToPromise(sitemapStream);
+    
+    // Ajout d'un saut de ligne après la déclaration XML
+    const formattedXml = xmlData.toString()
+      .replace('<?xml version="1.0" encoding="UTF-8"?>', '<?xml version="1.0" encoding="UTF-8"?>\n')
+      .replace(/></g, '>\n  <');
 
-    // Plus d'en-tête redondant ici !
-    fs.writeFileSync(resolve('./public/sitemap.xml'), xmlData.toString(), { encoding: 'utf8' });
+    fs.writeFileSync(resolve('./public/sitemap.xml'), formattedXml, { encoding: 'utf8' });
 
     console.log('✅ Sitemap XML propre généré dans /public/sitemap.xml');
   } catch (error) {
