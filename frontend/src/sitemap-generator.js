@@ -1,5 +1,5 @@
 const { SitemapStream, streamToPromise } = require('sitemap');
-const { createWriteStream } = require('fs');
+const fs = require('fs');
 const { resolve } = require('path');
 
 // Routes publiques extraites de App.js
@@ -17,26 +17,32 @@ const hostname = 'https://www.lexforge.fr';
 
 // Création du sitemap
 async function generateSitemap() {
-  const sitemap = new SitemapStream({ hostname });
-  const writeStream = createWriteStream(resolve('./public/sitemap.xml'));
-  
-  // Ajout des routes au sitemap
-  routes.forEach(route => {
-    sitemap.write({
-      url: route,
-      changefreq: 'weekly',
-      priority: route === '/' ? 1.0 : 0.8
+  try {
+    // Création du stream pour le sitemap
+    const sitemapStream = new SitemapStream({ hostname });
+    
+    // Ajout des routes au sitemap
+    routes.forEach(route => {
+      sitemapStream.write({
+        url: route,
+        changefreq: 'weekly',
+        priority: route === '/' ? 1.0 : 0.8
+      });
     });
-  });
-  
-  sitemap.end();
-  
-  // Redirection du flux vers le fichier
-  sitemap.pipe(writeStream);
-  
-  console.log('Sitemap généré avec succès dans /public/sitemap.xml');
+    
+    // Fin de l'écriture dans le stream
+    sitemapStream.end();
+    
+    // Conversion du stream en XML
+    const sitemap = await streamToPromise(sitemapStream);
+    
+    // Écriture du XML dans le fichier
+    fs.writeFileSync(resolve('./public/sitemap.xml'), sitemap.toString());
+    
+    console.log('✅ Sitemap généré au format XML valide dans /public/sitemap.xml');
+  } catch (error) {
+    console.error('Erreur lors de la génération du sitemap:', error);
+  }
 }
 
-generateSitemap().catch(error => {
-  console.error('Erreur lors de la génération du sitemap:', error);
-}); 
+generateSitemap(); 
