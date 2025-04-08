@@ -13,6 +13,7 @@ import {
 import { useAuth, UserButton, SignInButton, useClerk } from '@clerk/clerk-react';
 import { migrateAnonymousUserData, getCurrentUserId } from '../services/api';
 import { clearAllTempData } from '../utils/clearTempData';
+import SchemaOrg from './SchemaOrg';
 
 const Layout = () => {
   const location = useLocation();
@@ -82,6 +83,7 @@ const Layout = () => {
   
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
+      <SchemaOrg path={location.pathname} />
       {/* En-tête */}
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 py-3 sm:py-4 sm:px-6 flex items-center justify-between">
