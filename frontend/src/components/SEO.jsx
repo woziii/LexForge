@@ -17,8 +17,12 @@ const SEO = ({ title, description, keywords, canonical }) => {
       <meta name="robots" content="index, follow" />
       <link rel="canonical" href={canonical || 'https://www.lexforge.fr'} />
       
-      {/* Favicon et manifest */}
-      <link rel="icon" href="/favicon.ico" />
+      {/* Favicons pour différents contextes */}
+      <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+      <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+      <link rel="apple-touch-icon" href="/favicon.ico" />
+      <meta name="msapplication-TileImage" content="/favicon.ico" />
+      <meta name="msapplication-TileColor" content="#ffffff" />
       <link rel="manifest" href="/manifest.json" />
       
       {/* Open Graph - Essentiel pour LinkedIn et autres partages */}
