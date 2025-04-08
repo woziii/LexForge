@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import NotificationPopup from '../components/ui/NotificationPopup';
+import SEO from '../components/SEO';
 
 const LegalPage = () => {
   const [showPopup, setShowPopup] = useState(false);
@@ -49,15 +50,23 @@ const LegalPage = () => {
   };
   
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      {/* Page intentionnellement vide */}
-      {showPopup && (
-        <NotificationPopup 
-          messages={legalMessages} 
-          onClose={handleClosePopup} 
-        />
-      )}
-    </div>
+    <>
+      <SEO 
+        title="Mentions légales"
+        description="Mentions légales et conditions d'utilisation de notre plateforme de génération de contrats juridiques. Informations sur l'éditeur et les règles d'utilisation du service."
+        keywords="mentions légales, conditions utilisation, CGU, lexforge, juridique, éditeur, règles d'utilisation"
+        canonical="https://www.lexforge.fr/legal"
+      />
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        {/* Page intentionnellement vide */}
+        {showPopup && (
+          <NotificationPopup 
+            messages={legalMessages} 
+            onClose={handleClosePopup} 
+          />
+        )}
+      </div>
+    </>
   );
 };
 
