@@ -7,6 +7,7 @@ const SEO = ({ title, description, keywords, canonical }) => {
   const defaultDescription = 'Générez des contrats juridiques conformes en quelques clics. Protégez vos créations avec des documents légaux professionnels.';
   const defaultKeywords = 'contrat juridique, générateur de contrat, droit d\'auteur, cession de droits, document légal';
   const logoUrl = `https://www.lexforge.fr${logoIcon}`;
+  const publicUrl = process.env.PUBLIC_URL || '';
 
   return (
     <Helmet>
@@ -18,12 +19,12 @@ const SEO = ({ title, description, keywords, canonical }) => {
       <link rel="canonical" href={canonical || 'https://www.lexforge.fr'} />
       
       {/* Favicons pour différents contextes */}
-      <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-      <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
-      <link rel="apple-touch-icon" href="/favicon.ico" />
-      <meta name="msapplication-TileImage" content="/favicon.ico" />
+      <link rel="icon" type="image/x-icon" href={`${publicUrl}/favicon.ico`} />
+      <link rel="shortcut icon" type="image/x-icon" href={`${publicUrl}/favicon.ico`} />
+      <link rel="apple-touch-icon" href={`${publicUrl}/favicon.ico`} />
+      <meta name="msapplication-TileImage" content={`${publicUrl}/favicon.ico`} />
       <meta name="msapplication-TileColor" content="#ffffff" />
-      <link rel="manifest" href="/manifest.json" />
+      <link rel="manifest" href={`${publicUrl}/manifest.json`} />
       
       {/* Open Graph - Essentiel pour LinkedIn et autres partages */}
       <meta property="og:type" content="website" />
@@ -37,4 +38,4 @@ const SEO = ({ title, description, keywords, canonical }) => {
   );
 };
 
-export default SEO; 
+export default SEO;
