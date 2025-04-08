@@ -1,40 +1,34 @@
 import React from 'react';
 import { Helmet } from 'react-helmet';
+import logoIcon from '../assets/images/logoIcon.jpeg';
 
 const SEO = ({ title, description, keywords, canonical }) => {
   const defaultTitle = 'LexForge - Générateur de contrats juridiques';
   const defaultDescription = 'Générez des contrats juridiques conformes en quelques clics. Protégez vos créations avec des documents légaux professionnels.';
   const defaultKeywords = 'contrat juridique, générateur de contrat, droit d\'auteur, cession de droits, document légal';
+  const logoUrl = `https://www.lexforge.fr${logoIcon}`;
 
   return (
     <Helmet>
+      {/* Balises SEO essentielles */}
       <title>{title || defaultTitle}</title>
       <meta name="description" content={description || defaultDescription} />
       <meta name="keywords" content={keywords || defaultKeywords} />
+      <meta name="robots" content="index, follow" />
       <link rel="canonical" href={canonical || 'https://www.lexforge.fr'} />
       
-      {/* Favicon - Multiple formats pour assurer la compatibilité maximale */}
+      {/* Favicon et manifest */}
       <link rel="icon" href="/favicon.ico" />
-      <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-      <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
-      <link rel="apple-touch-icon" href="/favicon.ico" />
       <link rel="manifest" href="/manifest.json" />
-      <meta name="theme-color" content="#3B82F6" /> {/* Couleur bleue de l'interface LexForge */}
-      <meta name="msapplication-TileImage" content="/favicon.ico" />
       
-      {/* Open Graph / Facebook */}
+      {/* Open Graph - Essentiel pour LinkedIn et autres partages */}
       <meta property="og:type" content="website" />
       <meta property="og:url" content={canonical || 'https://www.lexforge.fr'} />
       <meta property="og:title" content={title || defaultTitle} />
       <meta property="og:description" content={description || defaultDescription} />
-      <meta property="og:image" content="/favicon.ico" /> {/* Utiliser favicon comme image par défaut */}
-      
-      {/* Twitter */}
-      <meta property="twitter:card" content="summary_large_image" />
-      <meta property="twitter:url" content={canonical || 'https://www.lexforge.fr'} />
-      <meta property="twitter:title" content={title || defaultTitle} />
-      <meta property="twitter:description" content={description || defaultDescription} />
-      <meta property="twitter:image" content="/favicon.ico" /> {/* Utiliser favicon comme image par défaut */}
+      <meta property="og:image" content={logoUrl} />
+      <meta property="og:site_name" content="LexForge" />
+      <meta property="og:locale" content="fr_FR" />
     </Helmet>
   );
 };

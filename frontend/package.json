@@ -52,8 +52,13 @@
     ]
   },
   "devDependencies": {
+    "@babel/plugin-transform-modules-commonjs": "^7.26.3",
+    "@babel/preset-env": "^7.26.9",
+    "@babel/preset-react": "^7.26.3",
+    "@babel/register": "^7.25.9",
     "autoprefixer": "^10.4.16",
     "postcss": "^8.4.31",
+    "react-router-sitemap-generator": "^0.0.8",
     "sitemap": "^8.0.0"
   }
 }
