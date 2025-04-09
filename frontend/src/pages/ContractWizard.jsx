@@ -59,6 +59,15 @@ const ContractWizard = () => {
       try {
         setIsCheckingProfile(true);
         
+        // Vérifier si l'utilisateur revient de l'étape 6 vers l'étape 5
+        if (location.state?.returnToStep === 5) {
+          setActiveStep(5);
+          // Réinitialiser l'état pour éviter de revenir à l'étape 5 lors d'une actualisation
+          window.history.replaceState({}, document.title);
+          setIsCheckingProfile(false);
+          return;
+        }
+        
         // Vérifier si l'utilisateur vient du Dashboard après avoir rempli ses informations
         const fromDashboard = new URLSearchParams(location.search).get('fromDashboard') === 'true';
         
