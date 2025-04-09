@@ -1,0 +1,25 @@
+{
+  "physical_person": {
+    "is_configured": false,
+    "gentille": "",
+    "nom": "",
+    "prenom": "",
+    "date_naissance": "",
+    "nationalite": "",
+    "adresse": ""
+  },
+  "legal_entity": {
+    "is_configured": false,
+    "nom": "",
+    "forme_juridique": "",
+    "capital": "",
+    "rcs": "",
+    "siege": "",
+    "representant": "",
+    "qualite_representant": ""
+  },
+  "selected_entity_type": "",
+  "user_id": "anon_9ahp7rlg5lb_m99rr6tj",
+  "is_temporary": true,
+  "created_at": "2025-04-09T12:11:04.913541"
+}

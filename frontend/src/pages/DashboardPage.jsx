@@ -163,21 +163,35 @@ const DashboardPage = () => {
       setIsSaving(true);
       setErrorMessage('');
       
-      // Marquer le type sélectionné comme configuré
-      if (profileData.selected_entity_type === 'physical_person') {
-        profileData.physical_person.is_configured = true;
-      } else if (profileData.selected_entity_type === 'legal_entity') {
-        profileData.legal_entity.is_configured = true;
-      } else {
-        setErrorMessage('Veuillez sélectionner un type de cessionnaire.');
+      // Déterminer si au moins un profil contient des informations
+      const hasPhysicalPersonData = profileData.physical_person && profileData.physical_person.nom;
+      const hasLegalEntityData = profileData.legal_entity && profileData.legal_entity.nom;
+      
+      // Vérifier qu'au moins un profil a des données
+      if (!hasPhysicalPersonData && !hasLegalEntityData) {
+        setErrorMessage('Veuillez compléter au moins un profil (personne physique ou morale).');
         setIsSaving(false);
         return;
       }
       
-      // Sauvegarder les données formatées pour le sessionStorage (prévisualisation)
-      const entityType = profileData.selected_entity_type;
-      const entityData = profileData[entityType];
-      const formattedData = formatBusinessDataForStorage(entityType, entityData);
+      // Marquer les profils comme configurés s'ils contiennent des données
+      if (hasPhysicalPersonData) {
+        profileData.physical_person.is_configured = true;
+      }
+      
+      if (hasLegalEntityData) {
+        profileData.legal_entity.is_configured = true;
+      }
+      
+      // Pour les utilisateurs non authentifiés, assurons-nous qu'un type d'entité est sélectionné
+      // Ceci est important pour maintenir la compatibilité avec le flux de travail existant
+      if (!profileData.selected_entity_type) {
+        if (hasPhysicalPersonData) {
+          profileData.selected_entity_type = 'physical_person';
+        } else if (hasLegalEntityData) {
+          profileData.selected_entity_type = 'legal_entity';
+        }
+      }
       
       // Assurer que l'ID utilisateur est inclus
       const dataToSave = {
@@ -185,7 +199,7 @@ const DashboardPage = () => {
         user_id: getCurrentUserId()
       };
       
-      // Enregistrer le profil sans validation obligatoire
+      // Enregistrer le profil
       await updateUserProfile(dataToSave);
       setSuccessMessage('Vos informations ont été enregistrées avec succès.');
       
@@ -302,7 +316,7 @@ const DashboardPage = () => {
             <div>
               <p className="text-blue-800 font-medium mb-1">Pourquoi ces informations sont-elles importantes ?</p>
               <p className="text-blue-700">
-                Veuillez choisir si vous souhaitez apparaître en tant que personne physique ou morale dans vos contrats.
+                Veuillez remplir vos informations personnelles et/ou d'entreprise pour les utiliser dans vos contrats.
               </p>
             </div>
           </div>
@@ -346,31 +360,21 @@ const DashboardPage = () => {
                   </p>
                 </div>
 
-                {/* Entity Type Selection - Style moderne avec cartes */}
+                {/* Entity Type Selection - Supprimé */}
                 <div className="mb-8">
-                  <h3 className="text-base font-medium text-gray-700 mb-3">Type de personne</h3>
+                  <h3 className="text-base font-medium text-gray-700 mb-3">Mes profils</h3>
                   
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {/* Option: Personne physique */}
-                    <label 
-                      className={`border rounded-xl p-4 flex cursor-pointer transition-all duration-200 ${
-                        profileData.selected_entity_type === 'physical_person' 
-                          ? 'bg-blue-50 border-blue-200 shadow-sm' 
-                          : 'bg-white hover:bg-gray-50 border-gray-200'
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="entity-type"
-                        className="sr-only"
-                        checked={profileData.selected_entity_type === 'physical_person'}
-                        onChange={() => handleEntityTypeSelect('physical_person')}
-                      />
-                      
+                    <div className={`border rounded-xl p-4 flex transition-all duration-200 ${
+                      profileData.physical_person.is_configured 
+                        ? 'bg-blue-50 border-blue-200 shadow-sm' 
+                        : 'bg-white border-gray-200'
+                    }`}>
                       <div className="flex items-center w-full relative">
                         <div className="flex-shrink-0 mr-4">
                           <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                            profileData.selected_entity_type === 'physical_person'
+                            profileData.physical_person.is_configured
                               ? 'bg-blue-100 text-blue-600'
                               : 'bg-gray-100 text-gray-500'
                           }`}>
@@ -381,7 +385,7 @@ const DashboardPage = () => {
                         <div className="flex-1">
                           <h4 className="text-base font-medium text-gray-900">Personne physique</h4>
                           <p className="text-sm text-gray-500">
-                            Utilisez cette option si vous agissez en tant qu'individu
+                            Utilisez ce profil si vous agissez en tant qu'individu
                           </p>
                           
                           {profileData.physical_person.is_configured && (
@@ -391,35 +395,19 @@ const DashboardPage = () => {
                             </div>
                           )}
                         </div>
-                        
-                        {profileData.selected_entity_type === 'physical_person' && (
-                          <div className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm border-2 border-white">
-                            Sélectionné
-                          </div>
-                        )}
                       </div>
-                    </label>
+                    </div>
                     
                     {/* Option: Personne morale */}
-                    <label 
-                      className={`border rounded-xl p-4 flex cursor-pointer transition-all duration-200 ${
-                        profileData.selected_entity_type === 'legal_entity' 
-                          ? 'bg-blue-50 border-blue-200 shadow-sm' 
-                          : 'bg-white hover:bg-gray-50 border-gray-200'
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="entity-type"
-                        className="sr-only"
-                        checked={profileData.selected_entity_type === 'legal_entity'}
-                        onChange={() => handleEntityTypeSelect('legal_entity')}
-                      />
-                      
+                    <div className={`border rounded-xl p-4 flex transition-all duration-200 ${
+                      profileData.legal_entity.is_configured 
+                        ? 'bg-blue-50 border-blue-200 shadow-sm' 
+                        : 'bg-white border-gray-200'
+                    }`}>
                       <div className="flex items-center w-full relative">
                         <div className="flex-shrink-0 mr-4">
                           <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                            profileData.selected_entity_type === 'legal_entity'
+                            profileData.legal_entity.is_configured
                               ? 'bg-blue-100 text-blue-600'
                               : 'bg-gray-100 text-gray-500'
                           }`}>
@@ -430,7 +418,7 @@ const DashboardPage = () => {
                         <div className="flex-1">
                           <h4 className="text-base font-medium text-gray-900">Personne morale</h4>
                           <p className="text-sm text-gray-500">
-                            Utilisez cette option si vous agissez au nom d'une société
+                            Utilisez ce profil si vous agissez au nom d'une société
                           </p>
                           
                           {profileData.legal_entity.is_configured && (
@@ -440,14 +428,8 @@ const DashboardPage = () => {
                             </div>
                           )}
                         </div>
-                        
-                        {profileData.selected_entity_type === 'legal_entity' && (
-                          <div className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm border-2 border-white">
-                            Sélectionné
-                          </div>
-                        )}
                       </div>
-                    </label>
+                    </div>
                   </div>
                 </div>
                 
@@ -811,9 +793,9 @@ const DashboardPage = () => {
                   <button
                     type="button"
                     onClick={handleSaveProfile}
-                    disabled={isSaving || !profileData.selected_entity_type}
+                    disabled={isSaving}
                     className={`flex items-center px-6 py-3 rounded-lg text-white ${
-                      isSaving || !profileData.selected_entity_type
+                      isSaving
                         ? 'bg-gray-400 cursor-not-allowed'
                         : 'bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-lg'
                     } transition-all duration-200`}

@@ -1,0 +1,29 @@
+{
+  "created_at": "2025-04-09T11:58:41.882584",
+  "is_temporary": true,
+  "legal_entity": {
+    "capital": "",
+    "forme_juridique": "",
+    "is_configured": false,
+    "nom": "",
+    "qualite_representant": "",
+    "rcs": "",
+    "representant": "",
+    "siege": ""
+  },
+  "physical_person": {
+    "adresse": "12 impasse Lumi\u00e8re",
+    "code_postal": "69001",
+    "date_naissance": "2025-04-10",
+    "email": "zoe.dupontel@exemplemail.com",
+    "gentille": "Mlle",
+    "is_configured": true,
+    "lieu_naissance": "Grenoble",
+    "nationalite": "Fran\u00e7aise",
+    "nom": "Dupontel",
+    "prenom": "Zo\u00e9",
+    "ville": "Lyon"
+  },
+  "selected_entity_type": "physical_person",
+  "user_id": "anon_n5mc5u8b7ik_m99rb86c"
+}
