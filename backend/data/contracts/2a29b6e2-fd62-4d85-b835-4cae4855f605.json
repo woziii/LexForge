@@ -1,0 +1,50 @@
+{
+  "id": "2a29b6e2-fd62-4d85-b835-4cae4855f605",
+  "title": "Brouillon - 09/04/2025 12:15:30",
+  "data": {
+    "type_contrat": [
+      "Image (droit à l'image)"
+    ],
+    "type_cession": "Gratuite",
+    "droits_cedes": [],
+    "exclusivite": false,
+    "auteur_type": "Personne physique",
+    "auteur_info": {
+      "gentille": "M.",
+      "saveToClients": false,
+      "nom": "AllRight",
+      "prenom": "Saul",
+      "adresse": "12 boulevard du Droit, Bâtiment 451",
+      "code_postal": "75013",
+      "ville": "Paris",
+      "date_naissance": "2666-06-26",
+      "lieu_naissance": "Paris",
+      "nationalite": "Française"
+    },
+    "description_oeuvre": "",
+    "description_image": "test",
+    "supports": [],
+    "remuneration": "",
+    "entreprise_info": {},
+    "user_id": "anon_ofcuwtlj4q_m99rr9e7",
+    "cessionnaire_info": {
+      "adresse": "12 impasse Lumière",
+      "date_naissance": "1996-09-27",
+      "gentille": "Mlle",
+      "is_configured": true,
+      "nationalite": "Française",
+      "nom": "Dupontel",
+      "prenom": "Zoé",
+      "code_postal": "69001",
+      "ville": "Lyon",
+      "email": "zoe.dupontel@exemplemail.com",
+      "lieu_naissance": "Paris",
+      "adresse_complete": "12 impasse Lumière, 69001 Lyon"
+    }
+  },
+  "is_draft": true,
+  "from_step6": true,
+  "user_id": "anon_ofcuwtlj4q_m99rr9e7",
+  "created_at": "2025-04-09T12:15:30.804573",
+  "updated_at": "2025-04-09T12:15:30.804603"
+}

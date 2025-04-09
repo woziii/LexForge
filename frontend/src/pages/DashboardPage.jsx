@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@clerk/clerk-react';
-import { Building2, User, Save, AlertCircle, Check, HelpCircle, Briefcase, Shield, Users, RotateCcw } from 'lucide-react';
+import { Building2, User, Save, AlertCircle, Check, HelpCircle, Briefcase, Shield, Users, RotateCcw, Info } from 'lucide-react';
 import { getUserProfile, updateUserProfile, getCurrentUserId } from '../services/api';
 import { AUTHOR_TYPES, CIVILITY_OPTIONS } from '../utils/constants';
 import { clearTempBusinessInfo } from '../utils/clearTempData';
@@ -184,13 +184,23 @@ const DashboardPage = () => {
       }
       
       // Pour les utilisateurs non authentifiés, assurons-nous qu'un type d'entité est sélectionné
-      // Ceci est important pour maintenir la compatibilité avec le flux de travail existant
+      // Ceci est essentiel pour le fonctionnement correct des brouillons
       if (!profileData.selected_entity_type) {
         if (hasPhysicalPersonData) {
           profileData.selected_entity_type = 'physical_person';
         } else if (hasLegalEntityData) {
           profileData.selected_entity_type = 'legal_entity';
         }
+      }
+      
+      // Sauvegarder les données formatées pour le sessionStorage (prévisualisation) - CRUCIAL pour les brouillons
+      const entityType = profileData.selected_entity_type;
+      const entityData = profileData[entityType];
+      const formattedData = formatBusinessDataForStorage(entityType, entityData);
+      
+      // Stocker les données formatées dans la session pour assurer la compatibilité avec les brouillons
+      if (entityType && entityData) {
+        sessionStorage.setItem('businessInfo', JSON.stringify(formattedData));
       }
       
       // Assurer que l'ID utilisateur est inclus
@@ -360,21 +370,31 @@ const DashboardPage = () => {
                   </p>
                 </div>
 
-                {/* Entity Type Selection - Supprimé */}
+                {/* Entity Type Selection */}
                 <div className="mb-8">
                   <h3 className="text-base font-medium text-gray-700 mb-3">Mes profils</h3>
                   
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {/* Option: Personne physique */}
-                    <div className={`border rounded-xl p-4 flex transition-all duration-200 ${
-                      profileData.physical_person.is_configured 
-                        ? 'bg-blue-50 border-blue-200 shadow-sm' 
-                        : 'bg-white border-gray-200'
-                    }`}>
+                    <label 
+                      className={`border rounded-xl p-4 flex cursor-pointer transition-all duration-200 ${
+                        profileData.selected_entity_type === 'physical_person' 
+                          ? 'bg-blue-50 border-blue-200 shadow-sm' 
+                          : 'bg-white hover:bg-gray-50 border-gray-200'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="entity-type"
+                        className="sr-only"
+                        checked={profileData.selected_entity_type === 'physical_person'}
+                        onChange={() => handleEntityTypeSelect('physical_person')}
+                      />
+                      
                       <div className="flex items-center w-full relative">
                         <div className="flex-shrink-0 mr-4">
                           <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                            profileData.physical_person.is_configured
+                            profileData.selected_entity_type === 'physical_person'
                               ? 'bg-blue-100 text-blue-600'
                               : 'bg-gray-100 text-gray-500'
                           }`}>
@@ -395,19 +415,35 @@ const DashboardPage = () => {
                             </div>
                           )}
                         </div>
+                        
+                        {profileData.selected_entity_type === 'physical_person' && (
+                          <div className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm border-2 border-white">
+                            Sélectionné
+                          </div>
+                        )}
                       </div>
-                    </div>
+                    </label>
                     
                     {/* Option: Personne morale */}
-                    <div className={`border rounded-xl p-4 flex transition-all duration-200 ${
-                      profileData.legal_entity.is_configured 
-                        ? 'bg-blue-50 border-blue-200 shadow-sm' 
-                        : 'bg-white border-gray-200'
-                    }`}>
+                    <label 
+                      className={`border rounded-xl p-4 flex cursor-pointer transition-all duration-200 ${
+                        profileData.selected_entity_type === 'legal_entity' 
+                          ? 'bg-blue-50 border-blue-200 shadow-sm' 
+                          : 'bg-white hover:bg-gray-50 border-gray-200'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="entity-type"
+                        className="sr-only"
+                        checked={profileData.selected_entity_type === 'legal_entity'}
+                        onChange={() => handleEntityTypeSelect('legal_entity')}
+                      />
+                      
                       <div className="flex items-center w-full relative">
                         <div className="flex-shrink-0 mr-4">
                           <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                            profileData.legal_entity.is_configured
+                            profileData.selected_entity_type === 'legal_entity'
                               ? 'bg-blue-100 text-blue-600'
                               : 'bg-gray-100 text-gray-500'
                           }`}>
@@ -428,8 +464,21 @@ const DashboardPage = () => {
                             </div>
                           )}
                         </div>
+                        
+                        {profileData.selected_entity_type === 'legal_entity' && (
+                          <div className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm border-2 border-white">
+                            Sélectionné
+                          </div>
+                        )}
                       </div>
-                    </div>
+                    </label>
+                  </div>
+                  
+                  <div className="flex items-center mt-3">
+                    <Info size={14} className="text-blue-500 mr-1 flex-shrink-0" />
+                    <p className="text-xs text-gray-500">
+                      La sélection est facultative. Pour les utilisateurs authentifiés, vous pourrez choisir le profil à utiliser à chaque création de contrat.
+                    </p>
                   </div>
                 </div>
                 

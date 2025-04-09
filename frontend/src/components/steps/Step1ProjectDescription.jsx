@@ -36,9 +36,39 @@ const Step1ProjectDescription = ({ contractData, updateContractData }) => {
         const profileData = await getUserProfile();
         setUserProfile(profileData);
         
+        // Vérifier s'il existe des données de businessInfo dans sessionStorage (pour les brouillons)
+        const storedBusinessInfo = sessionStorage.getItem('businessInfo');
+        let businessInfoData = null;
+        
+        if (storedBusinessInfo) {
+          try {
+            businessInfoData = JSON.parse(storedBusinessInfo);
+            console.log('Données businessInfo récupérées de sessionStorage:', businessInfoData);
+          } catch (e) {
+            console.error('Erreur lors du parsing des données businessInfo:', e);
+          }
+        }
+        
         // Vérifier si un type d'entité est déjà sélectionné dans les données du contrat
         if (contractData.entreprise_info && contractData.entreprise_info.type) {
           setSelectedEntityType(contractData.entreprise_info.type);
+        }
+        // Si des données businessInfo sont disponibles dans la session, les utiliser prioritairement
+        else if (businessInfoData && businessInfoData.type) {
+          setSelectedEntityType(businessInfoData.type);
+          
+          // Si ce type correspond à un profil configuré, mettre à jour les données du contrat
+          if ((businessInfoData.type === 'physical_person' && profileData.physical_person?.is_configured) ||
+              (businessInfoData.type === 'legal_entity' && profileData.legal_entity?.is_configured)) {
+            
+            // Utiliser les données du profil mais préserver le type de l'entité
+            updateContractData({
+              entreprise_info: {
+                ...businessInfoData,
+                type: businessInfoData.type
+              }
+            });
+          }
         }
         // Sinon, pré-sélectionner un type d'entité basé sur les données configurées
         else if (profileData.selected_entity_type) {
@@ -119,6 +149,10 @@ const Step1ProjectDescription = ({ contractData, updateContractData }) => {
   const hasBothProfiles = userProfile && 
     userProfile.physical_person?.is_configured && 
     userProfile.legal_entity?.is_configured;
+    
+  // Vérifier si au moins un profil est configuré
+  const hasPhysicalProfile = userProfile && userProfile.physical_person?.is_configured;
+  const hasLegalProfile = userProfile && userProfile.legal_entity?.is_configured;
   
   // Fonction pour gérer le changement de type d'entité
   const handleEntityTypeSelect = (type) => {
@@ -132,6 +166,43 @@ const Step1ProjectDescription = ({ contractData, updateContractData }) => {
     if (entityData) {
       console.log(`Mise à jour du profil: passage à ${type}`);
       
+      // Formatage des données pour le sessionStorage - Crucial pour les brouillons
+      const formattedData = {
+        type: type,
+        ...(type === 'physical_person' ? {
+          gentille: entityData.gentille || '',
+          nom: entityData.nom || '',
+          prenom: entityData.prenom || '',
+          adresse: entityData.adresse || '',
+          code_postal: entityData.code_postal || '',
+          ville: entityData.ville || '',
+          email: entityData.email || '',
+          telephone: entityData.telephone || '',
+          siege: entityData.adresse ? `${entityData.adresse}, ${entityData.code_postal || ''} ${entityData.ville || ''}`.trim() : '',
+          date_naissance: entityData.date_naissance || '',
+          lieu_naissance: entityData.lieu_naissance || '',
+          nationalite: entityData.nationalite || ''
+        } : {
+          nom: entityData.nom || '',
+          forme_juridique: entityData.forme_juridique || '',
+          siren: entityData.siren || '',
+          adresse: entityData.adresse || '',
+          code_postal: entityData.code_postal || '',
+          ville: entityData.ville || '',
+          email: entityData.email || '',
+          telephone: entityData.telephone || '',
+          siege: entityData.adresse ? `${entityData.adresse}, ${entityData.code_postal || ''} ${entityData.ville || ''}`.trim() : '',
+          capital: entityData.capital || '1000 €',
+          representant_civilite: entityData.representant_civilite || 'M.',
+          representant_nom: entityData.representant_nom || '',
+          representant_prenom: entityData.representant_prenom || '',
+          qualite_representant: entityData.qualite_representant || ''
+        })
+      };
+      
+      // Stocker les informations dans sessionStorage - essentiel pour les brouillons
+      sessionStorage.setItem('businessInfo', JSON.stringify(formattedData));
+      
       // Mettre à jour les informations d'entreprise dans les données du contrat
       updateContractData({ 
         entreprise_info: {
@@ -141,6 +212,18 @@ const Step1ProjectDescription = ({ contractData, updateContractData }) => {
       });
     }
   };
+  
+  // Si l'utilisateur n'a qu'un seul profil configuré et qu'aucun profil n'est sélectionné,
+  // sélectionner automatiquement ce profil
+  useEffect(() => {
+    if (!selectedEntityType && userProfile) {
+      if (hasPhysicalProfile && !hasLegalProfile) {
+        handleEntityTypeSelect('physical_person');
+      } else if (!hasPhysicalProfile && hasLegalProfile) {
+        handleEntityTypeSelect('legal_entity');
+      }
+    }
+  }, [userProfile, hasPhysicalProfile, hasLegalProfile, selectedEntityType]);
   
   return (
     <div className="max-w-2xl mx-auto">
