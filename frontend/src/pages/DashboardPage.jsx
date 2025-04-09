@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@clerk/clerk-react';
-import { Building2, User, Save, AlertCircle, Check, HelpCircle, Briefcase, Shield, Users, RotateCcw } from 'lucide-react';
+import { Building2, User, Save, AlertCircle, Check, HelpCircle, Briefcase, Shield, Users, RotateCcw, Info } from 'lucide-react';
 import { getUserProfile, updateUserProfile, getCurrentUserId } from '../services/api';
 import { AUTHOR_TYPES, CIVILITY_OPTIONS } from '../utils/constants';
 import { clearTempBusinessInfo } from '../utils/clearTempData';
@@ -163,21 +163,45 @@ const DashboardPage = () => {
       setIsSaving(true);
       setErrorMessage('');
       
-      // Marquer le type sélectionné comme configuré
-      if (profileData.selected_entity_type === 'physical_person') {
-        profileData.physical_person.is_configured = true;
-      } else if (profileData.selected_entity_type === 'legal_entity') {
-        profileData.legal_entity.is_configured = true;
-      } else {
-        setErrorMessage('Veuillez sélectionner un type de cessionnaire.');
+      // Déterminer si au moins un profil contient des informations
+      const hasPhysicalPersonData = profileData.physical_person && profileData.physical_person.nom;
+      const hasLegalEntityData = profileData.legal_entity && profileData.legal_entity.nom;
+      
+      // Vérifier qu'au moins un profil a des données
+      if (!hasPhysicalPersonData && !hasLegalEntityData) {
+        setErrorMessage('Veuillez compléter au moins un profil (personne physique ou morale).');
         setIsSaving(false);
         return;
       }
       
-      // Sauvegarder les données formatées pour le sessionStorage (prévisualisation)
+      // Marquer les profils comme configurés s'ils contiennent des données
+      if (hasPhysicalPersonData) {
+        profileData.physical_person.is_configured = true;
+      }
+      
+      if (hasLegalEntityData) {
+        profileData.legal_entity.is_configured = true;
+      }
+      
+      // Pour les utilisateurs non authentifiés, assurons-nous qu'un type d'entité est sélectionné
+      // Ceci est essentiel pour le fonctionnement correct des brouillons
+      if (!profileData.selected_entity_type) {
+        if (hasPhysicalPersonData) {
+          profileData.selected_entity_type = 'physical_person';
+        } else if (hasLegalEntityData) {
+          profileData.selected_entity_type = 'legal_entity';
+        }
+      }
+      
+      // Sauvegarder les données formatées pour le sessionStorage (prévisualisation) - CRUCIAL pour les brouillons
       const entityType = profileData.selected_entity_type;
       const entityData = profileData[entityType];
       const formattedData = formatBusinessDataForStorage(entityType, entityData);
+      
+      // Stocker les données formatées dans la session pour assurer la compatibilité avec les brouillons
+      if (entityType && entityData) {
+        sessionStorage.setItem('businessInfo', JSON.stringify(formattedData));
+      }
       
       // Assurer que l'ID utilisateur est inclus
       const dataToSave = {
@@ -185,7 +209,7 @@ const DashboardPage = () => {
         user_id: getCurrentUserId()
       };
       
-      // Enregistrer le profil sans validation obligatoire
+      // Enregistrer le profil
       await updateUserProfile(dataToSave);
       setSuccessMessage('Vos informations ont été enregistrées avec succès.');
       
@@ -302,7 +326,7 @@ const DashboardPage = () => {
             <div>
               <p className="text-blue-800 font-medium mb-1">Pourquoi ces informations sont-elles importantes ?</p>
               <p className="text-blue-700">
-                Veuillez choisir si vous souhaitez apparaître en tant que personne physique ou morale dans vos contrats.
+                Veuillez remplir vos informations personnelles et/ou d'entreprise pour les utiliser dans vos contrats.
               </p>
             </div>
           </div>
@@ -346,9 +370,9 @@ const DashboardPage = () => {
                   </p>
                 </div>
 
-                {/* Entity Type Selection - Style moderne avec cartes */}
+                {/* Entity Type Selection */}
                 <div className="mb-8">
-                  <h3 className="text-base font-medium text-gray-700 mb-3">Type de personne</h3>
+                  <h3 className="text-base font-medium text-gray-700 mb-3">Mes profils</h3>
                   
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {/* Option: Personne physique */}
@@ -381,7 +405,7 @@ const DashboardPage = () => {
                         <div className="flex-1">
                           <h4 className="text-base font-medium text-gray-900">Personne physique</h4>
                           <p className="text-sm text-gray-500">
-                            Utilisez cette option si vous agissez en tant qu'individu
+                            Utilisez ce profil si vous agissez en tant qu'individu
                           </p>
                           
                           {profileData.physical_person.is_configured && (
@@ -430,7 +454,7 @@ const DashboardPage = () => {
                         <div className="flex-1">
                           <h4 className="text-base font-medium text-gray-900">Personne morale</h4>
                           <p className="text-sm text-gray-500">
-                            Utilisez cette option si vous agissez au nom d'une société
+                            Utilisez ce profil si vous agissez au nom d'une société
                           </p>
                           
                           {profileData.legal_entity.is_configured && (
@@ -448,6 +472,13 @@ const DashboardPage = () => {
                         )}
                       </div>
                     </label>
+                  </div>
+                  
+                  <div className="flex items-center mt-3">
+                    <Info size={14} className="text-blue-500 mr-1 flex-shrink-0" />
+                    <p className="text-xs text-gray-500">
+                      La sélection est facultative. Pour les utilisateurs authentifiés, vous pourrez choisir le profil à utiliser à chaque création de contrat.
+                    </p>
                   </div>
                 </div>
                 
@@ -811,9 +842,9 @@ const DashboardPage = () => {
                   <button
                     type="button"
                     onClick={handleSaveProfile}
-                    disabled={isSaving || !profileData.selected_entity_type}
+                    disabled={isSaving}
                     className={`flex items-center px-6 py-3 rounded-lg text-white ${
-                      isSaving || !profileData.selected_entity_type
+                      isSaving
                         ? 'bg-gray-400 cursor-not-allowed'
                         : 'bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-lg'
                     } transition-all duration-200`}

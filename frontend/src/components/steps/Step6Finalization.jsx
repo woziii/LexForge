@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Download, Check, Edit, CheckCircle, AlertCircle, Info } from 'lucide-react';
+import { Download, Check, Edit, CheckCircle, AlertCircle, Info, ArrowLeft } from 'lucide-react';
 import { generatePdf, saveContract, saveClient, accessFinalizationStep } from '../../services/api';
 import { useAuth, useClerk } from '@clerk/clerk-react';
 
@@ -508,6 +508,17 @@ const Step6Finalization = ({ contractData, updateContractData }) => {
               <span className="ml-2 text-xs bg-blue-100 text-blue-800 py-0.5 px-1.5 rounded-md">Beta</span>
             </>
           )}
+        </button>
+      </div>
+      
+      {/* Bouton pour revenir aux étapes précédentes, toujours activé */}
+      <div className="mb-6 flex justify-start">
+        <button 
+          className="flex items-center py-2 px-4 text-gray-600 hover:text-blue-600 transition-colors"
+          onClick={() => navigate('/wizard', { state: { returnToStep: 5 } })}
+        >
+          <ArrowLeft size={18} className="mr-2" />
+          <span>Retour aux étapes précédentes</span>
         </button>
       </div>
       

@@ -59,6 +59,15 @@ const ContractWizard = () => {
       try {
         setIsCheckingProfile(true);
         
+        // Vérifier si l'utilisateur revient de l'étape 6 vers l'étape 5
+        if (location.state?.returnToStep === 5) {
+          setActiveStep(5);
+          // Réinitialiser l'état pour éviter de revenir à l'étape 5 lors d'une actualisation
+          window.history.replaceState({}, document.title);
+          setIsCheckingProfile(false);
+          return;
+        }
+        
         // Vérifier si l'utilisateur vient du Dashboard après avoir rempli ses informations
         const fromDashboard = new URLSearchParams(location.search).get('fromDashboard') === 'true';
         
@@ -69,9 +78,8 @@ const ContractWizard = () => {
           return;
         }
         
-        // Pour les utilisateurs authentifiés uniquement, récupérer leurs informations de profil
+        // Pour les utilisateurs authentifiés uniquement, vérifier la présence des profils
         if (authLoaded && isSignedIn) {
-          // Pour utilisateur authentifié
           const profile = await getUserProfile();
           
           const hasPhysicalPerson = profile?.physical_person?.is_configured;
@@ -79,50 +87,10 @@ const ContractWizard = () => {
           
           if (!hasPhysicalPerson && !hasLegalEntity) {
             setShowProfileModal(true);
-          } else {
-            // Préremplir les informations d'entreprise depuis le profil de l'utilisateur
-            if (hasLegalEntity && profile.legal_entity) {
-              setContractData(prevData => ({
-                ...prevData,
-                entreprise_info: {
-                  type: 'legal_entity',
-                  nom: profile.legal_entity.nom || '',
-                  forme_juridique: profile.legal_entity.forme_juridique || '',
-                  siren: profile.legal_entity.siren || '',
-                  adresse: profile.legal_entity.adresse || '',
-                  code_postal: profile.legal_entity.code_postal || '',
-                  ville: profile.legal_entity.ville || '',
-                  email: profile.legal_entity.email || '',
-                  telephone: profile.legal_entity.telephone || '',
-                  capital: profile.legal_entity.capital || '',
-                  representant_civilite: profile.legal_entity.representant_civilite || 'M.',
-                  representant_nom: profile.legal_entity.representant_nom || '',
-                  representant_prenom: profile.legal_entity.representant_prenom || '',
-                  qualite_representant: profile.legal_entity.qualite_representant || ''
-                }
-              }));
-            } else if (hasPhysicalPerson && profile.physical_person) {
-              // Pour une personne physique, ne pas ajouter 'Entreprise individuelle'
-              const physicalPerson = profile.physical_person;
-              setContractData(prevData => ({
-                ...prevData,
-                entreprise_info: {
-                  type: 'physical_person',
-                  gentille: physicalPerson.gentille || '',
-                  nom: physicalPerson.nom || '',
-                  prenom: physicalPerson.prenom || '',
-                  date_naissance: physicalPerson.date_naissance || '',
-                  lieu_naissance: physicalPerson.lieu_naissance || '',
-                  nationalite: physicalPerson.nationalite || '',
-                  adresse: physicalPerson.adresse || '',
-                  code_postal: physicalPerson.code_postal || '',
-                  ville: physicalPerson.ville || '',
-                  email: physicalPerson.email || '',
-                  telephone: physicalPerson.telephone || ''
-                }
-              }));
-            }
           }
+          
+          // Nous ne préremplit plus automatiquement les infos d'entreprise
+          // Les informations seront gérées par le composant Step1
         }
       } catch (error) {
         console.error('Error checking user profile:', error);

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getUserProfile } from '../../services/api';
-import { X, AlertCircle, User, Building2, ChevronRight, LightbulbIcon } from 'lucide-react';
+import { X, AlertCircle, User, Building2, ChevronRight, LightbulbIcon, Shield, Check } from 'lucide-react';
 import TutorialPopup from './TutorialPopup';
 import { profileTutorialData } from '../../data';
 
-const ProfileRequiredModal = ({ isOpen, onClose }) => {
+const ProfileRequiredModal = ({ isOpen, onClose, onContinue }) => {
   const navigate = useNavigate();
   const [profileData, setProfileData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -43,6 +43,13 @@ const ProfileRequiredModal = ({ isOpen, onClose }) => {
 
   const handleContinue = () => {
     onClose();
+    if (hasBothEntities || hasPhysicalPerson || hasLegalEntity) {
+      // Si au moins un profil est configuré, permettre de continuer
+      if (onContinue) onContinue();
+    } else {
+      // Sinon, rediriger vers le dashboard pour configurer un profil
+      navigate('/dashboard?redirectTo=wizard');
+    }
   };
 
   const toggleTutorial = () => {
@@ -93,81 +100,36 @@ const ProfileRequiredModal = ({ isOpen, onClose }) => {
               {error}
             </div>
           ) : !hasAnyEntity ? (
-            <div className="mb-4">
-              <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg mb-4 border border-blue-100">
-                <div className="text-blue-500 flex-shrink-0 mt-0.5">
-                  <AlertCircle size={18} />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-700 mb-1 font-medium">
-                    Informations juridiques manquantes
-                  </p>
-                  <p className="text-xs text-gray-600">
-                    Pour générer des contrats légalement valides, nous avons besoin de vos informations de cessionnaire. Ces données apparaîtront dans le préambule de vos contrats.
-                  </p>
-                </div>
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-blue-100 rounded-full mx-auto flex items-center justify-center mb-4">
+                <Shield className="w-8 h-8 text-blue-600" />
               </div>
-
-              {/* Notification tutoriel */}
-              <div className="flex items-center gap-2 p-2 bg-yellow-50 rounded-md border border-yellow-100 mb-4 animate-pulse-slow">
-                <LightbulbIcon size={16} className="text-yellow-500 flex-shrink-0" />
-                <p className="text-xs text-yellow-700">
-                  <span className="font-medium">Conseil :</span> Cliquez sur le bouton <span className="font-medium">Aide</span> pour découvrir pourquoi cette configuration est importante.
-                </p>
-              </div>
-
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                Configuration requise
+              </h3>
+              <p className="text-sm text-gray-600 mb-2">
+                Veuillez configurer au moins un profil pour continuer. 
+                Ces informations sont nécessaires pour personnaliser votre contrat.
+              </p>
               <p className="text-xs text-gray-500 mb-4">
                 Le cessionnaire est la personne ou l'entité qui reçoit les droits cédés dans le contrat. Cette information est essentielle pour la validité juridique de vos documents.
               </p>
             </div>
           ) : (
-            <>
-              {hasBothEntities && (
-                <p className="text-sm text-gray-700 mb-3">
-                  Veuillez choisir le profil à utiliser pour ce contrat :
-                </p>
-              )}
-
-              <div className="space-y-2 mb-4">
-                {hasPhysicalPerson && (
-                  <button
-                    onClick={handleContinue}
-                    className="w-full flex items-center justify-between p-3 bg-white border border-gray-200 rounded-md hover:border-blue-300 hover:bg-blue-50 transition-all"
-                  >
-                    <div className="flex items-center">
-                      <div className="bg-blue-100 rounded-full p-1.5 mr-2">
-                        <User className="w-4 h-4 text-blue-600" />
-                      </div>
-                      <div className="text-left">
-                        <span className="text-sm font-medium text-gray-800">
-                          {profileData.physical_person.prenom} {profileData.physical_person.nom}
-                        </span>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-gray-400" />
-                  </button>
-                )}
-
-                {hasLegalEntity && (
-                  <button
-                    onClick={handleContinue}
-                    className="w-full flex items-center justify-between p-3 bg-white border border-gray-200 rounded-md hover:border-blue-300 hover:bg-blue-50 transition-all"
-                  >
-                    <div className="flex items-center">
-                      <div className="bg-indigo-100 rounded-full p-1.5 mr-2">
-                        <Building2 className="w-4 h-4 text-indigo-600" />
-                      </div>
-                      <div className="text-left">
-                        <span className="text-sm font-medium text-gray-800">
-                          {profileData.legal_entity.nom}
-                        </span>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-gray-400" />
-                  </button>
-                )}
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-green-100 rounded-full mx-auto flex items-center justify-center mb-4">
+                <Check className="w-8 h-8 text-green-600" />
               </div>
-            </>
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                Votre profil est configuré
+              </h3>
+              <p className="text-sm text-gray-600 mb-2">
+                Vous pouvez continuer la création de votre contrat.
+              </p>
+              <p className="text-xs text-gray-500 mb-4">
+                Vous pourrez choisir le profil à utiliser lors de la première étape de création de contrat.
+              </p>
+            </div>
           )}
 
           <div className="flex gap-2 mt-4">
