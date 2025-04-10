@@ -81,17 +81,17 @@ const HomePage = () => {
         />
         
         {/* Section principale avec titre central dominant */}
-        <main className="flex-grow flex flex-col items-center justify-center px-3 py-6 sm:py-16">
+        <main className="flex-grow flex flex-col items-center justify-center px-3 py-6 sm:py-6">
           <div className="w-full max-w-6xl mx-auto text-center px-3">
             
             {/* Titre principal dominant avec effet de dégradé */}
-            <div className="mb-4 sm:mb-14">
+            <div className="mb-4 sm:mb-6">
               {/* Logo animé au-dessus du titre */}
-              <div className="mb-1.5 sm:mb-8 inline-flex items-center justify-center w-14 h-14 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg transform transition-all duration-500 hover:rotate-6 hover:scale-110">
-                <FileSignature className="h-7 w-7 sm:h-12 sm:w-12 text-white" strokeWidth={1.5} />
+              <div className="mb-1.5 sm:mb-4 inline-flex items-center justify-center w-14 h-14 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg transform transition-all duration-500 hover:rotate-6 hover:scale-110">
+                <FileSignature className="h-7 w-7 sm:h-10 sm:w-10 text-white" strokeWidth={1.5} />
               </div>
               
-              <h1 className="text-6xl sm:text-9xl font-black mb-2 sm:mb-10 bg-clip-text text-transparent bg-gradient-to-r from-blue-500 via-cyan-400 to-indigo-500 tracking-tight py-1 sm:py-4 px-2 leading-tight drop-shadow-xl animate-gradient-slow bg-gradient-size">
+              <h1 className="text-6xl sm:text-8xl font-black mb-2 sm:mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-500 via-cyan-400 to-indigo-500 tracking-tight py-1 sm:py-2 px-2 leading-tight drop-shadow-xl animate-gradient-slow bg-gradient-size">
                 LexForge
               </h1>
             </div>
@@ -99,7 +99,7 @@ const HomePage = () => {
             {/* Description avec badge */}
             <div className="relative mb-3 sm:mb-6">
               <p className="text-lg sm:text-xl text-gray-700 mb-2.5 sm:mb-3 px-1">
-                Créez des contrats juridiques professionnels en quelques clics
+                Créez des contrats juridiques simple en quelques clics
               </p>
               <div className="flex flex-wrap justify-center gap-2 sm:gap-2 mb-2 sm:mb-4">
                 <div className="inline-flex items-center px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 shadow-sm">

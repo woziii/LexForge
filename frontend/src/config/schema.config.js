@@ -62,7 +62,7 @@ export const applicationFeatures = {
 export const pageConfigs = {
   home: {
     title: "LexForge - Générateur de contrats juridiques",
-    description: "Créez des contrats juridiques professionnels en quelques clics. Solution française gratuite pour la génération de documents légaux.",
+    description: "Créez des contrats juridiques simple en quelques clics. Solution française gratuite pour la génération de documents légaux.",
     keywords: "contrat juridique, générateur contrat, droit auteur, droit image, document légal"
   },
   about: {
