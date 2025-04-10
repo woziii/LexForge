@@ -96,8 +96,7 @@ const AboutPage = () => {
               <h3 className="text-lg font-semibold mb-1">Propriété intellectuelle</h3>
               <p className="text-gray-600">
                 L'ensemble des éléments constituant ce site (textes, graphismes, logiciels, images, etc.) 
-                est la propriété exclusive de LexForge et est protégé par les lois françaises et internationales 
-                relatives à la propriété intellectuelle.
+                est la propriété exclusive de Lucas MAURICI. 
               </p>
             </div>
             <div>
